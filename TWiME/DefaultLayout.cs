@@ -15,10 +15,11 @@ namespace TWiME {
 
         }
 
-        public void updateWindowList(List<Window> windowList) {
+        public new void updateWindowList(List<Window> windowList) {
             _windowList = windowList;
         }
-        public void assert() {
+
+        public new void assert() {
             if (_windowList.Count == 0) {
                 return;
             }

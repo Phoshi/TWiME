@@ -72,7 +72,15 @@ namespace TWiME {
         }
 
         private void Bar_Load(object sender, EventArgs e) {
+            Window thisWindow = new Window(this.Text, this.Handle, "", "");
+            Rectangle rect = thisWindow.Location;
+            rect.Height = 15;
+            thisWindow.Location = rect;
             RegisterBar();
+            Timer t = new Timer();
+            t.Tick += Bar_LocationChanged;
+            t.Interval = 1000;
+            t.Start();
         }
 
 
@@ -194,11 +202,16 @@ namespace TWiME {
         }
 
         private void Bar_Shown(object sender, EventArgs e) {
-            this.Top -= this.Height;
+            this.Top = Screen.FromHandle(this.Handle).Bounds.Top;
         }
 
         private void Bar_LocationChanged(object sender, EventArgs e) {
-            this.Top = Screen.FromHandle(this.Handle).Bounds.Top;
+            Window thisWindow = new Window("", this.Handle, "", "");
+            Rectangle rect = thisWindow.Location;
+            rect.Height = 15;
+            rect.Y = Screen.FromHandle(this.Handle).Bounds.Y;
+            thisWindow.maximised = false;
+            thisWindow.Location = rect;
         }
     }
 }

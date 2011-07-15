@@ -8,7 +8,7 @@ using System.Windows.Forms;
 namespace TWiME {
     class Monitor {
         private Rectangle _controlled;
-        private Bar bar;
+        public Bar bar;
         private TagScreen[] tagScreens = new TagScreen[9];
         public string name { get; internal set; }
         public Dictionary<int, bool> tagsEnabled { get; internal set; }
@@ -31,6 +31,35 @@ namespace TWiME {
                 tagsEnabled[i] = false;
             }
             tagsEnabled[1] = true;
+        }
+
+        public void catchMessage(HotkeyMessage message) {
+            if (message.level == Level.monitor) {
+                if (message.message == Message.MonitorSwitch) {
+                    int newIndex = Manager.getFocussedMonitorIndex() + message.data;
+                    if (newIndex < 0) {
+                        newIndex = Manager.monitors.Count - 1;
+                    }
+                    if (newIndex >= Manager.monitors.Count) {
+                        newIndex = 0;
+                    }
+                    Console.WriteLine("Switching to window "+Manager.monitors[newIndex].name);
+                    Manager.monitors[newIndex].activate();
+                }
+            }
+            else {
+                foreach (TagScreen tagScreen in (from kvPair in tagsEnabled where kvPair.Value == true select tagScreens[kvPair.Key])) {
+                    tagScreen.catchMessage(message);
+                }
+            }
+        }
+
+        private void activate() {
+            var activeTags = from tag in tagsEnabled where tag.Value select tag.Key;
+            if (activeTags.Count() > 0) {
+                TagScreen screen = tagScreens[activeTags.ElementAt(0)];
+                screen.activate();
+            }
         }
     }
 }

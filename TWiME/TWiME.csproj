@@ -53,6 +53,8 @@
       <DependentUpon>Bar.cs</DependentUpon>
     </Compile>
     <Compile Include="DefaultLayout.cs" />
+    <Compile Include="GlobalKeyboardHook.cs" />
+    <Compile Include="HotkeyMessage.cs" />
     <Compile Include="Layout.cs" />
     <Compile Include="Manager.cs" />
     <Compile Include="Monitor.cs" />
