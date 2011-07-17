@@ -33,5 +33,6 @@ By
 Application by me, Phoshi. 
 Pinvoke.net has been an invaluable resource for figuring out the WinAPI functions neccesary to make this all come together.
 Any code taken from other sources, or heavily based on other sources, is marked as such in a comment at the top of the area.
+Window focussing logic was partially translated from AutoHotKey's WinActivate function.
 
 Inspiration comes from the great TWMs that came before, like Awesome, or DWM. Direct inspiration for **starting** comes from bug.n, an excellent attempt at a windows TWM, and well worth checking out.
