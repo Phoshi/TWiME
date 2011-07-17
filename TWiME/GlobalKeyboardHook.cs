@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Extensions;
 
 namespace TWiME {
     /// <summary>
@@ -88,6 +90,7 @@ namespace TWiME {
             UnhookWindowsHookEx(hhook);
         }
 
+        private const int KF_UP = 0x8000;
         /// <summary>
         /// The callback for the keyboard hook
         /// </summary>
@@ -99,15 +102,19 @@ namespace TWiME {
             if (code >= 0) {
                 Keys key = (Keys)lParam.vkCode;
                 if (HookedKeys.Contains(key)) {
+                    bool blockKeyPress = Manager.isModifierPressed(key, (lParam.flags & (KF_UP >> 8)) == 0);
                     KeyEventArgs kea = new KeyEventArgs(key);
                     if ((wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) && (KeyDown != null)) {
+                        Manager.log("Down: {0}".With(lParam.vkCode), 1);
                         KeyDown(this, kea);
                     }
                     else if ((wParam == WM_KEYUP || wParam == WM_SYSKEYUP) && (KeyUp != null)) {
+                        Manager.log("Up: {0}".With(lParam.vkCode), 1);
                         KeyUp(this, kea);
                     }
-                    if (kea.Handled)
+                    if (blockKeyPress)
                         return 1;
+
                 }
             }
             return CallNextHookEx(hhook, code, wParam, ref lParam);

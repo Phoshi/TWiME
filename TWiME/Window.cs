@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using Timer = System.Windows.Forms.Timer;
 
 namespace TWiME {
     public class Window {
@@ -60,6 +61,11 @@ namespace TWiME {
         [DllImport("user32.dll")]
         private static extern IntPtr GetWindow(IntPtr handle, uint command);
 
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, int wParam, IntPtr lParam);
+        public const int WM_SYSCOMMAND = 0x0112;
+        public const int SC_CLOSE = 0xF060;
+
 
 
         [StructLayout(LayoutKind.Sequential)]
@@ -114,12 +120,26 @@ namespace TWiME {
         private bool _maximized;
         private string _className;
         private Rectangle _location;
+        private long lastTitleUpdate = DateTime.Now.Ticks;
 
         public IntPtr handle { get { return _handle; } }
-        public string title { get { return _title; } }
+        public string title { get {
+            if (lastTitleUpdate < (DateTime.Now.Ticks - new TimeSpan(0,0,0,10).Ticks)) { //If the window title is more than 10 seconds old
+                updateTitle();
+            }
+            return _title;
+        } }
+
+        private void updateTitle() {
+            StringBuilder title = new StringBuilder(256);
+            GetWindowText(_handle, title, 256);
+            _title = title.ToString();
+            lastTitleUpdate = DateTime.Now.Ticks;
+        }
+
         public string process { get { return _process; } }
         public string className { get { return _className; } }
-        public Screen screen { get; internal set; }
+        public Screen screen { get { return Screen.FromHandle(handle); } }
 
         public bool visible { 
             get {
@@ -130,23 +150,27 @@ namespace TWiME {
                 if (value) {
                     if (ShowWindowAsync(_handle, _maximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL)) {
                         _visible = true;
+                        if (Manager.hiddenWindows.Contains(this)) {
+                            Manager.hiddenWindows.Remove(this);
+                        }
                     }
                 }
                 else {
                     _maximized = IsZoomed(_handle);
                     if (ShowWindowAsync(_handle, SW_HIDE)) {
                         _visible = false;
+                        Manager.hiddenWindows.Add(this);
                     }
                 }
             }
         }
 
-        public Window(string title, IntPtr handle, string process, string className) {
+        public Window(string title, IntPtr handle, string process, string className, bool isWindowVisible) {
             _title = title;
             _handle = handle;
             _process = process;
             _className = className;
-            screen = Screen.FromHandle(handle);
+            _visible = isWindowVisible;
         }
 
         public override string ToString() {
@@ -284,7 +308,13 @@ namespace TWiME {
         }
 
         public void catchMessage(HotkeyMessage message) {
-            throw new NotImplementedException();
+            if (message.message == Message.Close) {
+                this.close();
+            }
+        }
+
+        public void close() {
+            SendMessage(_handle, WM_SYSCOMMAND, SC_CLOSE, IntPtr.Zero);
         }
     }
 }

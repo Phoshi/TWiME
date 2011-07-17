@@ -8,14 +8,17 @@ namespace TWiME {
         Focus,          //Focus window
         Move,           //Move window to new position
         Switch,         //Swap active window with this
+        FocusThis,      //Focus a particular indexed window
+        SwitchThis,     //Swap active window with this indexed window
         Monitor,        //Swap window to other monitor
         Layout,         //Change to a new layout style
         Splitter,       //Move the layout splitter
-        ScreenOn,       //Turn this tag view on
-        ScreenOff,      //Turn this tag view off
+        Screen,       //Turn this tag view on
         TagWindow,      //Tag window with this tag
         UntagWindow,    //Untag window with this tag
         MonitorSwitch,  //Switch focus to another monitor
+        MonitorFocus,   //Switch focus to another indexed monitor
+        MonitorMoveThis,//Move window to another indexed monitor
         MonitorMove,    //Move the entire monitor object elsewhere
         Close           //Close TWiME
     }

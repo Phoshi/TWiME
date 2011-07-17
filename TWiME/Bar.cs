@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
+using Extensions;
 
 namespace TWiME {
     public partial class Bar : Form {
@@ -33,6 +35,11 @@ namespace TWiME {
         const UInt32 WS_TILED = WS_OVERLAPPED;
         const UInt32 WS_ICONIC = WS_MINIMIZE;
         const UInt32 WS_SIZEBOX = WS_THICKFRAME;
+        private const int GWL_EXSTYLE = (-20);
+        private const int WS_EX_TOOLWINDOW = 0x00000080;
+
+
+        private const int barHeight = 15;
 
         [DllImport("user32.dll")]
         private static extern
@@ -47,40 +54,46 @@ namespace TWiME {
         private static extern
             bool IsWindowVisible(int hWnd);
         [DllImport("user32.dll", SetLastError = true)]
-        static extern int GetWindowLong(int hWnd, int nIndex);
+        static extern IntPtr GetWindowLong(IntPtr hWnd, int nIndex);
         [DllImport("user32.dll", SetLastError = true)]
-        static extern int SetWindowLong(int hWnd, int nIndex, int newLong);
+        static extern int SetWindowLong(IntPtr hWnd, int nIndex, IntPtr newLong);
 
         public delegate bool EnumWindowsProc(int hWnd, int lParam);
 
         private Screen _screen;
+        private Monitor _parent;
 
-        public Bar(Screen screen) {
+        public Bar(Monitor monitor) {
             InitializeComponent();
-            _screen = screen;
+            _screen = monitor.screen;
+            _parent = monitor;
             //this.TopMost = true;
             this.StartPosition = FormStartPosition.Manual;
-            this.Location = screen.Bounds.Location;
-            this.Width = screen.Bounds.Width;
+            this.Location = _screen.Bounds.Location;
+            this.Width = _screen.Bounds.Width;
             this.Height = 10;
             this.FormBorderStyle = FormBorderStyle.None;
             this.DesktopLocation = this.Location;
             //RegisterBar();
-            this.BackColor = Color.White;
+            this.BackColor = Color.DarkGray;
 
             this.ShowInTaskbar = false;
         }
 
         private void Bar_Load(object sender, EventArgs e) {
-            Window thisWindow = new Window(this.Text, this.Handle, "", "");
+            Window thisWindow = new Window(this.Text, this.Handle, "", "", true);
             Rectangle rect = thisWindow.Location;
-            rect.Height = 15;
+            rect.Height = barHeight;
             thisWindow.Location = rect;
             RegisterBar();
             Timer t = new Timer();
-            t.Tick += Bar_LocationChanged;
-            t.Interval = 1000;
+            t.Tick += new EventHandler((object parent, EventArgs args)=>this.redraw());
+            t.Interval = 10000;
             t.Start();
+
+            int winStles = (int)GetWindowLong(this.Handle, GWL_EXSTYLE);
+            winStles |= WS_EX_TOOLWINDOW;
+            SetWindowLong(this.Handle, GWL_EXSTYLE, (IntPtr) winStles);
         }
 
 
@@ -206,12 +219,157 @@ namespace TWiME {
         }
 
         private void Bar_LocationChanged(object sender, EventArgs e) {
-            Window thisWindow = new Window("", this.Handle, "", "");
+            Window thisWindow = new Window("", this.Handle, "", "", true);
             Rectangle rect = thisWindow.Location;
-            rect.Height = 15;
+            rect.Height = barHeight;
             rect.Y = Screen.FromHandle(this.Handle).Bounds.Y;
             thisWindow.maximised = false;
             thisWindow.Location = rect;
+        }
+
+        private void Bar_Paint(object sender, PaintEventArgs e) {
+            Font titleFont = new Font("Segoe UI", barHeight * 0.6f);
+            Brush foregroundBrush = new SolidBrush(Color.Black);
+            Brush foregroundBrush2 = new SolidBrush(Color.LightGray);
+            Brush backgroundBrush = new SolidBrush(Color.DarkGray);
+            Brush backgroundBrush2 = new SolidBrush(Color.Black);
+
+            Pen seperatorPen = new Pen(Color.Blue, 3);
+            Manager.log(new string('=', 30));
+            Manager.log("Starting draw");
+
+            //Draw the tags display
+
+            int height = this.Height;
+            int screenHeight = _screen.Bounds.Height;
+            int screenWidth = _screen.Bounds.Width;
+            Manager.log("Screen is {0}x{1}".With(screenWidth, screenHeight));
+            int width = (int) ((screenWidth * height) / (float)screenHeight);
+            Manager.log("Each tag display is {0}x{1}".With(width, height));
+            int currentWidth = 0;
+            System.Drawing.Size previewSize = new Size(width, height);
+            int tag = 1;
+            foreach (TagScreen screen in _parent.screens) {
+                Rectangle drawTangle = new Rectangle(currentWidth, 0, width - 1, this.Height - 1);
+                Image state = screen.getStateImage(previewSize);
+                e.Graphics.DrawRectangle(new Pen(Color.White), drawTangle);
+                PointF tagPos = new PointF();
+                tagPos.X = (currentWidth) + (width / 2) - (tag.ToString().Width(titleFont) / 2);
+                tagPos.Y = height / 2 - tag.ToString().Height(titleFont) / 2;
+                e.Graphics.DrawImage(state, drawTangle);
+                e.Graphics.DrawString(tag++.ToString(), titleFont, foregroundBrush, tagPos);
+                currentWidth += width;
+            }
+
+            //Draw the datetime display
+
+            DateTime now = DateTime.Now;
+            string dateString = now.ToString("yyyy/MM/dd | HH:mm");
+            int dateWidth = dateString.Width(titleFont);
+            Bitmap dateMap = new Bitmap(dateWidth + 15, height);
+
+            using (Graphics gr = Graphics.FromImage(dateMap)) {
+                gr.FillRectangle(backgroundBrush2, 0, 0, dateMap.Width, dateMap.Height);
+                gr.DrawString(dateString, titleFont, foregroundBrush2, 0, 0);
+            }
+            
+            //Draw the window list in the space remaining
+            int startingPoint = currentWidth;
+            int remainingWidth = screenWidth - startingPoint - dateMap.Width;
+            Manager.log("Between the tag display and date display, there is {0}px remaining for windows".With(remainingWidth));
+            List<Bitmap> windowTiles = new List<Bitmap>();
+            int selectedWindowID = -1;
+            int index = 0;
+            foreach (Window window in _parent.getActiveScreen().windows) {
+                Window focussedWindow = Manager.getFocussedMonitor().getActiveScreen().getFocusedWindow();
+                if (focussedWindow != null) {
+                    if (focussedWindow.handle == window.handle) {
+                        selectedWindowID = index;
+                        Manager.log("There is a focussed window. It is \"{0}\"".With(window.title));
+                        break;
+                    }
+                }
+                index++;
+            }
+            int totalWidth = 0;
+            index = 0;
+            int numWindows = _parent.getActiveScreen().windows.Count;
+            Manager.log("There are {0} windows under this bar's monitor's active screen's domain".With(numWindows));
+            if (numWindows > 0) {
+                int originalRoom = remainingWidth / numWindows;
+                int room = originalRoom;
+                Manager.log("This gives us {0}px for each window".With(room));
+                if (selectedWindowID != -1) {
+                    if (selectedWindowID != -1) {
+                        int selectedWidth = Math.Max(_parent.getActiveScreen().windows[selectedWindowID].title.Width(titleFont), room);
+                        room = (remainingWidth - selectedWidth) / _parent.getActiveScreen().windows.Count();
+                        Manager.log("After adjusting for giving the active window more space, each window gets {0}px".With(room));
+                    }
+                }
+                foreach (Window window in _parent.getActiveScreen().windows) {
+                    bool drawFocussed = false;
+                    if (index == selectedWindowID) {
+                        drawFocussed = true;
+                    }
+                    int windowLength = window.title.Width(titleFont);
+                    Bitmap windowMap;
+                    string windowTitle = window.title;
+                    if (windowTitle == "") {
+                        windowTitle = window.className;
+                    }
+                    windowMap = new Bitmap(windowTitle.Width(titleFont), height);
+                    Graphics windowGraphics = Graphics.FromImage(windowMap);
+                    windowGraphics.FillRectangle(drawFocussed ? backgroundBrush : backgroundBrush2, 0, 0,
+                                                 windowMap.Width, windowMap.Height);
+                    windowGraphics.DrawString(window.title, titleFont, drawFocussed ? foregroundBrush : foregroundBrush2,
+                                              0, 0);
+                    windowGraphics.Dispose();
+                    windowTiles.Add(windowMap);
+                    totalWidth += windowLength;
+                    index++;
+                }
+                int drawIndex = 0;
+                foreach (Bitmap windowTile in windowTiles) {
+                    Rectangle drawRect;
+                    Color fadeOutColor = Color.Empty;
+                    if (drawIndex != selectedWindowID) {
+                        drawRect = new Rectangle(currentWidth, 0, room, height);
+                        fadeOutColor = Color.Black;
+                    }
+                    else {
+                        int remainingRoom;
+                        int i = 0;
+                        int totalNotMe = 0;
+                        foreach (Bitmap tile in windowTiles) {
+                            if (i++ != drawIndex) {
+                                totalNotMe += room;
+                            }
+                        }
+                        remainingRoom = remainingWidth - totalNotMe;
+                        drawRect = new Rectangle(currentWidth, 0, Math.Max(windowTile.Width, remainingRoom), height);
+                    }
+                    e.Graphics.FillRectangle(drawIndex != selectedWindowID ? backgroundBrush2 : backgroundBrush , drawRect);
+                    e.Graphics.DrawImageUnscaled(windowTile, drawRect);
+
+                    Rectangle newRect = drawRect;
+                    newRect.Width = 30;
+                    newRect.X = drawRect.Right - 30;
+                    Brush gradientBrush = new LinearGradientBrush(newRect, Color.FromArgb(0, fadeOutColor), fadeOutColor,
+                                                                  0.0);
+                    e.Graphics.FillRectangle(gradientBrush, newRect);
+                    drawIndex++;
+                    //if (drawIndex < windowTiles.Count)
+                        e.Graphics.DrawLine(seperatorPen, drawRect.Right - 1, 0, drawRect.Right - 1, drawRect.Height);
+                    currentWidth += drawRect.Width;
+                }
+            }
+
+            //Draw the time bit to the form
+            e.Graphics.DrawImage(dateMap, screenWidth - dateMap.Width, 0);
+        }
+
+        public void redraw() {
+            this.Invalidate();
         }
     }
 }

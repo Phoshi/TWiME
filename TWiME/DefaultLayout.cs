@@ -7,11 +7,15 @@ using System.Text;
 namespace TWiME {
     class DefaultLayout : Layout, ILayout {
         private string _name;
-        private Image _symbol;
+        private Image _symbol = null;
+        private Rectangle _owned;
         private List<Window> _windowList;
-        private float splitter = 0.7f;
-        public DefaultLayout(List<Window> windowList) {
+        public float splitter = 0.7f;
+        private TagScreen _parent;
+        public DefaultLayout(List<Window> windowList, Rectangle area, TagScreen parent) {
             _windowList = windowList;
+            _owned = area;
+            _parent = parent;
 
         }
 
@@ -23,35 +27,81 @@ namespace TWiME {
             if (_windowList.Count == 0) {
                 return;
             }
-            if (_windowList.Count == 1) {
-                _windowList[0].Location = _windowList[0].screen.WorkingArea;
-                return;
-            }
             Window mainWindow = _windowList[0];
-            int width = (int)(mainWindow.screen.WorkingArea.Width * splitter);
-            int height = mainWindow.screen.WorkingArea.Height;
-            int x = mainWindow.screen.WorkingArea.X;
-            int y = mainWindow.screen.WorkingArea.Y;
+            int width = (int)(_owned.Width * splitter);
+            if (_windowList.Count == 1) {
+                width = _owned.Width;
+            }
+            int height = _owned.Height;
+            int x = _owned.X;
+            int y = _owned.Y;
             Rectangle newRect = new Rectangle(x, y, width, height);
             mainWindow.Location = newRect;
 
-            int secondaryHeight = mainWindow.screen.WorkingArea.Height / (_windowList.Count - 1);
-            for (int i = 1; i < _windowList.Count; i++) {
-                Window window = _windowList[i];
-                int nx = window.screen.WorkingArea.Left + width;
-                int ny = window.screen.WorkingArea.Top + secondaryHeight * (i - 1);
-                int nwidth = window.screen.WorkingArea.Width - width;
-                Rectangle secondaryRect = new Rectangle(nx, ny, nwidth, secondaryHeight);
-                window.Location = secondaryRect;
+            if (_windowList.Count > 1) {
+                int secondaryHeight = _owned.Height / (_windowList.Count - 1);
+                for (int i = 1; i < _windowList.Count; i++) {
+                    Window window = _windowList[i];
+                    int nx = _owned.Left + width;
+                    int ny = _owned.Top + secondaryHeight * (i - 1);
+                    int nwidth = _owned.Width - width;
+                    Rectangle secondaryRect = new Rectangle(nx, ny, nwidth, secondaryHeight);
+                    window.Location = secondaryRect;
+                }
             }
         }
 
-        public string name() {
-            throw new NotImplementedException();
+        public new string name() {
+            return _name;
         }
 
-        public Image symbol() {
+        public new Image symbol() {
             throw new NotImplementedException();
+        }
+        public new void moveSplitter(float offset) {
+            float newSplitter = splitter + offset;
+            if (newSplitter < 0) {
+                newSplitter = 0;
+            }
+            if (newSplitter > 1) {
+                newSplitter = 1;
+            }
+            splitter = newSplitter;
+            assert();
+        }
+        private Image generateStateImage(Size dimensions) {
+            Bitmap state = new Bitmap(dimensions.Width, dimensions.Height);
+            Graphics gr = Graphics.FromImage(state);
+            //1680 * x = 40
+            float scaleFactor = (float)(dimensions.Width) / (_owned.Width);
+            foreach (Window window in _windowList) {
+                Rectangle newRect = window.Location;
+                if (newRect.X < 0) {
+                    newRect.Offset(-newRect.X, 0);
+                }
+                if (newRect.Y < 0) {
+                    newRect.Offset(0, -newRect.Y);
+                }
+                newRect.Width = (int)(newRect.Width * scaleFactor);
+                newRect.Height = (int)(newRect.Height * scaleFactor);
+                newRect.X = (int)(newRect.X * scaleFactor);
+                newRect.Y = (int)(newRect.Y * scaleFactor);
+                Color winColor = Color.FromArgb(192, Color.White);
+                if (_parent.getFocusedWindow() == window) {
+                    winColor = Color.FromArgb(255, Color.LightGray);
+                }
+                gr.FillRectangle(new SolidBrush(winColor), newRect);
+                gr.DrawRectangle(new Pen(Color.Black), newRect);
+            }
+            gr.Dispose();
+            return state;
+
+        }
+        public new Image stateImage(Size dimensions) {
+            if (_parent.tag == _parent.parent.tagEnabled || _symbol == null) {
+                _symbol = generateStateImage(dimensions);
+            }
+            return _symbol;
         }
     }
 }

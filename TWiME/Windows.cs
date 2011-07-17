@@ -35,17 +35,20 @@ namespace TWiME {
         private int _position = -1;
 
         List<Window> windowList = new List<Window>();
+        List<int> handleList = new List<int>();
 
         private bool _showInvisible = false;
         private bool _showNoTitle = false;
+        private bool _justHandles = false;
 
         private List<IntPtr> myHandles = new List<IntPtr>();
 
         private string[] ignoreClasses = new[] {"Progman", "Button"};
 
-        public Windows(bool showInvisible = false, bool showNoTitle = false) {
+        public Windows(bool justGiveMeHandles = false, bool showInvisible = false, bool showNoTitle = false) {
             _showNoTitle = showNoTitle;
             _showInvisible = showInvisible;
+            _justHandles = justGiveMeHandles;
 
             foreach (Form openForm in Application.OpenForms) {
                 myHandles.Add(openForm.Handle);
@@ -61,7 +64,10 @@ namespace TWiME {
         private bool processWindow(int handle, int lparam) {
             if (_showInvisible == false && !IsWindowVisible(handle))
                 return (true);
-
+            if (_justHandles) {
+                handleList.Add(handle);
+                return true;
+            }
             StringBuilder title = new StringBuilder(256);
             StringBuilder className = new StringBuilder(256);
 
@@ -84,7 +90,7 @@ namespace TWiME {
 
             if (!ignoreClasses.Contains(className.ToString())) {
                 windowList.Add(new Window(title.ToString(), (IntPtr) handle,
-                                          module.ToString(), className.ToString()));
+                                          module.ToString(), className.ToString(), IsWindowVisible(handle)));
             }
 
             return true;
@@ -109,12 +115,17 @@ namespace TWiME {
 
         public bool MoveNext() {
             _position++;
-            if (_position < windowList.Count) {
-                return true;
+            if (!_justHandles) {
+                if (_position < windowList.Count) {
+                    return true;
+                }
             }
             else {
-                return false;
+                if (_position > handleList.Count) {
+                    return true;
+                }
             }
+            return false;
         }
 
         public void Reset() {
@@ -122,7 +133,12 @@ namespace TWiME {
         }
 
         public object Current {
-            get { return windowList[_position]; }
+            get {
+                if (_justHandles) {
+                    return handleList[_position];
+                }
+                return windowList[_position];
+            }
         }
     }
 }

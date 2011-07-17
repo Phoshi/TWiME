@@ -1,36 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
 namespace TWiME {
-    class Monitor {
-        private Rectangle _controlled;
+    public class Monitor {
+        public Rectangle _controlled { get; internal set; }
         public Bar bar;
         private TagScreen[] tagScreens = new TagScreen[9];
+        public TagScreen[] screens { get { return tagScreens; } }
         public string name { get; internal set; }
-        public Dictionary<int, bool> tagsEnabled { get; internal set; }
-        public Monitor(Screen screen) {
-            createBar(screen);
+        public int tagEnabled = 0;
+        public Screen screen { get; internal set; }
+        public Monitor(Screen newscreen) {
+            screen = newscreen;
+            createBar();
+            Rectangle temp = screen.WorkingArea;
+            temp.Height = screen.Bounds.Height - bar.Height;
+            _controlled = temp;
             createTagScreens();
-            _controlled = screen.WorkingArea;
             name = screen.DeviceName;
+
+            Manager.WindowCreate += new Manager.WindowEventHandler(Manager_WindowCreate);
+            Manager.WindowDestroy += new Manager.WindowEventHandler(Manager_WindowDestroy);
+
         }
 
-        private void createBar(Screen screen) {
-            bar = new Bar(screen);
+        void Manager_WindowDestroy(object sender, WindowEventArgs args) {
+            bar.redraw();
+        }
+
+        void Manager_WindowCreate(object sender, WindowEventArgs args) {
+            bar.redraw();
+        }
+
+        private void createBar() {
+            bar = new Bar(this);
             bar.Show();
         }
 
         private void createTagScreens() {
-            tagsEnabled = new Dictionary<int, bool>();
             for (int i = 0; i < 9; i++) {
                 tagScreens[i] = new TagScreen(this, i);
-                tagsEnabled[i] = false;
             }
-            tagsEnabled[1] = true;
         }
 
         public void catchMessage(HotkeyMessage message) {
@@ -45,21 +60,56 @@ namespace TWiME {
                     }
                     Console.WriteLine("Switching to window "+Manager.monitors[newIndex].name);
                     Manager.monitors[newIndex].activate();
+                    Manager.monitors[newIndex].bar.redraw();
+                }
+                if (message.message == Message.MonitorFocus) {
+                    Manager.monitors[message.data].activate();
+                }
+                if (message.message == Message.Screen) {
+                    if (tagEnabled != message.data) {
+                        tagScreens[tagEnabled].disable();
+                        tagScreens[message.data].enable();
+                        tagEnabled = message.data;
+                    }
+                }
+                if (message.message == Message.TagWindow) {
+                    if (tagScreens[message.data].windows.Contains(getActiveScreen().getFocusedWindow())) {
+                        Window focussedWindow = getActiveScreen().getFocusedWindow();
+                        tagScreens[message.data].throwWindow(focussedWindow);
+                        focussedWindow.visible = false;
+                        if (message.data == tagEnabled) {
+                            getActiveScreen().enable();
+                        }
+                    }
+                    else {
+                        tagScreens[message.data].catchWindow(getActiveScreen().getFocusedWindow());
+                    }
+                    //getActiveScreen().activate();
+                    getActiveScreen().assertLayout();
                 }
             }
             else {
-                foreach (TagScreen tagScreen in (from kvPair in tagsEnabled where kvPair.Value == true select tagScreens[kvPair.Key])) {
-                    tagScreen.catchMessage(message);
-                }
+                tagScreens[tagEnabled].catchMessage(message);
             }
+            bar.redraw();
         }
 
         private void activate() {
-            var activeTags = from tag in tagsEnabled where tag.Value select tag.Key;
-            if (activeTags.Count() > 0) {
-                TagScreen screen = tagScreens[activeTags.ElementAt(0)];
-                screen.activate();
-            }
+            getActiveScreen().activate();
+        }
+
+        public TagScreen getActiveScreen() {
+            TagScreen screen = tagScreens[tagEnabled];
+            return screen;
+        }
+
+        public void catchWindow(Window window) {
+            Rectangle location = window.Location;
+            location.X = _controlled.X;
+            location.Y = _controlled.Y;
+            window.Location = location;
+            getActiveScreen().catchWindow(window);
+            bar.redraw();
         }
     }
 }

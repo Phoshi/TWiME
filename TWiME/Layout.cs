@@ -9,7 +9,9 @@ namespace TWiME {
         void assert();
         string name();
         Image symbol();
+        Image stateImage(Size dimensions);
         void updateWindowList(List<Window> newList);
+        void moveSplitter(float offset);
     }
     class Layout : ILayout {
         public void assert() {
@@ -24,7 +26,15 @@ namespace TWiME {
             throw new NotImplementedException();
         }
 
+        public Image stateImage(Size dimensions) {
+            throw new NotImplementedException();
+        }
+
         public void updateWindowList(List<Window> newList) {
+            throw new NotImplementedException();
+        }
+
+        public void moveSplitter(float offset) {
             throw new NotImplementedException();
         }
     }

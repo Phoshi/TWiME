@@ -30,12 +30,14 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(292, 51);
+            this.DoubleBuffered = true;
             this.Name = "Bar";
             this.Text = "Form1";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Bar_FormClosing);
             this.Load += new System.EventHandler(this.Bar_Load);
             this.Shown += new System.EventHandler(this.Bar_Shown);
             this.LocationChanged += new System.EventHandler(this.Bar_LocationChanged);
+            this.Paint += new System.Windows.Forms.PaintEventHandler(this.Bar_Paint);
             this.ResumeLayout(false);
 
         }
