@@ -23,9 +23,10 @@ namespace TWiME {
             _windowList = windowList;
         }
 
-        public new void assert() {
+        private Dictionary<Window, Rectangle> generateLayout() {
+            Dictionary<Window, Rectangle> layouts = new Dictionary<Window, Rectangle>();
             if (_windowList.Count == 0) {
-                return;
+                return layouts;
             }
             Window mainWindow = _windowList[0];
             int width = (int)(_owned.Width * splitter);
@@ -36,7 +37,7 @@ namespace TWiME {
             int x = _owned.X;
             int y = _owned.Y;
             Rectangle newRect = new Rectangle(x, y, width, height);
-            mainWindow.Location = newRect;
+            layouts[mainWindow] = newRect;
 
             if (_windowList.Count > 1) {
                 int secondaryHeight = _owned.Height / (_windowList.Count - 1);
@@ -46,10 +47,18 @@ namespace TWiME {
                     int ny = _owned.Top + secondaryHeight * (i - 1);
                     int nwidth = _owned.Width - width;
                     Rectangle secondaryRect = new Rectangle(nx, ny, nwidth, secondaryHeight);
-                    window.Location = secondaryRect;
+                    layouts[window] = secondaryRect;
                 }
             }
+            return layouts;
         }
+
+        public new void assert() {
+            foreach (KeyValuePair<Window, Rectangle> pair in generateLayout()) {
+                pair.Key.Location = pair.Value;
+            }
+        }
+
 
         public new string name() {
             return _name;
@@ -74,8 +83,8 @@ namespace TWiME {
             Graphics gr = Graphics.FromImage(state);
             //1680 * x = 40
             float scaleFactor = (float)(dimensions.Width) / (_owned.Width);
-            foreach (Window window in _windowList) {
-                Rectangle newRect = window.Location;
+            foreach (KeyValuePair<Window, Rectangle> pair in generateLayout()) {
+                Rectangle newRect = pair.Value;
                 if (newRect.X < 0) {
                     newRect.Offset(-newRect.X, 0);
                 }
@@ -87,7 +96,7 @@ namespace TWiME {
                 newRect.X = (int)(newRect.X * scaleFactor);
                 newRect.Y = (int)(newRect.Y * scaleFactor);
                 Color winColor = Color.FromArgb(192, Color.White);
-                if (_parent.getFocusedWindow() == window) {
+                if (_parent.getFocusedWindow() == pair.Key) {
                     winColor = Color.FromArgb(255, Color.LightGray);
                 }
                 gr.FillRectangle(new SolidBrush(winColor), newRect);
@@ -98,9 +107,7 @@ namespace TWiME {
 
         }
         public new Image stateImage(Size dimensions) {
-            if (_parent.tag == _parent.parent.tagEnabled || _symbol == null) {
-                _symbol = generateStateImage(dimensions);
-            }
+            _symbol = generateStateImage(dimensions);
             return _symbol;
         }
     }

@@ -26,6 +26,18 @@ namespace TWiME {
             IntPtr GetForegroundWindow();
         [DllImport("user32.dll")]
         private static extern IntPtr FindWindow(string className, string windowText);
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern IntPtr GetWindow(IntPtr hWnd, GetWindow_Cmd uCmd);
+
+        enum GetWindow_Cmd : uint {
+            GW_HWNDFIRST = 0,
+            GW_HWNDLAST = 1,
+            GW_HWNDNEXT = 2,
+            GW_HWNDPREV = 3,
+            GW_OWNER = 4,
+            GW_CHILD = 5,
+            GW_ENABLEDPOPUP = 6
+        }
 
         private static bool isWinKeyDown = false;
         private static bool isShiftKeyDown = false;
@@ -50,14 +62,17 @@ namespace TWiME {
         }
 
         static void Application_ApplicationExit(object sender, EventArgs e) {
-            sendMessage(Message.Close, Level.global, 0);
         }
 
         private static void setupHotkeys() {
+
+            #region Hook Modifiers
             globalHook.HookedKeys.Add(Keys.LWin);
             globalHook.HookedKeys.Add(Keys.LShiftKey);
             globalHook.HookedKeys.Add(Keys.LMenu);
-            hook(Keys.Q, (()=>Application.Exit()));
+            globalHook.HookedKeys.Add(Keys.LControlKey);
+            #endregion
+            hook(Keys.Q, (()=>sendMessage(Message.Close, Level.global, 0)));
             hook(Keys.R, (()=>Application.Restart()));
             hook(Keys.Space, (()=>sendMessage(Message.Switch, Level.global, 0)));
 
@@ -76,7 +91,16 @@ namespace TWiME {
             hook(Keys.Return, (() => sendMessage(Message.MonitorMoveThis, Level.screen, 0)), Keys.Shift | Keys.Alt);
 
             hook(Keys.Left, (() => sendMessage(Message.Splitter, Level.screen, -1)));
+            hook(Keys.Left, (() => sendMessage(Message.Splitter, Level.screen, -10)), Keys.Shift);
             hook(Keys.Right, (() => sendMessage(Message.Splitter, Level.screen, 1)));
+            hook(Keys.Right, (() => sendMessage(Message.Splitter, Level.screen, 10)), Keys.Shift);
+
+            hook(Keys.J, (() => sendMessage(Message.ScreenRelative, Level.monitor, 1)), Keys.Control);
+            hook(Keys.K, (() => sendMessage(Message.ScreenRelative, Level.monitor, -1)), Keys.Control);
+            hook(Keys.Return, (() => sendMessage(Message.ScreenRelative, Level.monitor, 0)), Keys.Control);
+            hook(Keys.J, (() => sendMessage(Message.SwapTagWindowRelative, Level.monitor, 1)), Keys.Control | Keys.Shift);
+            hook(Keys.K, (() => sendMessage(Message.SwapTagWindowRelative, Level.monitor, -1)), Keys.Control | Keys.Shift);
+            hook(Keys.Return, (() => sendMessage(Message.SwapTagWindow, Level.monitor, 0)), Keys.Control | Keys.Shift);
 
             hook(Keys.J, (() => sendMessage(Message.MonitorSwitch, Level.monitor, 1)), Keys.Alt);
             hook(Keys.K, (() => sendMessage(Message.MonitorSwitch, Level.monitor, -1)), Keys.Alt);
@@ -87,8 +111,8 @@ namespace TWiME {
             int tagIndex = 0;
             foreach (Keys key in new[] {Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9}) {
                 int index = tagIndex++;
-                hook(key, (() => sendMessage(Message.Screen, Level.monitor, index)));
-                hook(key, (() => sendMessage(Message.TagWindow, Level.monitor, index)), Keys.Shift);   
+                hook(key, (() => sendMessage(Message.Screen, Level.monitor, index)), Keys.Control);
+                hook(key, (() => sendMessage(Message.TagWindow, Level.monitor, index)), Keys.Shift | Keys.Control);   
             }
             #endregion
 
@@ -96,7 +120,7 @@ namespace TWiME {
             globalHook.KeyUp += new KeyEventHandler(globalHook_KeyUp);
         }
 
-        static void sendMessage(Message type, Level level, int data) {
+        public static void sendMessage(Message type, Level level, int data) {
             IntPtr focussed = GetForegroundWindow();
             HotkeyMessage message = new HotkeyMessage(type, level, focussed, data);
             if (message.level == Level.global) {
@@ -117,6 +141,8 @@ namespace TWiME {
                 }
                 Manager.log("Showing taskbar", 10);
                 Taskbar.hidden = false;
+                Application.Exit();
+
             }
             if (message.message == Message.Switch) {
                 Manager.log("Toggling taskbar");
@@ -206,8 +232,6 @@ namespace TWiME {
                     executedACommandLately = false;
                     PostMessage((IntPtr) 0xFFFF, WM_KEYDOWN, VK_LWIN, 0); //0xFFFF is HWND_BROADCAST - everything.
                     PostMessage((IntPtr) 0xFFFF, WM_KEYUP, VK_LWIN, 0); //0xFFFF is HWND_BROADCAST - everything.
-                    //PostMessage(Taskbar.orb, WM_KEYDOWN, VK_ESCAPE, 0); //0xFFFF is HWND_BROADCAST - everything.
-                    //PostMessage(Taskbar.orb, WM_KEYUP, VK_ESCAPE, 0); //0xFFFF is HWND_BROADCAST - everything.
                     return true;
                 }
                 log("We haven't executed a command this run. Return", 3);
@@ -256,6 +280,8 @@ namespace TWiME {
         }
 
         static void pollWindows_Tick(object sender, EventArgs e) {
+            globalHook.unhook();
+            globalHook.hook();
             Windows windows = new Windows();
             List<Window> allWindows = new List<Window>();
             foreach (Window window in windows) {
@@ -308,6 +334,18 @@ namespace TWiME {
 
         public static Monitor getFocussedMonitor() {
             return monitors[getFocussedMonitorIndex()];
+        }
+
+        public static IntPtr getPreviousFocussedWindowHandle() {
+            return GetWindow(Manager.GetForegroundWindow(), GetWindow_Cmd.GW_HWNDNEXT);
+        }
+        public static Window getWindowObjectByHandle(IntPtr handle) {
+            foreach (Window window in windowList) {
+                if (window.handle == handle) {
+                    return window;
+                }
+            }
+            return null;
         }
 
         public delegate void WindowEventHandler(object sender, WindowEventArgs args);

@@ -130,7 +130,7 @@ namespace TWiME {
             return _title;
         } }
 
-        private void updateTitle() {
+        public void updateTitle() {
             StringBuilder title = new StringBuilder(256);
             GetWindowText(_handle, title, 256);
             _title = title.ToString();

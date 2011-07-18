@@ -67,12 +67,26 @@ namespace TWiME {
                 }
                 if (message.message == Message.Screen) {
                     if (tagEnabled != message.data) {
-                        tagScreens[tagEnabled].disable();
+                        tagScreens[tagEnabled].disable(tagScreens[message.data]);
+                        bar.bar.activate();
                         tagScreens[message.data].enable();
                         tagEnabled = message.data;
                     }
                 }
+                if (message.message == Message.ScreenRelative) {
+                    int newIndex = this.tagEnabled + message.data;
+                    if (newIndex < 0) {
+                        newIndex = tagScreens.Count() - 1;
+                    }
+                    else if (newIndex >= tagScreens.Count()) {
+                        newIndex = 0;
+                    }
+                    catchMessage(new HotkeyMessage(Message.Screen, Level.monitor, message.handle, newIndex));
+                }
                 if (message.message == Message.TagWindow) {
+                    if (getActiveScreen().getFocusedWindow().Equals(bar.bar)) {
+                        return;
+                    }
                     if (tagScreens[message.data].windows.Contains(getActiveScreen().getFocusedWindow())) {
                         Window focussedWindow = getActiveScreen().getFocusedWindow();
                         tagScreens[message.data].throwWindow(focussedWindow);
@@ -84,8 +98,31 @@ namespace TWiME {
                     else {
                         tagScreens[message.data].catchWindow(getActiveScreen().getFocusedWindow());
                     }
-                    //getActiveScreen().activate();
                     getActiveScreen().assertLayout();
+                }
+                if (message.message == Message.SwapTagWindow) {
+                    if (getActiveScreen().getFocusedWindow().Equals(bar.bar)) {
+                        return;
+                    }
+                    Window thrown = getActiveScreen().throwWindow(getActiveScreen().getFocusedWindow());
+                    getActiveScreen().assertLayout();
+                    tagScreens[message.data].catchWindow(thrown);
+                    thrown.visible = false;
+                }
+                if (message.message == Message.SwapTagWindowRelative) {
+                    if (getActiveScreen().getFocusedWindow().Equals(bar.bar)) {
+                        return;
+                    }
+                    int newIndex = getActiveScreen().tag + message.data;
+                    if (newIndex < 0) {
+                        newIndex = tagScreens.Count() - 1;
+                    }
+                    else if (newIndex >= tagScreens.Count()) {
+                        newIndex = 0;
+                    }
+                    catchMessage(new HotkeyMessage(Message.SwapTagWindow, Level.monitor, message.handle, newIndex));
+                    catchMessage(new HotkeyMessage(Message.Screen, Level.monitor, message.handle, newIndex));
+
                 }
             }
             else {
@@ -102,7 +139,15 @@ namespace TWiME {
             TagScreen screen = tagScreens[tagEnabled];
             return screen;
         }
-
+        public override bool Equals(object obj) {
+            if (((Monitor)obj).name == name) {
+                return true;
+            }
+            else {
+                return false;
+            }
+            //return base.Equals(obj);
+        }
         public void catchWindow(Window window) {
             Rectangle location = window.Location;
             location.X = _controlled.X;

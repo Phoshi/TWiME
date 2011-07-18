@@ -12,6 +12,7 @@ using Extensions;
 
 namespace TWiME {
     public partial class Bar : Form {
+        public Window bar { get; internal set; }
         const UInt32 WS_OVERLAPPED = 0;
         const UInt32 WS_POPUP = 0x80000000;
         const UInt32 WS_CHILD = 0x40000000;
@@ -37,6 +38,7 @@ namespace TWiME {
         const UInt32 WS_SIZEBOX = WS_THICKFRAME;
         private const int GWL_EXSTYLE = (-20);
         private const int WS_EX_TOOLWINDOW = 0x00000080;
+        private const int WS_EX_NOACTIVATE = 0x08000000;
 
 
         private const int barHeight = 15;
@@ -62,6 +64,8 @@ namespace TWiME {
 
         private Screen _screen;
         private Monitor _parent;
+        private Dictionary<Rectangle, Action> clicks = new Dictionary<Rectangle, Action>();
+        private Dictionary<Rectangle, Action> rightclicks = new Dictionary<Rectangle, Action>();
 
         public Bar(Monitor monitor) {
             InitializeComponent();
@@ -78,6 +82,7 @@ namespace TWiME {
             this.BackColor = Color.DarkGray;
 
             this.ShowInTaskbar = false;
+            bar = new Window("", this.Handle, "", "", true);
         }
 
         private void Bar_Load(object sender, EventArgs e) {
@@ -229,10 +234,15 @@ namespace TWiME {
 
         private void Bar_Paint(object sender, PaintEventArgs e) {
             Font titleFont = new Font("Segoe UI", barHeight * 0.6f);
+            Font boldFont = new Font(titleFont, FontStyle.Bold);
             Brush foregroundBrush = new SolidBrush(Color.Black);
             Brush foregroundBrush2 = new SolidBrush(Color.LightGray);
             Brush backgroundBrush = new SolidBrush(Color.DarkGray);
             Brush backgroundBrush2 = new SolidBrush(Color.Black);
+            Brush selectedBrush = new SolidBrush(Color.FromArgb(128, Color.White));
+
+            clicks.Clear();
+            rightclicks.Clear();
 
             Pen seperatorPen = new Pen(Color.Blue, 3);
             Manager.log(new string('=', 30));
@@ -251,13 +261,24 @@ namespace TWiME {
             int tag = 1;
             foreach (TagScreen screen in _parent.screens) {
                 Rectangle drawTangle = new Rectangle(currentWidth, 0, width - 1, this.Height - 1);
+
+                int tag1 = tag - 1;
+                clicks[drawTangle] = (() => Manager.sendMessage(Message.Screen, Level.monitor, tag1));
+                rightclicks[drawTangle] = (() => Manager.sendMessage(Message.SwapTagWindow, Level.monitor, tag1));
+
                 Image state = screen.getStateImage(previewSize);
                 e.Graphics.DrawRectangle(new Pen(Color.White), drawTangle);
                 PointF tagPos = new PointF();
                 tagPos.X = (currentWidth) + (width / 2) - (tag.ToString().Width(titleFont) / 2);
                 tagPos.Y = height / 2 - tag.ToString().Height(titleFont) / 2;
                 e.Graphics.DrawImage(state, drawTangle);
-                e.Graphics.DrawString(tag++.ToString(), titleFont, foregroundBrush, tagPos);
+                if (tag1 == _parent.tagEnabled) {
+                    e.Graphics.FillRectangle(selectedBrush, drawTangle);
+                    e.Graphics.DrawString(tag++.ToString(), boldFont, foregroundBrush, tagPos);
+                }
+                else {
+                    e.Graphics.DrawString(tag++.ToString(), titleFont, foregroundBrush, tagPos);
+                }
                 currentWidth += width;
             }
 
@@ -310,6 +331,7 @@ namespace TWiME {
                     bool drawFocussed = false;
                     if (index == selectedWindowID) {
                         drawFocussed = true;
+                        window.updateTitle();
                     }
                     int windowLength = window.title.Width(titleFont);
                     Bitmap windowMap;
@@ -351,6 +373,14 @@ namespace TWiME {
                     e.Graphics.FillRectangle(drawIndex != selectedWindowID ? backgroundBrush2 : backgroundBrush , drawRect);
                     e.Graphics.DrawImageUnscaled(windowTile, drawRect);
 
+                    int index1 = drawIndex;
+                    clicks[drawRect] = (() => Manager.sendMessage(Message.FocusThis, Level.screen, index1));
+                    rightclicks[drawRect] = (() => {
+                                                 Manager.sendMessage(Message.FocusThis, Level.screen, 0);
+                                                 Manager.sendMessage(Message.SwitchThis, Level.screen, index1);
+                                                 Manager.sendMessage(Message.FocusThis, Level.screen, 0);
+                                             });
+
                     Rectangle newRect = drawRect;
                     newRect.Width = 30;
                     newRect.X = drawRect.Right - 30;
@@ -366,10 +396,43 @@ namespace TWiME {
 
             //Draw the time bit to the form
             e.Graphics.DrawImage(dateMap, screenWidth - dateMap.Width, 0);
+
+            if (Manager.getFocussedMonitor() != _parent) {
+                Brush coverBrush = new SolidBrush(Color.FromArgb(128, Color.Black));
+                e.Graphics.FillRectangle(coverBrush, this.ClientRectangle);
+            }
         }
 
         public void redraw() {
             this.Invalidate();
+        }
+
+        private void Bar_MouseDown(object sender, MouseEventArgs e) {
+            if (Manager.getFocussedMonitor() != _parent) {
+                bar.activate();
+            }
+            Manager.log("Caught click event on bar", 4);
+            Dictionary<Rectangle, Action> clickType = new Dictionary<Rectangle, Action>();
+            if (e.Button == MouseButtons.Left) {
+                clickType = clicks;
+            }
+            else if (e.Button == MouseButtons.Right) {
+                clickType = rightclicks;
+            }
+            foreach (KeyValuePair<Rectangle, Action> click in clickType) {
+                if (click.Key.ContainsPoint(this.PointToClient(MousePosition))) {
+                    Manager.log("Click ({1}) was over a clickable area ({0})".With(click.Key, this.PointToClient(MousePosition)), 4);
+                    click.Value();
+                }
+            }
+        }
+
+        protected override CreateParams CreateParams {
+            get {
+                CreateParams param = base.CreateParams;
+                param.ExStyle = (param.ExStyle | WS_EX_NOACTIVATE);
+                return param;
+            }
         }
     }
 }

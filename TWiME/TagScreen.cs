@@ -108,9 +108,18 @@ namespace TWiME {
                 }
                 if (message.message == Message.SwitchThis) {
                     int oldIndex = getFocusedWindowIndex();
+                    if (oldIndex == -1) {
+                        oldIndex = 0;
+                    }
                     int newIndex = message.data;
-                    Window oldWindow = windowList[oldIndex];
-                    Window newWindow = windowList[newIndex];
+                    Window newWindow, oldWindow;
+                    try {
+                        oldWindow = windowList[oldIndex];
+                        newWindow = windowList[newIndex];
+                    }
+                    catch (ArgumentOutOfRangeException) {
+                        return;
+                    }
                     windowList[oldIndex] = newWindow;
                     windowList[newIndex] = oldWindow;
                     layout.assert();
@@ -161,7 +170,7 @@ namespace TWiME {
         public Window getFocusedWindow() {
             int index = getFocusedWindowIndex();
             if (index==-1) {
-                return null;
+                return new Window("", parent.bar.Handle, "", "", true);
             }
             return windowList[index];
         }
@@ -171,7 +180,7 @@ namespace TWiME {
                 windowList[0].activate();
             }
             else {
-                _parent.bar.Activate();
+                new Window("", _parent.bar.Handle, "", "", true).activate();
             }
         }
 
@@ -186,6 +195,13 @@ namespace TWiME {
         public void disable() {
             foreach (Window window in windows) {
                 window.visible = false;
+            }
+        }
+        public void disable(TagScreen swappingWith) {
+            foreach (Window window in windows) {
+                if (!swappingWith.windows.Contains(window)) {
+                    window.visible = false;
+                }
             }
         }
         public void enable() {

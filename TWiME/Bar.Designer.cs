@@ -38,6 +38,7 @@
             this.Shown += new System.EventHandler(this.Bar_Shown);
             this.LocationChanged += new System.EventHandler(this.Bar_LocationChanged);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.Bar_Paint);
+            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Bar_MouseDown);
             this.ResumeLayout(false);
 
         }

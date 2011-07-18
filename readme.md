@@ -21,7 +21,7 @@ Win-Space, to toggle the windows taskbar (Because I have *never* seen a perfect 
 Win-Left/Right, to move the layout's horizontal splitter
 Win-Up/Down, to move the layout's vertical splitter
 Though note that the above two may have no effect depending on the loaded layout.
-Win-Shift-Left/Right moves between loaded layouts for the current monitor's active tag.
+Win-Alt-Left/Right moves between loaded layouts for the current monitor's active tag.
 
 Disclaimer
 ----------
