@@ -59,7 +59,7 @@ namespace TWiME {
                 else if (direction==Direction.Left) {
                     Rectangle winTangle = rectangle;
                     winTangle.Width = (int) (winTangle.Width * splitter);
-                    winTangle.X += winTangle.Width;
+                    winTangle.X += rectangle.Width - winTangle.Width;
                     layouts[window] = winTangle;
                     rectangle.Width -=winTangle.Width;
                     direction = Direction.Up;
@@ -67,7 +67,7 @@ namespace TWiME {
                 else if (direction==Direction.Up) {
                     Rectangle winTangle = rectangle;
                     winTangle.Height = (int) (winTangle.Height * vsplitter);
-                    winTangle.Y += winTangle.Height;
+                    winTangle.Y += rectangle.Height - winTangle.Height;
                     layouts[window] = winTangle;
                     rectangle.Height -=winTangle.Height;
                     direction = Direction.Right;
