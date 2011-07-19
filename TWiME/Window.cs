@@ -214,6 +214,7 @@ namespace TWiME {
             meAttachedToFore = AttachThreadInput(thisThread, foregroundThread, true);
             foreAttachedToTarget = AttachThreadInput(foregroundThread, targetThread, true);
             IntPtr foreground = GetForegroundWindow();
+            BringWindowToTop(_handle);
             for (int i = 0; i < 5; i++) {
                 attemptSetForeground(_handle, foreground);
                 if (GetForegroundWindow() == _handle) {
