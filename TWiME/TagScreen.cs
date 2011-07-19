@@ -37,7 +37,9 @@ namespace TWiME {
                 windowList.Remove(toRemove);
                 Manager.log("Removing window: {0} {1}".With(toRemove.className, toRemove.title), 1);
                 layout.updateWindowList(windowList);
-                layout.assert();
+                if (parent.tagEnabled == tag) {
+                    layout.assert();
+                }
             }
         }
 

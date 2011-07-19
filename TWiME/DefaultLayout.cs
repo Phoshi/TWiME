@@ -31,7 +31,7 @@ namespace TWiME {
             Window mainWindow = _windowList[0];
             int width = (int)(_owned.Width * splitter);
             if (_windowList.Count == 1) {
-                width = _owned.Width;
+                width = _owned.Width - 1;
             }
             int height = _owned.Height;
             int x = _owned.X;

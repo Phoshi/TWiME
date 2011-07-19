@@ -279,9 +279,15 @@ namespace TWiME {
             pollTimer.Start();
         }
 
+        private static IntPtr focusTrack = IntPtr.Zero;
         static void pollWindows_Tick(object sender, EventArgs e) {
             globalHook.unhook();
             globalHook.hook();
+
+            if (GetForegroundWindow() != focusTrack) {
+                focusTrack = GetForegroundWindow();
+                OnWindowFocusChange(getWindowObjectByHandle(focusTrack), new WindowEventArgs(Manager.getFocussedMonitor().screen));
+            }
             Windows windows = new Windows();
             List<Window> allWindows = new List<Window>();
             foreach (Window window in windows) {
@@ -293,7 +299,7 @@ namespace TWiME {
                 }
                 allWindows.Add(window);
             }
-            if (allWindows.Count < windowList.Count) { //Something's been closed?
+            //if (allWindows.Count < windowList.Count) { //Something's been closed?
                 int numClosures = windowList.Count - allWindows.Count;
                 Manager.log("Detecting {0} window closure{1}".With(numClosures, numClosures==1? "s" : ""), 1);
                 int numFound = 0;
@@ -305,18 +311,15 @@ namespace TWiME {
                             Manager.log("{0} is also not hidden - it's closed".With(window.title));
                             windowList.Remove(window);
                             handles.Remove(window.handle);
-                            Screen windowScreen = Screen.FromHandle(window.handle);
+                            //Screen windowScreen = Screen.FromHandle(window.handle);
                             OnWindowDestroy(window, new WindowEventArgs(window.screen));
-                            if (++numFound == numClosures) {
-                                break;
-                            }
                         }
                         else {
                             Manager.log("{0} is just hidden, not closed".With(window.title), 1);
                         }
                     }
                 }
-            }
+            //}
         }
 
         public static int getFocussedMonitorIndex() {
@@ -352,6 +355,7 @@ namespace TWiME {
 
         public static event WindowEventHandler WindowCreate;
         public static event WindowEventHandler WindowDestroy;
+        public static event WindowEventHandler WindowFocusChange;
         private static void OnWindowCreate(object sender, WindowEventArgs args) {
             if (WindowCreate != null) {
                 WindowCreate(sender, args);
@@ -361,6 +365,11 @@ namespace TWiME {
         private static void OnWindowDestroy(object sender, WindowEventArgs args) {
             if (WindowDestroy != null) {
                 WindowDestroy(sender, args);
+            }
+        }
+        public static void OnWindowFocusChange(object sender, WindowEventArgs args) {
+            if (WindowFocusChange != null) {
+                WindowFocusChange(sender, args);
             }
         }
     }

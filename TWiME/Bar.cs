@@ -91,14 +91,19 @@ namespace TWiME {
             rect.Height = barHeight;
             thisWindow.Location = rect;
             RegisterBar();
+            Manager.WindowFocusChange += new Manager.WindowEventHandler(Manager_WindowFocusChange);
             Timer t = new Timer();
             t.Tick += new EventHandler((object parent, EventArgs args)=>this.redraw());
             t.Interval = 10000;
             t.Start();
 
-            int winStles = (int)GetWindowLong(this.Handle, GWL_EXSTYLE);
-            winStles |= WS_EX_TOOLWINDOW;
-            SetWindowLong(this.Handle, GWL_EXSTYLE, (IntPtr) winStles);
+            int winStyles = (int)GetWindowLong(this.Handle, GWL_EXSTYLE);
+            winStyles |= WS_EX_TOOLWINDOW;
+            SetWindowLong(this.Handle, GWL_EXSTYLE, (IntPtr) winStyles);
+        }
+
+        void Manager_WindowFocusChange(object sender, WindowEventArgs args) {
+            redraw();
         }
 
 
