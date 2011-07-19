@@ -349,11 +349,11 @@ namespace TWiME {
                     if (windowTitle == "") {
                         windowTitle = window.className;
                     }
-                    windowMap = new Bitmap(windowTitle.Width(titleFont), height);
+                    windowMap = new Bitmap("{0}) {1}".With(index + 1, windowTitle).Width(titleFont), height);
                     Graphics windowGraphics = Graphics.FromImage(windowMap);
                     windowGraphics.FillRectangle(drawFocussed ? backgroundBrush : backgroundBrush2, 0, 0,
                                                  windowMap.Width, windowMap.Height);
-                    windowGraphics.DrawString(window.title, titleFont, drawFocussed ? foregroundBrush : foregroundBrush2,
+                    windowGraphics.DrawString("{0}) {1}".With(index + 1, windowTitle), titleFont, drawFocussed ? foregroundBrush : foregroundBrush2,
                                               0, 0);
                     windowGraphics.Dispose();
                     windowTiles.Add(windowMap);
