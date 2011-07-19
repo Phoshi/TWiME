@@ -5,15 +5,15 @@ using System.Linq;
 using System.Text;
 
 namespace TWiME {
-    class DefaultLayout : Layout, ILayout {
+    class SpiralLayout : Layout, ILayout {
         private string _name;
         private Image _symbol = null;
         private Rectangle _owned;
         private List<Window> _windowList;
-        public float splitter = 0.6f;
-        public float vsplitter = 0.5f; //Doesn't matter, we don't use it here anyway
+        public float splitter = 0.5f;
+        public float vsplitter = 0.5f;
         private TagScreen _parent;
-        public DefaultLayout(List<Window> windowList, Rectangle area, TagScreen parent) {
+        public SpiralLayout(List<Window> windowList, Rectangle area, TagScreen parent) {
             _windowList = windowList;
             _owned = area;
             _parent = parent;
@@ -24,32 +24,55 @@ namespace TWiME {
             _windowList = windowList;
         }
 
+        private enum Direction {
+            Left, 
+            Right, 
+            Up, 
+            Down
+        }
         private Dictionary<Window, Rectangle> generateLayout() {
             Dictionary<Window, Rectangle> layouts = new Dictionary<Window, Rectangle>();
-            if (_windowList.Count == 0) {
-                return layouts;
-            }
-            Window mainWindow = _windowList[0];
-            int width = (int)(_owned.Width * splitter);
-            if (_windowList.Count == 1) {
-                width = _owned.Width - 1;
-            }
-            int height = _owned.Height;
-            int x = _owned.X;
-            int y = _owned.Y;
-            Rectangle newRect = new Rectangle(x, y, width, height);
-            layouts[mainWindow] = newRect;
-
-            if (_windowList.Count > 1) {
-                int secondaryHeight = _owned.Height / (_windowList.Count - 1);
-                for (int i = 1; i < _windowList.Count; i++) {
-                    Window window = _windowList[i];
-                    int nx = _owned.Left + width;
-                    int ny = _owned.Top + secondaryHeight * (i - 1);
-                    int nwidth = _owned.Width - width;
-                    Rectangle secondaryRect = new Rectangle(nx, ny, nwidth, secondaryHeight);
-                    layouts[window] = secondaryRect;
+            Rectangle rectangle = _owned;
+            Direction direction = Direction.Right;
+            int workingIndex = 0;
+            foreach (Window window in _windowList) {
+                if (workingIndex + 1 == _windowList.Count) {
+                    layouts[window] = rectangle;
+                    break;
                 }
+                if (direction == Direction.Right) {
+                    Rectangle winTangle = rectangle;
+                    winTangle.Width = (int) (winTangle.Width * splitter);
+                    layouts[window] = winTangle;
+                    rectangle.Width -= winTangle.Width;
+                    rectangle.X = winTangle.Right;
+                    direction = Direction.Down;
+                }
+                else if (direction==Direction.Down) {
+                    Rectangle winTangle = rectangle;
+                    winTangle.Height = (int) (winTangle.Height * vsplitter);
+                    layouts[window] = winTangle;
+                    rectangle.Height -=winTangle.Height;
+                    rectangle.Y = winTangle.Bottom;
+                    direction = Direction.Left;
+                }
+                else if (direction==Direction.Left) {
+                    Rectangle winTangle = rectangle;
+                    winTangle.Width = (int) (winTangle.Width * splitter);
+                    winTangle.X += winTangle.Width;
+                    layouts[window] = winTangle;
+                    rectangle.Width -=winTangle.Width;
+                    direction = Direction.Up;
+                }
+                else if (direction==Direction.Up) {
+                    Rectangle winTangle = rectangle;
+                    winTangle.Height = (int) (winTangle.Height * vsplitter);
+                    winTangle.Y += winTangle.Height;
+                    layouts[window] = winTangle;
+                    rectangle.Height -=winTangle.Height;
+                    direction = Direction.Right;
+                }
+                workingIndex++;
             }
             return layouts;
         }

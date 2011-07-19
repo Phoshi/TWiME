@@ -20,6 +20,7 @@ namespace TWiME {
             createBar();
             Rectangle temp = screen.WorkingArea;
             temp.Height = screen.Bounds.Height - bar.Height;
+            temp.Y = bar.Bottom;
             _controlled = temp;
             createTagScreens();
             name = screen.DeviceName;
@@ -67,9 +68,9 @@ namespace TWiME {
                 }
                 if (message.message == Message.Screen) {
                     if (tagEnabled != message.data) {
+                        tagScreens[message.data].enable();
                         tagScreens[tagEnabled].disable(tagScreens[message.data]);
                         bar.bar.activate();
-                        tagScreens[message.data].enable();
                         tagEnabled = message.data;
                     }
                 }
@@ -122,8 +123,24 @@ namespace TWiME {
                     }
                     catchMessage(new HotkeyMessage(Message.SwapTagWindow, Level.monitor, message.handle, newIndex));
                     catchMessage(new HotkeyMessage(Message.Screen, Level.monitor, message.handle, newIndex));
-
                 }
+                if (message.message == Message.LayoutRelative) {
+                    TagScreen switchScreen = tagScreens[message.data];
+                    int newIndex = switchScreen.activeLayout + 1;
+                    if (newIndex < 0) {
+                        newIndex = Manager.layouts.Count() - 1;
+                    }
+                    else if (newIndex >= Manager.layouts.Count) {
+                        newIndex = 0;
+                    }
+                    switchScreen.activeLayout = newIndex;
+                    switchScreen.initLayout();
+                    if (switchScreen.tag == tagEnabled) {
+                        switchScreen.assertLayout();
+                    }
+                }
+
+
             }
             else {
                 tagScreens[tagEnabled].catchMessage(message);

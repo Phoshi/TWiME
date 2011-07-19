@@ -15,14 +15,21 @@ namespace TWiME {
         private ILayout layout;
         private Monitor _parent;
         private int _tag;
+        public int activeLayout = 0;
         public int tag { get { return _tag; } }
         public Monitor parent { get { return _parent; } }
         public TagScreen(Monitor parent, int tag) {
             _parent = parent;
             _tag = tag;
-            layout = new DefaultLayout(windowList, _parent._controlled, this);
+            //layout = new DefaultLayout(windowList, _parent._controlled, this);
+            initLayout();
             Manager.WindowCreate += Manager_WindowCreate;
             Manager.WindowDestroy+= Manager_WindowDestroy;
+        }
+
+        public void initLayout() {
+            Layout instance = (Layout)Activator.CreateInstance(Manager.layouts[activeLayout], new object[] { windowList, _parent._controlled, this });
+            layout = instance;
         }
 
         [DllImport("user32.dll")]
@@ -151,11 +158,17 @@ namespace TWiME {
                 if (message.message == Message.Splitter) {
                     layout.moveSplitter(message.data / 100.0f);
                 }
+                if (message.message == Message.VSplitter) {
+                    layout.moveSplitter(message.data / 100.0f, true);
+                }
                 if (message.message == Message.Close) {
                     foreach (Window window in windowList) {
                         window.visible = true;
                         window.maximised = false;
                     }
+                }
+                if (message.message == Message.Close) {
+                    windowList[message.data].close();
                 }
             }
             else {

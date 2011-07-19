@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
@@ -19,6 +20,7 @@ namespace TWiME {
         public static List<Monitor> monitors = new List<Monitor>();
         static globalKeyboardHook globalHook = new globalKeyboardHook();
         static Dictionary<Keys,Dictionary<Keys,Action>> hooked = new Dictionary<Keys, Dictionary<Keys, Action>>();
+        public static List<Type> layouts = new List<Type>();
         private static StreamWriter logger;
 
         [DllImport("user32.dll")]
@@ -46,6 +48,7 @@ namespace TWiME {
         public static void setup() {
             Taskbar.hidden = true;
             setupHotkeys();
+            setupLayouts();
             setupMonitors();
             setupTimers();
             logger = new StreamWriter("log.txt");
@@ -63,7 +66,16 @@ namespace TWiME {
 
         static void Application_ApplicationExit(object sender, EventArgs e) {
         }
+        private static void setupLayouts() {
+            //TODO: Shift layouts to plugins and iterate them here
+            Assembly asm = Assembly.GetExecutingAssembly();
+            foreach (Type type in asm.GetTypes()) {
+                if (type.BaseType == typeof(Layout)) {
+                    layouts.Add(type);
+                }
+            }
 
+        }
         private static void setupHotkeys() {
 
             #region Hook Modifiers
@@ -94,6 +106,10 @@ namespace TWiME {
             hook(Keys.Left, (() => sendMessage(Message.Splitter, Level.screen, -10)), Keys.Shift);
             hook(Keys.Right, (() => sendMessage(Message.Splitter, Level.screen, 1)));
             hook(Keys.Right, (() => sendMessage(Message.Splitter, Level.screen, 10)), Keys.Shift);
+            hook(Keys.Up, (() => sendMessage(Message.VSplitter, Level.screen, -1)));
+            hook(Keys.Up, (() => sendMessage(Message.VSplitter, Level.screen, -10)), Keys.Shift);
+            hook(Keys.Down, (() => sendMessage(Message.VSplitter, Level.screen, 1)));
+            hook(Keys.Down, (() => sendMessage(Message.VSplitter, Level.screen, 10)), Keys.Shift);
 
             hook(Keys.J, (() => sendMessage(Message.ScreenRelative, Level.monitor, 1)), Keys.Control);
             hook(Keys.K, (() => sendMessage(Message.ScreenRelative, Level.monitor, -1)), Keys.Control);
@@ -289,7 +305,8 @@ namespace TWiME {
                 OnWindowFocusChange(getWindowObjectByHandle(focusTrack), new WindowEventArgs(Manager.getFocussedMonitor().screen));
             }
             Windows windows = new Windows();
-            List<Window> allWindows = new List<Window>();
+            List<Window> allCurrentlyVisibleWindows = new List<Window>();
+            List<Window> hiddenNotShownByMeWindows = new List<Window>();
             foreach (Window window in windows) {
                 if (!handles.Contains(window.handle)) {
                     Manager.log("Found a new window! {0} isn't in the main listing".With(window.title));
@@ -297,15 +314,23 @@ namespace TWiME {
                     handles.Add(window.handle);
                     OnWindowCreate(window, new WindowEventArgs(window.screen));
                 }
-                allWindows.Add(window);
+                if ((from win in hiddenWindows select win.handle).Contains(window.handle)) {
+                    hiddenNotShownByMeWindows.Add(window);
+                }
+                allCurrentlyVisibleWindows.Add(window);
+            }
+            foreach (Window window in hiddenNotShownByMeWindows) {
+                window.activate();
+                var screensWithWindow = (from screen in Manager.getFocussedMonitor().screens where screen.windows.Contains(window) select screen);
+                TagScreen firstScreenWithWindow = screensWithWindow.First();
+                sendMessage(Message.Screen, Level.monitor, firstScreenWithWindow.tag);
             }
             //if (allWindows.Count < windowList.Count) { //Something's been closed?
-                int numClosures = windowList.Count - allWindows.Count;
+                int numClosures = windowList.Count - allCurrentlyVisibleWindows.Count;
                 Manager.log("Detecting {0} window closure{1}".With(numClosures, numClosures==1? "s" : ""), 1);
                 int numFound = 0;
-                HashSet<IntPtr> allHandles = new HashSet<IntPtr>(from window in allWindows select window.handle);
                 foreach (Window window in new List<Window>(windowList)) {
-                    if (!allHandles.Contains(window.handle)) {
+                    if (!allCurrentlyVisibleWindows.Contains(window)) {
                         Manager.log("{0} is no longer open".With(window.title), 1);
                         if (!hiddenWindows.Contains(window)) {
                             Manager.log("{0} is also not hidden - it's closed".With(window.title));

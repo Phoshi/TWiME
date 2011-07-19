@@ -5,15 +5,15 @@ using System.Linq;
 using System.Text;
 
 namespace TWiME {
-    class DefaultLayout : Layout, ILayout {
+    class VerticalDockLayout : Layout, ILayout {
         private string _name;
         private Image _symbol = null;
         private Rectangle _owned;
         private List<Window> _windowList;
-        public float splitter = 0.6f;
-        public float vsplitter = 0.5f; //Doesn't matter, we don't use it here anyway
+        public float splitter = 0.6f; //Don't use this one here
+        public float vsplitter = 0.6f;
         private TagScreen _parent;
-        public DefaultLayout(List<Window> windowList, Rectangle area, TagScreen parent) {
+        public VerticalDockLayout(List<Window> windowList, Rectangle area, TagScreen parent) {
             _windowList = windowList;
             _owned = area;
             _parent = parent;
@@ -30,24 +30,24 @@ namespace TWiME {
                 return layouts;
             }
             Window mainWindow = _windowList[0];
-            int width = (int)(_owned.Width * splitter);
+            int height = (int)(_owned.Height * vsplitter);
             if (_windowList.Count == 1) {
-                width = _owned.Width - 1;
+                height = _owned.Height;
             }
-            int height = _owned.Height;
+            int width = _owned.Width;
             int x = _owned.X;
             int y = _owned.Y;
             Rectangle newRect = new Rectangle(x, y, width, height);
             layouts[mainWindow] = newRect;
 
             if (_windowList.Count > 1) {
-                int secondaryHeight = _owned.Height / (_windowList.Count - 1);
+                int secondaryWidth = _owned.Width / (_windowList.Count - 1);
                 for (int i = 1; i < _windowList.Count; i++) {
                     Window window = _windowList[i];
-                    int nx = _owned.Left + width;
-                    int ny = _owned.Top + secondaryHeight * (i - 1);
-                    int nwidth = _owned.Width - width;
-                    Rectangle secondaryRect = new Rectangle(nx, ny, nwidth, secondaryHeight);
+                    int nx = _owned.Left + secondaryWidth * (i - 1);
+                    int ny = _owned.Top + height;
+                    int nHeight = _owned.Height - height;
+                    Rectangle secondaryRect = new Rectangle(nx, ny, secondaryWidth, nHeight);
                     layouts[window] = secondaryRect;
                 }
             }

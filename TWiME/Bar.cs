@@ -64,8 +64,7 @@ namespace TWiME {
 
         private Screen _screen;
         private Monitor _parent;
-        private Dictionary<Rectangle, Action> clicks = new Dictionary<Rectangle, Action>();
-        private Dictionary<Rectangle, Action> rightclicks = new Dictionary<Rectangle, Action>();
+        private Dictionary<MouseButtons, Dictionary<Rectangle, Action>> clicks = new Dictionary<MouseButtons, Dictionary<Rectangle, Action>>();
 
         public Bar(Monitor monitor) {
             InitializeComponent();
@@ -236,6 +235,12 @@ namespace TWiME {
             thisWindow.maximised = false;
             thisWindow.Location = rect;
         }
+        private void addMouseAction(MouseButtons button, Rectangle area, Action action) {
+            if (!clicks.ContainsKey(button)) {
+                clicks[button] = new Dictionary<Rectangle, Action>();
+            }
+            clicks[button][area] = action;
+        }
 
         private void Bar_Paint(object sender, PaintEventArgs e) {
             Font titleFont = new Font("Segoe UI", barHeight * 0.6f);
@@ -247,7 +252,6 @@ namespace TWiME {
             Brush selectedBrush = new SolidBrush(Color.FromArgb(128, Color.White));
 
             clicks.Clear();
-            rightclicks.Clear();
 
             Pen seperatorPen = new Pen(Color.Blue, 3);
             Manager.log(new string('=', 30));
@@ -268,8 +272,9 @@ namespace TWiME {
                 Rectangle drawTangle = new Rectangle(currentWidth, 0, width - 1, this.Height - 1);
 
                 int tag1 = tag - 1;
-                clicks[drawTangle] = (() => Manager.sendMessage(Message.Screen, Level.monitor, tag1));
-                rightclicks[drawTangle] = (() => Manager.sendMessage(Message.SwapTagWindow, Level.monitor, tag1));
+                addMouseAction(MouseButtons.Left, drawTangle, (() => Manager.sendMessage(Message.Screen, Level.monitor, tag1)));
+                addMouseAction(MouseButtons.Middle, drawTangle, (() => Manager.sendMessage(Message.LayoutRelative, Level.monitor, tag1)));
+                addMouseAction(MouseButtons.Right, drawTangle, (() => Manager.sendMessage(Message.SwapTagWindow, Level.monitor, tag1)));
 
                 Image state = screen.getStateImage(previewSize);
                 e.Graphics.DrawRectangle(new Pen(Color.White), drawTangle);
@@ -379,12 +384,13 @@ namespace TWiME {
                     e.Graphics.DrawImageUnscaled(windowTile, drawRect);
 
                     int index1 = drawIndex;
-                    clicks[drawRect] = (() => Manager.sendMessage(Message.FocusThis, Level.screen, index1));
-                    rightclicks[drawRect] = (() => {
+                    addMouseAction(MouseButtons.Left, drawRect, (() => Manager.sendMessage(Message.FocusThis, Level.screen, index1)));
+                    addMouseAction(MouseButtons.Middle, drawRect, (() => Manager.sendMessage(Message.Close, Level.screen, index1)));
+                    addMouseAction(MouseButtons.Right, drawRect, (() => {
                                                  Manager.sendMessage(Message.FocusThis, Level.screen, 0);
                                                  Manager.sendMessage(Message.SwitchThis, Level.screen, index1);
                                                  Manager.sendMessage(Message.FocusThis, Level.screen, 0);
-                                             });
+                                             }));
 
                     Rectangle newRect = drawRect;
                     newRect.Width = 30;
@@ -417,17 +423,15 @@ namespace TWiME {
                 bar.activate();
             }
             Manager.log("Caught click event on bar", 4);
-            Dictionary<Rectangle, Action> clickType = new Dictionary<Rectangle, Action>();
-            if (e.Button == MouseButtons.Left) {
-                clickType = clicks;
-            }
-            else if (e.Button == MouseButtons.Right) {
-                clickType = rightclicks;
-            }
-            foreach (KeyValuePair<Rectangle, Action> click in clickType) {
-                if (click.Key.ContainsPoint(this.PointToClient(MousePosition))) {
-                    Manager.log("Click ({1}) was over a clickable area ({0})".With(click.Key, this.PointToClient(MousePosition)), 4);
-                    click.Value();
+            if (clicks.ContainsKey(e.Button)) {
+                Dictionary<Rectangle, Action> clickType = clicks[e.Button];
+                foreach (KeyValuePair<Rectangle, Action> click in clickType) {
+                    if (click.Key.ContainsPoint(this.PointToClient(MousePosition))) {
+                        Manager.log(
+                            "Click ({1}) was over a clickable area ({0})".With(click.Key,
+                                                                               this.PointToClient(MousePosition)), 4);
+                        click.Value();
+                    }
                 }
             }
         }

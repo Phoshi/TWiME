@@ -12,7 +12,9 @@ namespace TWiME {
         SwitchThis,             //Swap active window with this indexed window
         Monitor,                //Swap window to other monitor
         Layout,                 //Change to a new layout style
+        LayoutRelative,         //Change to a new layout style offset
         Splitter,               //Move the layout splitter
+        VSplitter,              //Move the layout vsplitter
         Screen,                 //Turn this tag view on
         ScreenRelative,         //Turn this offset tag view on
         TagWindow,              //Tag window with this tag

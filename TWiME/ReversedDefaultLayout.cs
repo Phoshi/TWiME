@@ -5,15 +5,15 @@ using System.Linq;
 using System.Text;
 
 namespace TWiME {
-    class DefaultLayout : Layout, ILayout {
+    class ReversedDefaultLayout : Layout, ILayout {
         private string _name;
         private Image _symbol = null;
         private Rectangle _owned;
         private List<Window> _windowList;
         public float splitter = 0.6f;
-        public float vsplitter = 0.5f; //Doesn't matter, we don't use it here anyway
+        public float vsplitter = 0.6f; //Don't use this anyway
         private TagScreen _parent;
-        public DefaultLayout(List<Window> windowList, Rectangle area, TagScreen parent) {
+        public ReversedDefaultLayout(List<Window> windowList, Rectangle area, TagScreen parent) {
             _windowList = windowList;
             _owned = area;
             _parent = parent;
@@ -35,7 +35,7 @@ namespace TWiME {
                 width = _owned.Width - 1;
             }
             int height = _owned.Height;
-            int x = _owned.X;
+            int x = _owned.Left + _owned.Width - width;
             int y = _owned.Y;
             Rectangle newRect = new Rectangle(x, y, width, height);
             layouts[mainWindow] = newRect;
@@ -44,7 +44,7 @@ namespace TWiME {
                 int secondaryHeight = _owned.Height / (_windowList.Count - 1);
                 for (int i = 1; i < _windowList.Count; i++) {
                     Window window = _windowList[i];
-                    int nx = _owned.Left + width;
+                    int nx = _owned.Left;
                     int ny = _owned.Top + secondaryHeight * (i - 1);
                     int nwidth = _owned.Width - width;
                     Rectangle secondaryRect = new Rectangle(nx, ny, nwidth, secondaryHeight);

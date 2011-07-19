@@ -148,19 +148,17 @@ namespace TWiME {
 
             set {
                 if (value) {
-                    if (ShowWindowAsync(_handle, _maximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL)) {
-                        _visible = true;
-                        if (Manager.hiddenWindows.Contains(this)) {
-                            Manager.hiddenWindows.Remove(this);
-                        }
+                    ShowWindowAsync(_handle, _maximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
+                    _visible = true;
+                    if (Manager.hiddenWindows.Contains(this)) {
+                        Manager.hiddenWindows.Remove(this);
                     }
                 }
                 else {
                     _maximized = IsZoomed(_handle);
-                    if (ShowWindowAsync(_handle, SW_HIDE)) {
-                        _visible = false;
-                        Manager.hiddenWindows.Add(this);
-                    }
+                    ShowWindowAsync(_handle, SW_HIDE);
+                    _visible = false;
+                    Manager.hiddenWindows.Add(this);
                 }
             }
         }
@@ -181,16 +179,17 @@ namespace TWiME {
                 return _title;
             }
         }
-        public bool Equals(Window otherWindow) {
-            if (otherWindow == null) {
+        public override bool Equals(object obj) {
+            if (ReferenceEquals(null, obj)) {
                 return false;
             }
-            if (_handle == otherWindow.handle) {
+            if (ReferenceEquals(this, obj)) {
                 return true;
             }
-            else {
+            if (obj.GetType() != typeof (Window)) {
                 return false;
             }
+            return Equals((Window) obj);
         }
 
         /// <summary>
@@ -315,6 +314,30 @@ namespace TWiME {
 
         public void close() {
             SendMessage(_handle, WM_SYSCOMMAND, SC_CLOSE, IntPtr.Zero);
+        }
+
+        public bool Equals(Window other) {
+            if (ReferenceEquals(null, other)) {
+                return false;
+            }
+            if (ReferenceEquals(this, other)) {
+                return true;
+            }
+            return other._handle.Equals(_handle);
+        }
+
+        public override int GetHashCode() {
+            unchecked {
+                int result = _handle.GetHashCode();
+                result = (result * 397) ^ (_title != null ? _title.GetHashCode() : 0);
+                result = (result * 397) ^ _visible.GetHashCode();
+                result = (result * 397) ^ (_process != null ? _process.GetHashCode() : 0);
+                result = (result * 397) ^ _maximized.GetHashCode();
+                result = (result * 397) ^ (_className != null ? _className.GetHashCode() : 0);
+                result = (result * 397) ^ _location.GetHashCode();
+                result = (result * 397) ^ lastTitleUpdate.GetHashCode();
+                return result;
+            }
         }
     }
 }
