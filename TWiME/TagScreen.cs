@@ -134,7 +134,9 @@ namespace TWiME {
                     layout.assert();
                 }
                 if (message.message == Message.FocusThis) {
-                    windowList[message.data].activate();
+                    if (message.data < windowList.Count) {
+                        windowList[message.data].activate();
+                    }
                 }
                 if (message.message == Message.Monitor) {
                     int newMonitorIndex = Manager.getFocussedMonitorIndex() + message.data;

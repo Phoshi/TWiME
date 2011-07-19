@@ -34,7 +34,7 @@ namespace TWiME {
             if (_windowList.Count == 1) {
                 height = _owned.Height;
             }
-            int width = _owned.Width;
+            int width = _owned.Width - 1;
             int x = _owned.X;
             int y = _owned.Y;
             Rectangle newRect = new Rectangle(x, y, width, height);

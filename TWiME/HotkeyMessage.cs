@@ -13,6 +13,7 @@ namespace TWiME {
         Monitor,                //Swap window to other monitor
         Layout,                 //Change to a new layout style
         LayoutRelative,         //Change to a new layout style offset
+        LayoutRelativeReverse,  //Change to a new layout style backwards offset
         Splitter,               //Move the layout splitter
         VSplitter,              //Move the layout vsplitter
         Screen,                 //Turn this tag view on
@@ -24,7 +25,7 @@ namespace TWiME {
         MonitorFocus,           //Switch focus to another indexed monitor
         MonitorMoveThis,        //Move window to another indexed monitor
         MonitorMove,            //Move the entire monitor object elsewhere
-        Close                   //Close TWiME
+        Close,                   //Close TWiME
     }
 
     public enum Level {

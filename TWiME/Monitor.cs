@@ -124,9 +124,35 @@ namespace TWiME {
                     catchMessage(new HotkeyMessage(Message.SwapTagWindow, Level.monitor, message.handle, newIndex));
                     catchMessage(new HotkeyMessage(Message.Screen, Level.monitor, message.handle, newIndex));
                 }
+                if (message.message == Message.Layout) {
+                    int newIndex = message.data;
+                    if (newIndex < Manager.layouts.Count) {
+                        TagScreen switchScreen = this.getActiveScreen();
+                        switchScreen.activeLayout = newIndex;
+                        switchScreen.initLayout();
+                        if (switchScreen.tag == tagEnabled) {
+                            switchScreen.assertLayout();
+                        }
+                    }
+                }
                 if (message.message == Message.LayoutRelative) {
                     TagScreen switchScreen = tagScreens[message.data];
                     int newIndex = switchScreen.activeLayout + 1;
+                    if (newIndex < 0) {
+                        newIndex = Manager.layouts.Count() - 1;
+                    }
+                    else if (newIndex >= Manager.layouts.Count) {
+                        newIndex = 0;
+                    }
+                    switchScreen.activeLayout = newIndex;
+                    switchScreen.initLayout();
+                    if (switchScreen.tag == tagEnabled) {
+                        switchScreen.assertLayout();
+                    }
+                }
+                if (message.message == Message.LayoutRelativeReverse) {
+                    TagScreen switchScreen = tagScreens[message.data];
+                    int newIndex = switchScreen.activeLayout - 1;
                     if (newIndex < 0) {
                         newIndex = Manager.layouts.Count() - 1;
                     }

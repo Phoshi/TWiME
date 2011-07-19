@@ -266,7 +266,7 @@ namespace TWiME {
             int width = (int) ((screenWidth * height) / (float)screenHeight);
             Manager.log("Each tag display is {0}x{1}".With(width, height));
             int currentWidth = 0;
-            System.Drawing.Size previewSize = new Size(width, height);
+            Size previewSize = new Size(width, height);
             int tag = 1;
             foreach (TagScreen screen in _parent.screens) {
                 Rectangle drawTangle = new Rectangle(currentWidth, 0, width - 1, this.Height - 1);

@@ -122,6 +122,8 @@ namespace TWiME {
             hook(Keys.K, (() => sendMessage(Message.MonitorSwitch, Level.monitor, -1)), Keys.Alt);
             hook(Keys.Return, (() => sendMessage(Message.MonitorFocus, Level.monitor, 0)), Keys.Alt);
 
+            hook(Keys.Space, (()=>sendMessage(Message.LayoutRelative, Level.monitor, getFocussedMonitor().getActiveScreen().tag)), Keys.Control);
+            hook(Keys.Space, (()=>sendMessage(Message.LayoutRelativeReverse, Level.monitor, getFocussedMonitor().getActiveScreen().tag)), Keys.Control | Keys.Shift);
             #region TagStuff
 
             int tagIndex = 0;
@@ -129,6 +131,10 @@ namespace TWiME {
                 int index = tagIndex++;
                 hook(key, (() => sendMessage(Message.Screen, Level.monitor, index)), Keys.Control);
                 hook(key, (() => sendMessage(Message.TagWindow, Level.monitor, index)), Keys.Shift | Keys.Control);   
+                hook(key, (() => sendMessage(Message.FocusThis, Level.screen, index)));   
+                hook(key, (() => sendMessage(Message.SwitchThis, Level.screen, index)), Keys.Shift);   
+                hook(key, (() => sendMessage(Message.MonitorMoveThis, Level.screen, index)), Keys.Shift | Keys.Alt);   
+                hook(key, (() => sendMessage(Message.MonitorFocus, Level.monitor, index)), Keys.Alt);   
             }
             #endregion
 

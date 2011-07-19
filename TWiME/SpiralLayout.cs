@@ -33,6 +33,7 @@ namespace TWiME {
         private Dictionary<Window, Rectangle> generateLayout() {
             Dictionary<Window, Rectangle> layouts = new Dictionary<Window, Rectangle>();
             Rectangle rectangle = _owned;
+            rectangle.Width -= 1; //Work around the "Windows set to as large as the screenspace are maximised" issue
             Direction direction = Direction.Right;
             int workingIndex = 0;
             foreach (Window window in _windowList) {
