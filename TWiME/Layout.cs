@@ -12,6 +12,7 @@ namespace TWiME {
         Image stateImage(Size dimensions);
         void updateWindowList(List<Window> newList);
         void moveSplitter(float offset, bool vertical = false);
+        float getSplitter(bool vertical = false);
     }
     class Layout : ILayout {
         public void assert() {
@@ -35,6 +36,10 @@ namespace TWiME {
         }
 
         public void moveSplitter(float offset, bool vertical = false) {
+            throw new NotImplementedException();
+        }
+
+        public float getSplitter(bool vertical = false) {
             throw new NotImplementedException();
         }
     }

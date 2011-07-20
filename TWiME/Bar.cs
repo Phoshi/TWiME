@@ -41,7 +41,14 @@ namespace TWiME {
         private const int WS_EX_NOACTIVATE = 0x08000000;
 
 
-        private const int barHeight = 15;
+        private int barHeight = 15;
+        private Font titleFont;
+        private Font boldFont;
+        private Brush foregroundBrush;
+        private Brush foregroundBrush2;
+        private Brush backgroundBrush;
+        private Brush backgroundBrush2;
+        private Brush selectedBrush;
 
         [DllImport("user32.dll")]
         private static extern
@@ -68,6 +75,14 @@ namespace TWiME {
 
         public Bar(Monitor monitor) {
             InitializeComponent();
+            barHeight = Convert.ToInt32(Manager.settings.ReadSettingOrDefault(15, "General.Bar.Height"));
+            titleFont = new Font(Manager.settings.ReadSettingOrDefault("Segoe UI", "General.Bar.Font"), barHeight * 0.6f);
+            boldFont = new Font(titleFont, FontStyle.Bold);
+            foregroundBrush = new SolidBrush(Color.FromName(Manager.settings.ReadSettingOrDefault("Black", "General.Bar.UnselectedForeground")));
+            foregroundBrush2 = new SolidBrush(Color.FromName(Manager.settings.ReadSettingOrDefault("LightGray", "General.Bar.SelectedForeground")));
+            backgroundBrush = new SolidBrush(Color.FromName(Manager.settings.ReadSettingOrDefault("DarkGray", "General.Bar.SelectedItemColour")));
+            backgroundBrush2 = new SolidBrush(Color.FromName(Manager.settings.ReadSettingOrDefault("Black", "General.Bar.UnselectedBackgroundColour")));
+            selectedBrush = new SolidBrush(Color.FromArgb(128, Color.FromName(Manager.settings.ReadSettingOrDefault("White", "General.Bar.SelectedTagColour"))));
             _screen = monitor.screen;
             _parent = monitor;
             //this.TopMost = true;
@@ -78,7 +93,8 @@ namespace TWiME {
             this.FormBorderStyle = FormBorderStyle.None;
             this.DesktopLocation = this.Location;
             //RegisterBar();
-            this.BackColor = Color.DarkGray;
+            Color bColor = Color.FromName(Manager.settings.ReadSettingOrDefault("DarkGray", "General.Bar.BackColour"));
+            this.BackColor = bColor;
 
             this.ShowInTaskbar = false;
             bar = new Window("", this.Handle, "", "", true);
@@ -243,14 +259,6 @@ namespace TWiME {
         }
 
         private void Bar_Paint(object sender, PaintEventArgs e) {
-            Font titleFont = new Font("Segoe UI", barHeight * 0.6f);
-            Font boldFont = new Font(titleFont, FontStyle.Bold);
-            Brush foregroundBrush = new SolidBrush(Color.Black);
-            Brush foregroundBrush2 = new SolidBrush(Color.LightGray);
-            Brush backgroundBrush = new SolidBrush(Color.DarkGray);
-            Brush backgroundBrush2 = new SolidBrush(Color.Black);
-            Brush selectedBrush = new SolidBrush(Color.FromArgb(128, Color.White));
-
             clicks.Clear();
 
             Pen seperatorPen = new Pen(Color.Blue, 3);

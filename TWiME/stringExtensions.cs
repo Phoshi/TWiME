@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace Extensions {
@@ -17,6 +18,10 @@ namespace Extensions {
         }
         public static string With(this string str, params object[] formatWith) {
             return String.Format(str, formatWith);
+        }
+        public static bool Glob(this string str, string match) {
+            match = Regex.Escape(match).Replace(@"\*", ".*").Replace(@"\?", ".");
+            return Regex.IsMatch(str, match, RegexOptions.IgnoreCase);
         }
     }
 

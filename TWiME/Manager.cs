@@ -8,6 +8,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Extensions;
+using HumanReadableSettings;
+using WindowRules;
 
 namespace TWiME {
     static class Manager {
@@ -22,6 +24,9 @@ namespace TWiME {
         static Dictionary<Keys,Dictionary<Keys,Action>> hooked = new Dictionary<Keys, Dictionary<Keys, Action>>();
         public static List<Type> layouts = new List<Type>();
         private static StreamWriter logger;
+        static Settings userSettingsOverride = new Settings("_TWiMErc", true);
+        public static Settings settings;
+        public static Dictionary<WindowRules.Match, WindowRules.Rule> windowRules = new Dictionary<WindowRules.Match, WindowRules.Rule>();
 
         [DllImport("user32.dll")]
         private static extern
@@ -47,6 +52,10 @@ namespace TWiME {
         private static bool isControlKeyDown = false;
         public static void setup() {
             Taskbar.hidden = true;
+            bool settingsReadOnly = !Convert.ToBoolean(userSettingsOverride.ReadSettingOrDefault("false", "General.Main.AutoSave"));
+            settings = new Settings("_runtimesettings", settingsReadOnly);
+            settings.OverwriteWith(userSettingsOverride);
+            setupWindowRules();
             setupHotkeys();
             setupLayouts();
             setupMonitors();
@@ -54,6 +63,21 @@ namespace TWiME {
             logger = new StreamWriter("log.txt");
 
             Application.ApplicationExit += new EventHandler(Application_ApplicationExit);
+        }
+
+        private static void setupWindowRules() {
+            foreach (List<string> list in settings.KeysUnderSection("Window Rules")) {
+                string winClass = list[1];
+                string winTitle = list[2];
+                string winRule = list[3];
+                int value = Convert.ToInt32(settings.ReadSetting(list.ToArray()));
+                WindowRules.Rules rule;
+                if (WindowRules.Rules.TryParse(winRule, true, out rule)) {
+                    WindowRules.Rule newRule = new WindowRules.Rule(rule, value);
+                    WindowRules.Match newMatch = new WindowRules.Match(winClass, winTitle);
+                    windowRules[newMatch] = newRule;
+                }
+            }
         }
 
         public static void log(string toLog, int logLevel = 0) {
@@ -65,6 +89,7 @@ namespace TWiME {
         }
 
         static void Application_ApplicationExit(object sender, EventArgs e) {
+            settings.save();
         }
         private static void setupLayouts() {
             //TODO: Shift layouts to plugins and iterate them here
@@ -74,8 +99,21 @@ namespace TWiME {
                     layouts.Add(type);
                 }
             }
-
         }
+        public static int getLayoutIndexFromName(string name) {
+            int index = 0;
+            foreach (Type layout in layouts) {
+                if (name == layout.Name) {
+                    return index;
+                }
+                index++;
+            }
+            return 0;
+        }
+        public static string getLayoutNameFromIndex(int index) {
+            return layouts[index].Name;
+        }
+
         private static void setupHotkeys() {
 
             #region Hook Modifiers
@@ -85,7 +123,6 @@ namespace TWiME {
             globalHook.HookedKeys.Add(Keys.LControlKey);
             #endregion
             hook(Keys.Q, (()=>sendMessage(Message.Close, Level.global, 0)));
-            hook(Keys.R, (()=>Application.Restart()));
             hook(Keys.Space, (()=>sendMessage(Message.Switch, Level.global, 0)));
 
 
@@ -164,7 +201,17 @@ namespace TWiME {
                 Manager.log("Showing taskbar", 10);
                 Taskbar.hidden = false;
                 Application.Exit();
-
+            }
+            if (message.message == Message.Restart) {
+                Manager.log("Beginning shutdown loop", 10);
+                foreach (Window window in windowList) {
+                    Manager.log("Setting {0} visible and not maximised".With(window), 10);
+                    window.visible = true;
+                    window.maximised = false;
+                }
+                Manager.log("Showing taskbar", 10);
+                Taskbar.hidden = false;
+                Application.Restart();
             }
             if (message.message == Message.Switch) {
                 Manager.log("Toggling taskbar");
@@ -295,8 +342,8 @@ namespace TWiME {
         }
 
         private static void setupTimers() {
-                        Timer pollTimer = new Timer();
-            pollTimer.Interval = 1000;
+            Timer pollTimer = new Timer();
+            pollTimer.Interval = Convert.ToInt32(Manager.settings.ReadSettingOrDefault("1000", "General.Main.Poll"));
             pollTimer.Tick += pollWindows_Tick;
             pollTimer.Start();
         }
@@ -314,8 +361,20 @@ namespace TWiME {
             List<Window> allCurrentlyVisibleWindows = new List<Window>();
             List<Window> hiddenNotShownByMeWindows = new List<Window>();
             foreach (Window window in windows) {
+                bool windowIgnored = false;
                 if (!handles.Contains(window.handle)) {
                     Manager.log("Found a new window! {0} isn't in the main listing".With(window.title));
+                    foreach (KeyValuePair<Match, Rule> kvPair in windowRules) {
+                        if (kvPair.Key.windowMatches(window)) {
+                            Rule rule = kvPair.Value;
+                            if (rule.rule == Rules.ignore) {
+                                windowIgnored = true;
+                            }
+                        }
+                    }
+                    if (windowIgnored) {
+                        continue;
+                    }
                     windowList.Add(window);
                     handles.Add(window.handle);
                     OnWindowCreate(window, new WindowEventArgs(window.screen));
@@ -331,26 +390,24 @@ namespace TWiME {
                 TagScreen firstScreenWithWindow = screensWithWindow.First();
                 sendMessage(Message.Screen, Level.monitor, firstScreenWithWindow.tag);
             }
-            //if (allWindows.Count < windowList.Count) { //Something's been closed?
-                int numClosures = windowList.Count - allCurrentlyVisibleWindows.Count;
-                Manager.log("Detecting {0} window closure{1}".With(numClosures, numClosures==1? "s" : ""), 1);
-                int numFound = 0;
-                foreach (Window window in new List<Window>(windowList)) {
-                    if (!allCurrentlyVisibleWindows.Contains(window)) {
-                        Manager.log("{0} is no longer open".With(window.title), 1);
-                        if (!hiddenWindows.Contains(window)) {
-                            Manager.log("{0} is also not hidden - it's closed".With(window.title));
-                            windowList.Remove(window);
-                            handles.Remove(window.handle);
-                            //Screen windowScreen = Screen.FromHandle(window.handle);
-                            OnWindowDestroy(window, new WindowEventArgs(window.screen));
-                        }
-                        else {
-                            Manager.log("{0} is just hidden, not closed".With(window.title), 1);
-                        }
+            int numClosures = windowList.Count - allCurrentlyVisibleWindows.Count;
+            Manager.log("Detecting {0} window closure{1}".With(numClosures, numClosures==1? "s" : ""), 1);
+            int numFound = 0;
+            foreach (Window window in new List<Window>(windowList)) {
+                if (!allCurrentlyVisibleWindows.Contains(window)) {
+                    Manager.log("{0} is no longer open".With(window.title), 1);
+                    if (!hiddenWindows.Contains(window)) {
+                        Manager.log("{0} is also not hidden - it's closed".With(window.title));
+                        windowList.Remove(window);
+                        handles.Remove(window.handle);
+                        //Screen windowScreen = Screen.FromHandle(window.handle);
+                        OnWindowDestroy(window, new WindowEventArgs(window.screen));
+                    }
+                    else {
+                        Manager.log("{0} is just hidden, not closed".With(window.title), 1);
                     }
                 }
-            //}
+            }
         }
 
         public static int getFocussedMonitorIndex() {

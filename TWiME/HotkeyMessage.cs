@@ -25,7 +25,8 @@ namespace TWiME {
         MonitorFocus,           //Switch focus to another indexed monitor
         MonitorMoveThis,        //Move window to another indexed monitor
         MonitorMove,            //Move the entire monitor object elsewhere
-        Close,                   //Close TWiME
+        Close,                  //Close TWiME
+        Restart                 //Restart TWiME
     }
 
     public enum Level {

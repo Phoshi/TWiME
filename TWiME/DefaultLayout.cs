@@ -6,7 +6,7 @@ using System.Text;
 
 namespace TWiME {
     class DefaultLayout : Layout, ILayout {
-        private string _name;
+        private string _name = "Default";
         private Image _symbol = null;
         private Rectangle _owned;
         private List<Window> _windowList;
@@ -17,6 +17,13 @@ namespace TWiME {
             _windowList = windowList;
             _owned = area;
             _parent = parent;
+
+            splitter =
+                float.Parse(Manager.settings.ReadSettingOrDefault(0.5f, parent.parent.screen.DeviceName.Replace(".", ""),
+                                                                  parent.tag.ToString(), "Splitter"));
+            vsplitter =
+                float.Parse(Manager.settings.ReadSettingOrDefault(0.5f, parent.parent.screen.DeviceName.Replace(".", ""),
+                                                                  parent.tag.ToString(), "VSplitter"));
 
         }
 
@@ -82,6 +89,14 @@ namespace TWiME {
                 vsplitter = newSplitter;
             }
             assert();
+        }
+        public new float getSplitter(bool vertical = false) {
+            if (vertical) {
+                return vsplitter;
+            }
+            else {
+                return splitter;
+            }
         }
         private Image generateStateImage(Size dimensions) {
             Bitmap state = new Bitmap(dimensions.Width, dimensions.Height);

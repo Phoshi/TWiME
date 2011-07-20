@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Extensions;
+using WindowRules;
 
 namespace TWiME {
     public class TagScreen{
@@ -19,15 +20,16 @@ namespace TWiME {
         public int tag { get { return _tag; } }
         public Monitor parent { get { return _parent; } }
         public TagScreen(Monitor parent, int tag) {
+            activeLayout = Manager.getLayoutIndexFromName(Manager.settings.ReadSettingOrDefault("DefaultLayout", parent.screen.DeviceName.Replace(".", ""), tag.ToString(), "DefaultLayout"));
             _parent = parent;
             _tag = tag;
-            //layout = new DefaultLayout(windowList, _parent._controlled, this);
             initLayout();
             Manager.WindowCreate += Manager_WindowCreate;
             Manager.WindowDestroy+= Manager_WindowDestroy;
         }
 
         public void initLayout() {
+            Manager.settings.AddSetting(Manager.getLayoutNameFromIndex(activeLayout), parent.screen.DeviceName.Replace(".", ""), _tag.ToString(), "DefaultLayout");
             Layout instance = (Layout)Activator.CreateInstance(Manager.layouts[activeLayout], new object[] { windowList, _parent._controlled, this });
             layout = instance;
         }
@@ -51,9 +53,34 @@ namespace TWiME {
         }
 
         void Manager_WindowCreate(object sender, WindowEventArgs args) {
-            if (args.monitor.DeviceName == _parent.name && _parent.tagEnabled == _tag) {
+            bool rulesThisMonitor = false, rulesThisTag = false;
+            int stackPosition = 0;
+            foreach (KeyValuePair<Match, Rule> keyValuePair in Manager.windowRules) {
+                if (keyValuePair.Key.windowMatches((Window)sender)) {
+                    if (keyValuePair.Value.rule == Rules.monitor) {
+                        if (Manager.monitors[keyValuePair.Value.data].name == _parent.name) {
+                            rulesThisMonitor = true;
+                        }
+                        else {
+                            return;
+                        }
+                    }
+                    if (keyValuePair.Value.rule == Rules.tag) {
+                        if (keyValuePair.Value.data - 1 == _tag) { //-1 because tag 1 is index 0, etc
+                            rulesThisTag = true;
+                        }
+                        else {
+                            return;
+                        }
+                    }
+                    if (keyValuePair.Value.rule == Rules.stack) {
+                        stackPosition = keyValuePair.Value.data;
+                    }
+                }
+            }
+            if ((args.monitor.DeviceName == _parent.name || rulesThisMonitor) && (_parent.tagEnabled == _tag || rulesThisTag)) {
                 Window newWindow = (Window) sender;
-                windowList.Insert(0, newWindow);
+                windowList.Insert(stackPosition, newWindow);
                 Manager.log("Adding Window: " + newWindow.className + " "+newWindow, 1);
                 layout.updateWindowList(windowList);
                 layout.assert();
@@ -159,9 +186,11 @@ namespace TWiME {
                 }
                 if (message.message == Message.Splitter) {
                     layout.moveSplitter(message.data / 100.0f);
+                    Manager.settings.AddSetting(layout.getSplitter(), parent.screen.DeviceName.Replace(".", ""), _tag.ToString(), "Splitter");
                 }
                 if (message.message == Message.VSplitter) {
                     layout.moveSplitter(message.data / 100.0f, true);
+                    Manager.settings.AddSetting(layout.getSplitter(true), parent.screen.DeviceName.Replace(".", ""), _tag.ToString(), "VSplitter");
                 }
                 if (message.message == Message.Close) {
                     foreach (Window window in windowList) {

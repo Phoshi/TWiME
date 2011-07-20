@@ -34,6 +34,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HumanReadableSettings">
+      <HintPath>..\..\HumanReadableSettings\HumanReadableSettings\bin\Release\HumanReadableSettings.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -70,6 +73,7 @@
     <Compile Include="VerticalDockLayout.cs" />
     <Compile Include="Window.cs" />
     <Compile Include="WindowEventArgs.cs" />
+    <Compile Include="WindowRules.cs" />
     <Compile Include="Windows.cs" />
     <EmbeddedResource Include="Bar.resx">
       <DependentUpon>Bar.cs</DependentUpon>
