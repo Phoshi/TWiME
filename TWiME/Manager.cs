@@ -66,6 +66,9 @@ namespace TWiME {
         }
 
         private static void setupWindowRules() {
+            if (!settings.sections.Contains("Window Rules")) {
+                return;
+            }
             foreach (List<string> list in settings.KeysUnderSection("Window Rules")) {
                 string winClass = list[1];
                 string winTitle = list[2];
@@ -83,7 +86,11 @@ namespace TWiME {
         public static void CenterMouseOnActiveWindow() {
             bool moveMouse = Convert.ToBoolean(Manager.settings.ReadSettingOrDefault("false", "General.Main.MouseFollowsInput"));
             if (moveMouse) {
-                Cursor.Position = getWindowObjectByHandle(GetForegroundWindow()).Location.Center();
+                IntPtr pointer = GetForegroundWindow();
+                Window window = getWindowObjectByHandle(pointer);
+                if (window != null) {
+                    Cursor.Position = window.Location.Center();
+                }
             }
         }
 
@@ -96,7 +103,8 @@ namespace TWiME {
         }
 
         static void Application_ApplicationExit(object sender, EventArgs e) {
-            settings.save();
+            if (!settings.readOnly)
+                settings.save();
         }
         private static void setupLayouts() {
             //TODO: Shift layouts to plugins and iterate them here

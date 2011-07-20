@@ -29,7 +29,8 @@ namespace TWiME {
         }
 
         public void initLayout() {
-            Manager.settings.AddSetting(Manager.getLayoutNameFromIndex(activeLayout), parent.screen.DeviceName.Replace(".", ""), _tag.ToString(), "DefaultLayout");
+            if (!Manager.settings.readOnly)
+                Manager.settings.AddSetting(Manager.getLayoutNameFromIndex(activeLayout), parent.screen.DeviceName.Replace(".", ""), _tag.ToString(), "DefaultLayout");
             Layout instance = (Layout)Activator.CreateInstance(Manager.layouts[activeLayout], new object[] { windowList, _parent._controlled, this });
             layout = instance;
         }
