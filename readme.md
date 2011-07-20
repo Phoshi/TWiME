@@ -51,7 +51,6 @@ There are many different settings you can change here.
     Bar.UnselectedBackgroundColour - default Black  
     Bar.SelectedTagColour - default White  
     Bar.BackColour - default DarkGray   
-
     Main.AutoSave - "true" or "false", decides whether layout state is saved at the end of the session. TWiMErc values still override saved settings, however. Default false.  
     Main.MouseFollowsInput - "true" or "false", decides whether the mouse is moved whenever TWiME switches focus. Default false.  
     Main.poll - an integer value, decides how often the main polling loop runs, in ms. Lower values produce faster detection of windows, but with an increase in required processor time. 1000ms is default. You probably won't need to mess with this.  
