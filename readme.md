@@ -45,12 +45,12 @@ There are many different settings you can change here.
     Bar.Font - The name of the font to use. The default is Segoe UI  
     Windows.DefaultStackPosition - the position in the stack new windows open at. Default is 0, or the main window. Use negative indexes to go from the end of the stack.  
     Many settings for colouring the bar - takes names of colours:  
-        Bar.UnselectedForeground - default Black  
-        Bar.SelectedForeground - default LightGray  
-        Bar.SelectedItemColour - default DarkGray  
-        Bar.UnselectedBackgroundColour - default Black  
-        Bar.SelectedTagColour - default White  
-        Bar.BackColour - default DarkGray   
+    Bar.UnselectedForeground - default Black  
+    Bar.SelectedForeground - default LightGray  
+    Bar.SelectedItemColour - default DarkGray  
+    Bar.UnselectedBackgroundColour - default Black  
+    Bar.SelectedTagColour - default White  
+    Bar.BackColour - default DarkGray   
 
     Main.AutoSave - "true" or "false", decides whether layout state is saved at the end of the session. TWiMErc values still override saved settings, however. Default false.  
     Main.MouseFollowsInput - "true" or "false", decides whether the mouse is moved whenever TWiME switches focus. Default false.  
