@@ -1,37 +1,54 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows.Forms;
 using Extensions;
-using WindowRules;
 
 namespace TWiME {
-    public class TagScreen{
-        List<Window> windowList = new List<Window>();
-        public List<Window> windows { get { return windowList; } }
+    public class TagScreen {
+        private List<Window> _windowList = new List<Window>();
+
+        public List<Window> windows {
+            get { return _windowList; }
+        }
+
         private ILayout layout;
-        private Monitor _parent;
-        private int _tag;
-        public int activeLayout = 0;
-        public int tag { get { return _tag; } }
-        public Monitor parent { get { return _parent; } }
+        private readonly Monitor _parent;
+        private readonly int _tag;
+        public int activeLayout;
+
+        public int tag {
+            get { return _tag; }
+        }
+
+        public Monitor parent {
+            get { return _parent; }
+        }
+
         public TagScreen(Monitor parent, int tag) {
-            activeLayout = Manager.getLayoutIndexFromName(Manager.settings.ReadSettingOrDefault("DefaultLayout", parent.screen.DeviceName.Replace(".", ""), tag.ToString(), "DefaultLayout"));
+            activeLayout =
+                Manager.GetLayoutIndexFromName(Manager.settings.ReadSettingOrDefault("DefaultLayout",
+                                                                                     parent.Screen.DeviceName.Replace(
+                                                                                         ".", ""), tag.ToString(),
+                                                                                     "DefaultLayout"));
             _parent = parent;
             _tag = tag;
             initLayout();
             Manager.WindowCreate += Manager_WindowCreate;
-            Manager.WindowDestroy+= Manager_WindowDestroy;
+            Manager.WindowDestroy += Manager_WindowDestroy;
         }
 
         public void initLayout() {
-            if (!Manager.settings.readOnly)
-                Manager.settings.AddSetting(Manager.getLayoutNameFromIndex(activeLayout), parent.screen.DeviceName.Replace(".", ""), _tag.ToString(), "DefaultLayout");
-            Layout instance = (Layout)Activator.CreateInstance(Manager.layouts[activeLayout], new object[] { windowList, _parent._controlled, this });
+            if (!Manager.settings.readOnly) {
+                Manager.settings.AddSetting(Manager.GetLayoutNameFromIndex(activeLayout),
+                                            parent.Screen.DeviceName.Replace(".", ""), _tag.ToString(), "DefaultLayout");
+            }
+            Layout instance =
+                (Layout)
+                Activator.CreateInstance(Manager.layouts[activeLayout],
+                                         new object[] {_windowList, _parent.Controlled, this});
             layout = instance;
         }
 
@@ -41,74 +58,78 @@ namespace TWiME {
 
         private void Manager_WindowDestroy(object sender, WindowEventArgs args) {
             Window newWindow = (Window) sender;
-            IEnumerable<Window> deleteList = (from window in windowList where window.handle == newWindow.handle select window);
+            IEnumerable<Window> deleteList =
+                (from window in _windowList where window.handle == newWindow.handle select window);
             if (deleteList.Count() > 0) {
                 Window toRemove = deleteList.First();
-                windowList.Remove(toRemove);
-                Manager.log("Removing window: {0} {1}".With(toRemove.className, toRemove.title), 1);
-                layout.updateWindowList(windowList);
-                if (parent.tagEnabled == tag) {
-                    layout.assert();
+                _windowList.Remove(toRemove);
+                Manager.Log("Removing window: {0} {1}".With(toRemove.ClassName, toRemove.Title), 1);
+                layout.UpdateWindowList(_windowList);
+                if (parent.EnabledTag == tag) {
+                    layout.Assert();
                 }
             }
         }
 
-        void Manager_WindowCreate(object sender, WindowEventArgs args) {
+        private void Manager_WindowCreate(object sender, WindowEventArgs args) {
             bool rulesThisMonitor = false, rulesThisTag = false;
-            int stackPosition = Convert.ToInt32(Manager.settings.ReadSettingOrDefault(0, "General.Windows.DefaultStackPosition"));
-            foreach (KeyValuePair<Match, Rule> keyValuePair in Manager.windowRules) {
-                if (keyValuePair.Key.windowMatches((Window)sender)) {
-                    if (keyValuePair.Value.rule == Rules.monitor) {
-                        if (Manager.monitors[keyValuePair.Value.data].name == _parent.name) {
+            int stackPosition =
+                Convert.ToInt32(Manager.settings.ReadSettingOrDefault(0, "General.Windows.DefaultStackPosition"));
+            foreach (KeyValuePair<WindowMatch, WindowRule> keyValuePair in Manager.windowRules) {
+                if (keyValuePair.Key.windowMatches((Window) sender)) {
+                    if (keyValuePair.Value.rule == WindowRules.monitor) {
+                        if (Manager.monitors[keyValuePair.Value.data].Name == _parent.Name) {
                             rulesThisMonitor = true;
                         }
                         else {
                             return;
                         }
                     }
-                    if (keyValuePair.Value.rule == Rules.tag) {
-                        if (keyValuePair.Value.data - 1 == _tag) { //-1 because tag 1 is index 0, etc
+                    if (keyValuePair.Value.rule == WindowRules.tag) {
+                        if (keyValuePair.Value.data - 1 == _tag) {
+                            //-1 because tag 1 is index 0, etc
                             rulesThisTag = true;
                         }
                         else {
                             return;
                         }
                     }
-                    if (keyValuePair.Value.rule == Rules.stack) {
+                    if (keyValuePair.Value.rule == WindowRules.stack) {
                         stackPosition = keyValuePair.Value.data;
                     }
                 }
             }
-            if ((args.monitor.DeviceName == _parent.name || rulesThisMonitor) && (_parent.tagEnabled == _tag || rulesThisTag)) {
+            if ((args.monitor.DeviceName == _parent.Name || rulesThisMonitor) &&
+                (_parent.EnabledTag == _tag || rulesThisTag)) {
                 Window newWindow = (Window) sender;
                 if (stackPosition < 0) {
-                    stackPosition = windowList.Count() - stackPosition;
+                    stackPosition = _windowList.Count() - stackPosition;
                     if (stackPosition < 0) {
                         stackPosition = 0;
                     }
                 }
-                if (stackPosition >= windowList.Count) {
-                    stackPosition = windowList.Count;
+                if (stackPosition >= _windowList.Count) {
+                    stackPosition = _windowList.Count;
                 }
 
-                windowList.Insert(stackPosition, newWindow);
-                Manager.log("Adding Window: " + newWindow.className + " "+newWindow, 1);
-                layout.updateWindowList(windowList);
-                layout.assert();
+                _windowList.Insert(stackPosition, newWindow);
+                Manager.Log("Adding Window: " + newWindow.ClassName + " " + newWindow, 1);
+                layout.UpdateWindowList(_windowList);
+                layout.Assert();
             }
         }
 
         ~TagScreen() {
-            foreach (Window window in windowList) {
-                window.visible = true;
-                window.maximised = false;
+            foreach (Window window in _windowList) {
+                window.Visible = true;
+                window.Maximised = false;
             }
         }
 
         private int getFocusedWindowIndex() {
             IntPtr hWnd = GetForegroundWindow();
-            for (int i = 0; i < windowList.Count; i++) {
-                if (windowList[i].handle == hWnd) {
+            for (int i = 0; i < _windowList.Count; i++) {
+                if (_windowList[i].handle == hWnd) {
                     return i;
                 }
             }
@@ -118,40 +139,40 @@ namespace TWiME {
         public void catchMessage(HotkeyMessage message) {
             if (message.level == Level.screen) {
                 if (message.message == Message.Focus) {
-                    if (windowList.Count == 0) {
+                    if (_windowList.Count == 0) {
                         return;
                     }
-                    if (Screen.FromHandle(message.handle).DeviceName == _parent.name) {
+                    if (Screen.FromHandle(message.handle).DeviceName == _parent.Name) {
                         int newIndex = getFocusedWindowIndex() + message.data;
-                        if (newIndex >= windowList.Count) {
+                        if (newIndex >= _windowList.Count) {
                             newIndex = 0;
                         }
                         else if (newIndex < 0) {
-                            newIndex = windowList.Count - 1;
+                            newIndex = _windowList.Count - 1;
                         }
                         Console.WriteLine(newIndex);
-                        windowList[newIndex].activate();
+                        _windowList[newIndex].Activate();
                         Manager.CenterMouseOnActiveWindow();
                     }
                 }
                 if (message.message == Message.Switch) {
-                    if (windowList.Count == 0) {
+                    if (_windowList.Count == 0) {
                         return;
                     }
-                    if (Screen.FromHandle(message.handle).DeviceName == _parent.name) {
+                    if (Screen.FromHandle(message.handle).DeviceName == _parent.Name) {
                         int oldIndex = getFocusedWindowIndex();
                         int newIndex = oldIndex + message.data;
-                        if (newIndex >= windowList.Count) {
+                        if (newIndex >= _windowList.Count) {
                             newIndex = 0;
                         }
                         else if (newIndex < 0) {
-                            newIndex = windowList.Count - 1;
+                            newIndex = _windowList.Count - 1;
                         }
-                        Window oldWindow = windowList[oldIndex];
-                        Window newWindow = windowList[newIndex];
-                        windowList[oldIndex] = newWindow;
-                        windowList[newIndex] = oldWindow;
-                        layout.assert();
+                        Window oldWindow = _windowList[oldIndex];
+                        Window newWindow = _windowList[newIndex];
+                        _windowList[oldIndex] = newWindow;
+                        _windowList[newIndex] = oldWindow;
+                        layout.Assert();
                         Manager.CenterMouseOnActiveWindow();
                     }
                 }
@@ -163,25 +184,25 @@ namespace TWiME {
                     int newIndex = message.data;
                     Window newWindow, oldWindow;
                     try {
-                        oldWindow = windowList[oldIndex];
-                        newWindow = windowList[newIndex];
+                        oldWindow = _windowList[oldIndex];
+                        newWindow = _windowList[newIndex];
                     }
                     catch (ArgumentOutOfRangeException) {
                         return;
                     }
-                    windowList[oldIndex] = newWindow;
-                    windowList[newIndex] = oldWindow;
-                    layout.assert();
+                    _windowList[oldIndex] = newWindow;
+                    _windowList[newIndex] = oldWindow;
+                    layout.Assert();
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.FocusThis) {
-                    if (message.data < windowList.Count) {
-                        windowList[message.data].activate();
+                    if (message.data < _windowList.Count) {
+                        _windowList[message.data].Activate();
                         Manager.CenterMouseOnActiveWindow();
                     }
                 }
                 if (message.message == Message.Monitor) {
-                    int newMonitorIndex = Manager.getFocussedMonitorIndex() + message.data;
+                    int newMonitorIndex = Manager.GetFocussedMonitorIndex() + message.data;
                     if (newMonitorIndex < 0) {
                         newMonitorIndex = Manager.monitors.Count - 1;
                     }
@@ -190,91 +211,96 @@ namespace TWiME {
                     }
                     Monitor newMonitor = Manager.monitors[newMonitorIndex];
                     Window focussedWindow = getFocusedWindow();
-                    newMonitor.catchWindow(this.throwWindow(focussedWindow));
-                    layout.assert();
-                    newMonitor.getActiveScreen().enable();
+                    newMonitor.CatchWindow(this.throwWindow(focussedWindow));
+                    layout.Assert();
+                    newMonitor.GetActiveScreen().enable();
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.MonitorMoveThis) {
-                    Manager.monitors[message.data].catchWindow(throwWindow(getFocusedWindow()));
-                    layout.assert();
-                    Manager.monitors[message.data].getActiveScreen().activate();
+                    Manager.monitors[message.data].CatchWindow(throwWindow(getFocusedWindow()));
+                    layout.Assert();
+                    Manager.monitors[message.data].GetActiveScreen().Activate();
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.Splitter) {
-                    layout.moveSplitter(message.data / 100.0f);
-                    Manager.settings.AddSetting(layout.getSplitter(), parent.screen.DeviceName.Replace(".", ""), _tag.ToString(), "Splitter");
+                    layout.MoveSplitter(message.data / 100.0f);
+                    Manager.settings.AddSetting(layout.GetSplitter(), parent.Screen.DeviceName.Replace(".", ""),
+                                                _tag.ToString(), "Splitter");
                 }
                 if (message.message == Message.VSplitter) {
-                    layout.moveSplitter(message.data / 100.0f, true);
-                    Manager.settings.AddSetting(layout.getSplitter(true), parent.screen.DeviceName.Replace(".", ""), _tag.ToString(), "VSplitter");
+                    layout.MoveSplitter(message.data / 100.0f, true);
+                    Manager.settings.AddSetting(layout.GetSplitter(true), parent.Screen.DeviceName.Replace(".", ""),
+                                                _tag.ToString(), "VSplitter");
                 }
                 if (message.message == Message.Close) {
-                    foreach (Window window in windowList) {
-                        window.visible = true;
-                        window.maximised = false;
+                    foreach (Window window in _windowList) {
+                        window.Visible = true;
+                        window.Maximised = false;
                     }
                 }
                 if (message.message == Message.Close) {
-                    windowList[message.data].close();
+                    _windowList[message.data].Close();
                 }
             }
             else {
-                getFocusedWindow().catchMessage(message);
-                layout.assert();
+                getFocusedWindow().CatchMessage(message);
+                layout.Assert();
             }
         }
 
         public Window throwWindow(Window window) {
-            windowList.Remove(window);
+            _windowList.Remove(window);
             return window;
         }
 
         public Window getFocusedWindow() {
             int index = getFocusedWindowIndex();
-            if (index==-1) {
-                return new Window("", parent.bar.Handle, "", "", true);
+            if (index == -1) {
+                return new Window("", parent.Bar.Handle, "", "", true);
             }
-            return windowList[index];
+            return _windowList[index];
         }
 
-        public void activate() {
-            if (windowList.Count > 0) {
-                windowList[0].activate();
+        public void Activate() {
+            if (_windowList.Count > 0) {
+                _windowList[0].Activate();
             }
             else {
-                new Window("", _parent.bar.Handle, "", "", true).activate();
+                new Window("", _parent.Bar.Handle, "", "", true).Activate();
             }
         }
 
-        public void catchWindow(Window window) {
-            windowList.Add(window);
+        public void CatchWindow(Window window) {
+            _windowList.Add(window);
         }
 
         public Image getStateImage(Size previewSize) {
-            return layout.stateImage(previewSize);
+            return layout.StateImage(previewSize);
         }
 
         public void disable() {
             foreach (Window window in windows) {
-                window.visible = false;
+                window.Visible = false;
             }
         }
+
         public void disable(TagScreen swappingWith) {
             foreach (Window window in windows) {
                 if (!swappingWith.windows.Contains(window)) {
-                    window.visible = false;
+                    window.Visible = false;
                 }
             }
         }
+
         public void enable() {
             foreach (Window window in windows) {
-                window.visible = true;
+                window.Visible = true;
             }
-            layout.assert();
+            layout.Assert();
         }
+
         public void assertLayout() {
-            layout.assert();
+            layout.Assert();
         }
     }
 }

@@ -1,58 +1,52 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows.Forms;
 using Extensions;
 using HumanReadableSettings;
-using WindowRules;
 
 namespace TWiME {
-    static class Manager {
+    internal static class Manager {
+        private const int LOG_LEVEL = 3;
 
-        const int LOG_LEVEL = 3;
-
-        static List<Window> windowList = new List<Window>();
+        private static List<Window> _windowList = new List<Window>();
         public static List<Window> hiddenWindows = new List<Window>();
-        static HashSet<IntPtr> handles = new HashSet<IntPtr>();
+        private static HashSet<IntPtr> _handles = new HashSet<IntPtr>();
         public static List<Monitor> monitors = new List<Monitor>();
-        static globalKeyboardHook globalHook = new globalKeyboardHook();
-        static Dictionary<Keys,Dictionary<Keys,Action>> hooked = new Dictionary<Keys, Dictionary<Keys, Action>>();
+        private static globalKeyboardHook _globalHook = new globalKeyboardHook();
+
+        private static Dictionary<Keys, Dictionary<Keys, Action>> hooked =
+            new Dictionary<Keys, Dictionary<Keys, Action>>();
+
         public static List<Type> layouts = new List<Type>();
         private static StreamWriter logger;
-        static Settings userSettingsOverride = new Settings("_TWiMErc", true);
+        private static Settings userSettingsOverride = new Settings("_TWiMErc", true);
         public static Settings settings;
-        public static Dictionary<WindowRules.Match, WindowRules.Rule> windowRules = new Dictionary<WindowRules.Match, WindowRules.Rule>();
+        public static Dictionary<WindowMatch, WindowRule> windowRules = new Dictionary<WindowMatch, WindowRule>();
 
         [DllImport("user32.dll")]
         private static extern
             IntPtr GetForegroundWindow();
+
         [DllImport("user32.dll")]
-        private static extern IntPtr FindWindow(string className, string windowText);
-        [DllImport("user32.dll", SetLastError = true)]
-        static extern IntPtr GetWindow(IntPtr hWnd, GetWindow_Cmd uCmd);
+        private static extern bool PostMessage(IntPtr hWnd, UInt32 Msg, int wParam, int lParam);
 
-        enum GetWindow_Cmd : uint {
-            GW_HWNDFIRST = 0,
-            GW_HWNDLAST = 1,
-            GW_HWNDNEXT = 2,
-            GW_HWNDPREV = 3,
-            GW_OWNER = 4,
-            GW_CHILD = 5,
-            GW_ENABLEDPOPUP = 6
-        }
+        private const UInt32 WM_KEYDOWN = 0x0100;
+        private const UInt32 WM_KEYUP = 0x0101;
+        private const int VK_LWIN = 0x5B;
 
-        private static bool isWinKeyDown = false;
-        private static bool isShiftKeyDown = false;
-        private static bool isAltKeyDown = false;
-        private static bool isControlKeyDown = false;
-        public static void setup() {
+        private static bool isWinKeyDown;
+        private static bool isShiftKeyDown;
+        private static bool isAltKeyDown;
+        private static bool isControlKeyDown;
+
+        public static void Setup() {
             Taskbar.hidden = true;
-            bool settingsReadOnly = !Convert.ToBoolean(userSettingsOverride.ReadSettingOrDefault("false", "General.Main.AutoSave"));
+            bool settingsReadOnly =
+                !Convert.ToBoolean(userSettingsOverride.ReadSettingOrDefault("false", "General.Main.AutoSave"));
             settings = new Settings("_runtimesettings", settingsReadOnly);
             settings.OverwriteWith(userSettingsOverride);
             setupWindowRules();
@@ -62,7 +56,7 @@ namespace TWiME {
             setupTimers();
             logger = new StreamWriter("log.txt");
 
-            Application.ApplicationExit += new EventHandler(Application_ApplicationExit);
+            Application.ApplicationExit += Application_ApplicationExit;
         }
 
         private static void setupWindowRules() {
@@ -74,27 +68,27 @@ namespace TWiME {
                 string winTitle = list[2];
                 string winRule = list[3];
                 int value = Convert.ToInt32(settings.ReadSetting(list.ToArray()));
-                WindowRules.Rules rule;
-                if (WindowRules.Rules.TryParse(winRule, true, out rule)) {
-                    WindowRules.Rule newRule = new WindowRules.Rule(rule, value);
-                    WindowRules.Match newMatch = new WindowRules.Match(winClass, winTitle);
+                WindowRules rule;
+                if (WindowRules.TryParse(winRule, true, out rule)) {
+                    WindowRule newRule = new WindowRule(rule, value);
+                    WindowMatch newMatch = new WindowMatch(winClass, winTitle);
                     windowRules[newMatch] = newRule;
                 }
             }
         }
 
         public static void CenterMouseOnActiveWindow() {
-            bool moveMouse = Convert.ToBoolean(Manager.settings.ReadSettingOrDefault("false", "General.Main.MouseFollowsInput"));
+            bool moveMouse = Convert.ToBoolean(settings.ReadSettingOrDefault("false", "General.Main.MouseFollowsInput"));
             if (moveMouse) {
                 IntPtr pointer = GetForegroundWindow();
-                Window window = getWindowObjectByHandle(pointer);
+                Window window = GetWindowObjectByHandle(pointer);
                 if (window != null) {
                     Cursor.Position = window.Location.Center();
                 }
             }
         }
 
-        public static void log(string toLog, int logLevel = 0) {
+        public static void Log(string toLog, int logLevel = 0) {
             if (logLevel >= LOG_LEVEL) {
                 Console.WriteLine(toLog);
                 logger.WriteLine(toLog);
@@ -102,20 +96,23 @@ namespace TWiME {
             }
         }
 
-        static void Application_ApplicationExit(object sender, EventArgs e) {
-            if (!settings.readOnly)
+        private static void Application_ApplicationExit(object sender, EventArgs e) {
+            if (!settings.readOnly) {
                 settings.save();
+            }
         }
+
         private static void setupLayouts() {
             //TODO: Shift layouts to plugins and iterate them here
             Assembly asm = Assembly.GetExecutingAssembly();
             foreach (Type type in asm.GetTypes()) {
-                if (type.BaseType == typeof(Layout)) {
+                if (type.BaseType == typeof (Layout)) {
                     layouts.Add(type);
                 }
             }
         }
-        public static int getLayoutIndexFromName(string name) {
+
+        public static int GetLayoutIndexFromName(string name) {
             int index = 0;
             foreach (Type layout in layouts) {
                 if (name == layout.Name) {
@@ -125,116 +122,128 @@ namespace TWiME {
             }
             return 0;
         }
-        public static string getLayoutNameFromIndex(int index) {
+
+        public static string GetLayoutNameFromIndex(int index) {
             return layouts[index].Name;
         }
 
         private static void setupHotkeys() {
-
             #region Hook Modifiers
-            globalHook.HookedKeys.Add(Keys.LWin);
-            globalHook.HookedKeys.Add(Keys.LShiftKey);
-            globalHook.HookedKeys.Add(Keys.LMenu);
-            globalHook.HookedKeys.Add(Keys.LControlKey);
+
+            _globalHook.HookedKeys.Add(Keys.LWin);
+            _globalHook.HookedKeys.Add(Keys.LShiftKey);
+            _globalHook.HookedKeys.Add(Keys.LMenu);
+            _globalHook.HookedKeys.Add(Keys.LControlKey);
+
             #endregion
-            hook(Keys.Q, (()=>sendMessage(Message.Close, Level.global, 0)));
-            hook(Keys.Space, (()=>sendMessage(Message.Switch, Level.global, 0)));
+
+            hook(Keys.Q, (() => SendMessage(Message.Close, Level.global, 0)));
+            hook(Keys.Space, (() => SendMessage(Message.Switch, Level.global, 0)));
 
 
-            hook(Keys.J, (()=>sendMessage(Message.Focus, Level.screen, 1)));
-            hook(Keys.K, (()=>sendMessage(Message.Focus, Level.screen, -1)));
-            hook(Keys.Return, (()=>sendMessage(Message.FocusThis, Level.screen, 0)));
-            hook(Keys.J, (() => sendMessage(Message.Switch, Level.screen, 1)), Keys.Shift);
-            hook(Keys.K, (() => sendMessage(Message.Switch, Level.screen, -1)), Keys.Shift);
-            hook(Keys.Return, (() => sendMessage(Message.SwitchThis, Level.screen, 0)), Keys.Shift);
-            hook(Keys.C, (() => sendMessage(Message.Close, Level.window, 0)));
+            hook(Keys.J, (() => SendMessage(Message.Focus, Level.screen, 1)));
+            hook(Keys.K, (() => SendMessage(Message.Focus, Level.screen, -1)));
+            hook(Keys.Return, (() => SendMessage(Message.FocusThis, Level.screen, 0)));
+            hook(Keys.J, (() => SendMessage(Message.Switch, Level.screen, 1)), Keys.Shift);
+            hook(Keys.K, (() => SendMessage(Message.Switch, Level.screen, -1)), Keys.Shift);
+            hook(Keys.Return, (() => SendMessage(Message.SwitchThis, Level.screen, 0)), Keys.Shift);
+            hook(Keys.C, (() => SendMessage(Message.Close, Level.window, 0)));
 
 
-            hook(Keys.J, (() => sendMessage(Message.Monitor, Level.screen, 1)), Keys.Shift | Keys.Alt);
-            hook(Keys.K, (() => sendMessage(Message.Monitor, Level.screen, -1)), Keys.Shift | Keys.Alt);
-            hook(Keys.Return, (() => sendMessage(Message.MonitorMoveThis, Level.screen, 0)), Keys.Shift | Keys.Alt);
+            hook(Keys.J, (() => SendMessage(Message.Monitor, Level.screen, 1)), Keys.Shift | Keys.Alt);
+            hook(Keys.K, (() => SendMessage(Message.Monitor, Level.screen, -1)), Keys.Shift | Keys.Alt);
+            hook(Keys.Return, (() => SendMessage(Message.MonitorMoveThis, Level.screen, 0)), Keys.Shift | Keys.Alt);
 
-            hook(Keys.Left, (() => sendMessage(Message.Splitter, Level.screen, -1)));
-            hook(Keys.Left, (() => sendMessage(Message.Splitter, Level.screen, -10)), Keys.Shift);
-            hook(Keys.Right, (() => sendMessage(Message.Splitter, Level.screen, 1)));
-            hook(Keys.Right, (() => sendMessage(Message.Splitter, Level.screen, 10)), Keys.Shift);
-            hook(Keys.Up, (() => sendMessage(Message.VSplitter, Level.screen, -1)));
-            hook(Keys.Up, (() => sendMessage(Message.VSplitter, Level.screen, -10)), Keys.Shift);
-            hook(Keys.Down, (() => sendMessage(Message.VSplitter, Level.screen, 1)));
-            hook(Keys.Down, (() => sendMessage(Message.VSplitter, Level.screen, 10)), Keys.Shift);
+            hook(Keys.Left, (() => SendMessage(Message.Splitter, Level.screen, -1)));
+            hook(Keys.Left, (() => SendMessage(Message.Splitter, Level.screen, -10)), Keys.Shift);
+            hook(Keys.Right, (() => SendMessage(Message.Splitter, Level.screen, 1)));
+            hook(Keys.Right, (() => SendMessage(Message.Splitter, Level.screen, 10)), Keys.Shift);
+            hook(Keys.Up, (() => SendMessage(Message.VSplitter, Level.screen, -1)));
+            hook(Keys.Up, (() => SendMessage(Message.VSplitter, Level.screen, -10)), Keys.Shift);
+            hook(Keys.Down, (() => SendMessage(Message.VSplitter, Level.screen, 1)));
+            hook(Keys.Down, (() => SendMessage(Message.VSplitter, Level.screen, 10)), Keys.Shift);
 
-            hook(Keys.J, (() => sendMessage(Message.ScreenRelative, Level.monitor, 1)), Keys.Control);
-            hook(Keys.K, (() => sendMessage(Message.ScreenRelative, Level.monitor, -1)), Keys.Control);
-            hook(Keys.Return, (() => sendMessage(Message.ScreenRelative, Level.monitor, 0)), Keys.Control);
-            hook(Keys.J, (() => sendMessage(Message.SwapTagWindowRelative, Level.monitor, 1)), Keys.Control | Keys.Shift);
-            hook(Keys.K, (() => sendMessage(Message.SwapTagWindowRelative, Level.monitor, -1)), Keys.Control | Keys.Shift);
-            hook(Keys.Return, (() => sendMessage(Message.SwapTagWindow, Level.monitor, 0)), Keys.Control | Keys.Shift);
+            hook(Keys.J, (() => SendMessage(Message.ScreenRelative, Level.monitor, 1)), Keys.Control);
+            hook(Keys.K, (() => SendMessage(Message.ScreenRelative, Level.monitor, -1)), Keys.Control);
+            hook(Keys.Return, (() => SendMessage(Message.ScreenRelative, Level.monitor, 0)), Keys.Control);
+            hook(Keys.J, (() => SendMessage(Message.SwapTagWindowRelative, Level.monitor, 1)), Keys.Control | Keys.Shift);
+            hook(Keys.K, (() => SendMessage(Message.SwapTagWindowRelative, Level.monitor, -1)),
+                 Keys.Control | Keys.Shift);
+            hook(Keys.Return, (() => SendMessage(Message.SwapTagWindow, Level.monitor, 0)), Keys.Control | Keys.Shift);
 
-            hook(Keys.J, (() => sendMessage(Message.MonitorSwitch, Level.monitor, 1)), Keys.Alt);
-            hook(Keys.K, (() => sendMessage(Message.MonitorSwitch, Level.monitor, -1)), Keys.Alt);
-            hook(Keys.Return, (() => sendMessage(Message.MonitorFocus, Level.monitor, 0)), Keys.Alt);
+            hook(Keys.J, (() => SendMessage(Message.MonitorSwitch, Level.monitor, 1)), Keys.Alt);
+            hook(Keys.K, (() => SendMessage(Message.MonitorSwitch, Level.monitor, -1)), Keys.Alt);
+            hook(Keys.Return, (() => SendMessage(Message.MonitorFocus, Level.monitor, 0)), Keys.Alt);
 
-            hook(Keys.Space, (()=>sendMessage(Message.LayoutRelative, Level.monitor, getFocussedMonitor().getActiveScreen().tag)), Keys.Control);
-            hook(Keys.Space, (()=>sendMessage(Message.LayoutRelativeReverse, Level.monitor, getFocussedMonitor().getActiveScreen().tag)), Keys.Control | Keys.Shift);
+            hook(Keys.Space,
+                 (() => SendMessage(Message.LayoutRelative, Level.monitor, GetFocussedMonitor().GetActiveScreen().tag)),
+                 Keys.Control);
+            hook(Keys.Space,
+                 (() =>
+                  SendMessage(Message.LayoutRelativeReverse, Level.monitor, GetFocussedMonitor().GetActiveScreen().tag)),
+                 Keys.Control | Keys.Shift);
+
             #region TagStuff
 
             int tagIndex = 0;
-            foreach (Keys key in new[] {Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9}) {
+            foreach (Keys key in new[] {Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9}
+                ) {
                 int index = tagIndex++;
-                hook(key, (() => sendMessage(Message.Screen, Level.monitor, index)), Keys.Control);
-                hook(key, (() => sendMessage(Message.TagWindow, Level.monitor, index)), Keys.Shift | Keys.Control);   
-                hook(key, (() => sendMessage(Message.FocusThis, Level.screen, index)));   
-                hook(key, (() => sendMessage(Message.SwitchThis, Level.screen, index)), Keys.Shift);   
-                hook(key, (() => sendMessage(Message.MonitorMoveThis, Level.screen, index)), Keys.Shift | Keys.Alt);   
-                hook(key, (() => sendMessage(Message.MonitorFocus, Level.monitor, index)), Keys.Alt);   
+                hook(key, (() => SendMessage(Message.Screen, Level.monitor, index)), Keys.Control);
+                hook(key, (() => SendMessage(Message.TagWindow, Level.monitor, index)), Keys.Shift | Keys.Control);
+                hook(key, (() => SendMessage(Message.FocusThis, Level.screen, index)));
+                hook(key, (() => SendMessage(Message.SwitchThis, Level.screen, index)), Keys.Shift);
+                hook(key, (() => SendMessage(Message.MonitorMoveThis, Level.screen, index)), Keys.Shift | Keys.Alt);
+                hook(key, (() => SendMessage(Message.MonitorFocus, Level.monitor, index)), Keys.Alt);
             }
+
             #endregion
 
-            globalHook.KeyDown += hook_KeyDown;
-            globalHook.KeyUp += new KeyEventHandler(globalHook_KeyUp);
+            _globalHook.KeyDown += hook_KeyDown;
+            _globalHook.KeyUp += globalHook_KeyUp;
         }
 
-        public static void sendMessage(Message type, Level level, int data) {
+        public static void SendMessage(Message type, Level level, int data) {
             IntPtr focussed = GetForegroundWindow();
             HotkeyMessage message = new HotkeyMessage(type, level, focussed, data);
             if (message.level == Level.global) {
-                catchMessage(message);
+                CatchMessage(message);
             }
             else {
-                getFocussedMonitor().catchMessage(message);
+                GetFocussedMonitor().CatchMessage(message);
             }
         }
 
-        private static void catchMessage(HotkeyMessage message) {
+        private static void CatchMessage(HotkeyMessage message) {
             if (message.message == Message.Close) {
-                Manager.log("Beginning shutdown loop", 10);
-                foreach (Window window in windowList) {
-                    Manager.log("Setting {0} visible and not maximised".With(window), 10);
-                    window.visible = true;
-                    window.maximised = false;
+                Manager.Log("Beginning shutdown loop", 10);
+                foreach (Window window in _windowList) {
+                    Manager.Log("Setting {0} visible and not maximised".With(window), 10);
+                    window.Visible = true;
+                    window.Maximised = false;
                 }
-                Manager.log("Showing taskbar", 10);
+                Manager.Log("Showing taskbar", 10);
                 Taskbar.hidden = false;
                 Application.Exit();
             }
             if (message.message == Message.Restart) {
-                Manager.log("Beginning shutdown loop", 10);
-                foreach (Window window in windowList) {
-                    Manager.log("Setting {0} visible and not maximised".With(window), 10);
-                    window.visible = true;
-                    window.maximised = false;
+                Manager.Log("Beginning shutdown loop", 10);
+                foreach (Window window in _windowList) {
+                    Manager.Log("Setting {0} visible and not maximised".With(window), 10);
+                    window.Visible = true;
+                    window.Maximised = false;
                 }
-                Manager.log("Showing taskbar", 10);
+                Manager.Log("Showing taskbar", 10);
                 Taskbar.hidden = false;
                 Application.Restart();
             }
             if (message.message == Message.Switch) {
-                Manager.log("Toggling taskbar");
+                Manager.Log("Toggling taskbar");
                 Taskbar.hidden = !Taskbar.hidden;
             }
         }
 
-        static void globalHook_KeyUp(object sender, KeyEventArgs e) {
+        private static void globalHook_KeyUp(object sender, KeyEventArgs e) {
             if (e.KeyCode == Keys.LWin) {
                 isWinKeyDown = false;
             }
@@ -250,14 +259,14 @@ namespace TWiME {
         }
 
         private static void hook(Keys key, Action response, Keys modifiers = Keys.None) {
-            globalHook.HookedKeys.Add(key);
+            _globalHook.HookedKeys.Add(key);
             if (!hooked.ContainsKey(modifiers)) {
-                hooked[modifiers]=new Dictionary<Keys, Action>();
+                hooked[modifiers] = new Dictionary<Keys, Action>();
             }
             hooked[modifiers][key] = response;
         }
 
-        static void hook_KeyDown(object sender, KeyEventArgs e) {
+        private static void hook_KeyDown(object sender, KeyEventArgs e) {
             if (e.KeyData == Keys.LWin) {
                 isWinKeyDown = true;
                 return;
@@ -277,12 +286,15 @@ namespace TWiME {
 
             if (isWinKeyDown) {
                 Keys modifier = Keys.None;
-                if (isShiftKeyDown)
+                if (isShiftKeyDown) {
                     modifier |= Keys.Shift;
-                if (isAltKeyDown)
+                }
+                if (isAltKeyDown) {
                     modifier |= Keys.Alt;
-                if (isControlKeyDown)
+                }
+                if (isControlKeyDown) {
                     modifier |= Keys.Control;
+                }
                 e.Handled = true;
                 if (hooked.ContainsKey(modifier)) {
                     if (hooked[modifier].ContainsKey(e.KeyCode)) {
@@ -293,59 +305,53 @@ namespace TWiME {
             }
         }
 
-        [DllImport("user32.dll")]
-        static extern bool PostMessage(IntPtr hWnd, UInt32 Msg, int wParam, int lParam);
-        const UInt32 WM_KEYDOWN = 0x0100;
-        const UInt32 WM_KEYUP = 0x0101;
-        const int VK_LWIN = 0x5B;
-        const int VK_ESCAPE = 0x1B;
 
+        private static bool executedACommandLately;
 
-        private static bool executedACommandLately = false;
-        public static bool isModifierPressed(Keys key, bool keyDown) {
-            Manager.log("==============isModifierPressed running for {0} (KeyDown is {1})".With(key, keyDown), 3);
+        public static bool IsModifierPressed(Keys key, bool keyDown) {
+            Manager.Log("==============isModifierPressed running for {0} (KeyDown is {1})".With(key, keyDown), 3);
             Keys modifier = Keys.None;
             if (key == Keys.LWin && keyDown) {
-                Manager.log("Key is LWin, and we're pressing it. Return.",3);
+                Manager.Log("Key is LWin, and we're pressing it. Return.", 3);
                 return true;
             }
-            else if (key == Keys.LWin) {
-                Manager.log("Key is LWin, and it's coming back up", 3);
+            if (key == Keys.LWin) {
+                Manager.Log("Key is LWin, and it's coming back up", 3);
                 if (executedACommandLately) {
-                    log("We've executed a command this run. Return.", 3);
+                    Log("We've executed a command this run. Return.", 3);
                     executedACommandLately = false;
                     PostMessage((IntPtr) 0xFFFF, WM_KEYDOWN, VK_LWIN, 0); //0xFFFF is HWND_BROADCAST - everything.
                     PostMessage((IntPtr) 0xFFFF, WM_KEYUP, VK_LWIN, 0); //0xFFFF is HWND_BROADCAST - everything.
                     return true;
                 }
-                log("We haven't executed a command this run. Return", 3);
+                Log("We haven't executed a command this run. Return", 3);
                 return false;
             }
 
             if (isWinKeyDown) {
-                log("Windows key state is down - this could be a hotkey", 3);
+                Log("Windows key state is down - this could be a hotkey", 3);
                 if (isShiftKeyDown) {
-                    log("Shift key is down", 3);
+                    Log("Shift key is down", 3);
                     modifier |= Keys.Shift;
                 }
                 if (isAltKeyDown) {
-                    log("Alt key is down", 3);
+                    Log("Alt key is down", 3);
                     modifier |= Keys.Alt;
                 }
                 if (isControlKeyDown) {
-                    log("Control key is down", 3);
+                    Log("Control key is down", 3);
                     modifier |= Keys.Control;
                 }
                 if (hooked.ContainsKey(modifier)) {
-                    log("This modifier combination is a thing", 3);
+                    Log("This modifier combination is a thing", 3);
                     if (hooked[modifier].ContainsKey(key)) {
-                        Manager.log("Blocking Key{2} {1}+{0}.".With(key, modifier, keyDown ? "down" : "up"), 3);
+                        Manager.Log("Blocking Key{2} {1}+{0}.".With(key, modifier, keyDown ? "down" : "up"), 3);
                         executedACommandLately = true;
                         return true;
                     }
                 }
             }
-            Manager.log("Allowing Key{2} {1}+{0}".With(key, modifier, keyDown ? "down" : "up"), 3);
+            Manager.Log("Allowing Key{2} {1}+{0}".With(key, modifier, keyDown ? "down" : "up"), 3);
             return false;
         }
 
@@ -364,25 +370,27 @@ namespace TWiME {
         }
 
         private static IntPtr focusTrack = IntPtr.Zero;
-        static void pollWindows_Tick(object sender, EventArgs e) {
-            globalHook.unhook();
-            globalHook.hook();
+
+        private static void pollWindows_Tick(object sender, EventArgs e) {
+            _globalHook.unhook();
+            _globalHook.hook();
 
             if (GetForegroundWindow() != focusTrack) {
                 focusTrack = GetForegroundWindow();
-                OnWindowFocusChange(getWindowObjectByHandle(focusTrack), new WindowEventArgs(Manager.getFocussedMonitor().screen));
+                OnWindowFocusChange(GetWindowObjectByHandle(focusTrack),
+                                    new WindowEventArgs(Manager.GetFocussedMonitor().Screen));
             }
             Windows windows = new Windows();
             List<Window> allCurrentlyVisibleWindows = new List<Window>();
             List<Window> hiddenNotShownByMeWindows = new List<Window>();
             foreach (Window window in windows) {
                 bool windowIgnored = false;
-                if (!handles.Contains(window.handle)) {
-                    Manager.log("Found a new window! {0} isn't in the main listing".With(window.title));
-                    foreach (KeyValuePair<Match, Rule> kvPair in windowRules) {
+                if (!_handles.Contains(window.handle)) {
+                    Manager.Log("Found a new window! {0} isn't in the main listing".With(window.Title));
+                    foreach (KeyValuePair<WindowMatch, WindowRule> kvPair in windowRules) {
                         if (kvPair.Key.windowMatches(window)) {
-                            Rule rule = kvPair.Value;
-                            if (rule.rule == Rules.ignore) {
+                            WindowRule rule = kvPair.Value;
+                            if (rule.rule == WindowRules.ignore) {
                                 windowIgnored = true;
                             }
                         }
@@ -390,9 +398,9 @@ namespace TWiME {
                     if (windowIgnored) {
                         continue;
                     }
-                    windowList.Add(window);
-                    handles.Add(window.handle);
-                    OnWindowCreate(window, new WindowEventArgs(window.screen));
+                    _windowList.Add(window);
+                    _handles.Add(window.handle);
+                    OnWindowCreate(window, new WindowEventArgs(window.Screen));
                 }
                 if ((from win in hiddenWindows select win.handle).Contains(window.handle)) {
                     hiddenNotShownByMeWindows.Add(window);
@@ -400,37 +408,38 @@ namespace TWiME {
                 allCurrentlyVisibleWindows.Add(window);
             }
             foreach (Window window in hiddenNotShownByMeWindows) {
-                window.activate();
-                var screensWithWindow = (from screen in Manager.getFocussedMonitor().screens where screen.windows.Contains(window) select screen);
+                window.Activate();
+                Window window1 = window;
+                var screensWithWindow =
+                    (from screen in Manager.GetFocussedMonitor().screens
+                     where screen.windows.Contains(window1)
+                     select screen);
                 TagScreen firstScreenWithWindow = screensWithWindow.First();
-                sendMessage(Message.Screen, Level.monitor, firstScreenWithWindow.tag);
+                SendMessage(Message.Screen, Level.monitor, firstScreenWithWindow.tag);
             }
-            int numClosures = windowList.Count - allCurrentlyVisibleWindows.Count;
-            Manager.log("Detecting {0} window closure{1}".With(numClosures, numClosures==1? "s" : ""), 1);
-            int numFound = 0;
-            foreach (Window window in new List<Window>(windowList)) {
+            foreach (Window window in new List<Window>(_windowList)) {
                 if (!allCurrentlyVisibleWindows.Contains(window)) {
-                    Manager.log("{0} is no longer open".With(window.title), 1);
+                    Manager.Log("{0} is no longer open".With(window.Title), 1);
                     if (!hiddenWindows.Contains(window)) {
-                        Manager.log("{0} is also not hidden - it's closed".With(window.title));
-                        windowList.Remove(window);
-                        handles.Remove(window.handle);
+                        Manager.Log("{0} is also not hidden - it's closed".With(window.Title));
+                        _windowList.Remove(window);
+                        _handles.Remove(window.handle);
                         //Screen windowScreen = Screen.FromHandle(window.handle);
-                        OnWindowDestroy(window, new WindowEventArgs(window.screen));
+                        OnWindowDestroy(window, new WindowEventArgs(window.Screen));
                     }
                     else {
-                        Manager.log("{0} is just hidden, not closed".With(window.title), 1);
+                        Manager.Log("{0} is just hidden, not closed".With(window.Title), 1);
                     }
                 }
             }
         }
 
-        public static int getFocussedMonitorIndex() {
+        public static int GetFocussedMonitorIndex() {
             IntPtr handle = GetForegroundWindow();
             Screen screen = Screen.FromHandle(handle);
             int index = 0;
             foreach (Monitor monitor in monitors) {
-                if (monitor.name == screen.DeviceName) {
+                if (monitor.Name == screen.DeviceName) {
                     return index;
                 }
                 index++;
@@ -438,20 +447,12 @@ namespace TWiME {
             return -1;
         }
 
-        public static Monitor getFocussedMonitor() {
-            return monitors[getFocussedMonitorIndex()];
+        public static Monitor GetFocussedMonitor() {
+            return monitors[GetFocussedMonitorIndex()];
         }
 
-        public static IntPtr getPreviousFocussedWindowHandle() {
-            return GetWindow(Manager.GetForegroundWindow(), GetWindow_Cmd.GW_HWNDNEXT);
-        }
-        public static Window getWindowObjectByHandle(IntPtr handle) {
-            foreach (Window window in windowList) {
-                if (window.handle == handle) {
-                    return window;
-                }
-            }
-            return null;
+        public static Window GetWindowObjectByHandle(IntPtr handle) {
+            return _windowList.FirstOrDefault(window => window.handle == handle);
         }
 
         public delegate void WindowEventHandler(object sender, WindowEventArgs args);
@@ -459,6 +460,7 @@ namespace TWiME {
         public static event WindowEventHandler WindowCreate;
         public static event WindowEventHandler WindowDestroy;
         public static event WindowEventHandler WindowFocusChange;
+
         private static void OnWindowCreate(object sender, WindowEventArgs args) {
             if (WindowCreate != null) {
                 WindowCreate(sender, args);
@@ -470,6 +472,7 @@ namespace TWiME {
                 WindowDestroy(sender, args);
             }
         }
+
         public static void OnWindowFocusChange(object sender, WindowEventArgs args) {
             if (WindowFocusChange != null) {
                 WindowFocusChange(sender, args);

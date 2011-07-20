@@ -9,23 +9,28 @@ using System.Text;
 using System.Windows.Forms;
 
 namespace TWiME {
-    class Windows : IEnumerable, IEnumerator {
+    internal class Windows : IEnumerable, IEnumerator {
         [DllImport("user32.dll")]
         private static extern
-            int GetWindowText(int hWnd, StringBuilder title, int size);        
+            int GetWindowText(int hWnd, StringBuilder title, int size);
+
         [DllImport("user32.dll")]
         private static extern
             int GetClassName(int hWnd, StringBuilder className, int size);
+
         [DllImport("user32.dll")]
         private static extern
             int EnumWindows(EnumWindowsProc ewp, int lParam);
+
         [DllImport("user32.dll")]
         private static extern
             bool IsWindowVisible(int hWnd);
+
         [DllImport("user32.dll", SetLastError = true)]
-        static extern uint GetWindowThreadProcessId(int hWnd, out uint lpdwProcessId);
+        private static extern uint GetWindowThreadProcessId(int hWnd, out uint lpdwProcessId);
+
         [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
-        static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
+        private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
 
         private const long WS_POPUP = 0x80000000L;
         private const long WS_CAPTION = 0x00C00000L;
@@ -34,12 +39,12 @@ namespace TWiME {
 
         private int _position = -1;
 
-        List<Window> windowList = new List<Window>();
-        List<int> handleList = new List<int>();
+        private List<Window> windowList = new List<Window>();
+        private List<int> handleList = new List<int>();
 
-        private bool _showInvisible = false;
-        private bool _showNoTitle = false;
-        private bool _justHandles = false;
+        private bool _showInvisible;
+        private bool _showNoTitle;
+        private bool _justHandles;
 
         private List<IntPtr> myHandles = new List<IntPtr>();
 
@@ -56,14 +61,16 @@ namespace TWiME {
 
             enumerateWindows();
         }
+
         private void enumerateWindows() {
-            EnumWindowsProc callback = new EnumWindowsProc(processWindow);
+            EnumWindowsProc callback = processWindow;
             EnumWindows(callback, 0);
         }
 
         private bool processWindow(int handle, int lparam) {
-            if (_showInvisible == false && !IsWindowVisible(handle))
+            if (_showInvisible == false && !IsWindowVisible(handle)) {
                 return (true);
+            }
             if (_justHandles) {
                 handleList.Add(handle);
                 return true;
@@ -75,22 +82,23 @@ namespace TWiME {
             GetWindowText(handle, title, 256);
             GetClassName(handle, className, 256);
 
-            if (_showNoTitle == false && title.Length == 0)
+            if (_showNoTitle == false && title.Length == 0) {
                 return true;
-            if (myHandles.Contains((IntPtr)handle)) {
+            }
+            if (myHandles.Contains((IntPtr) handle)) {
                 return true;
             }
             IntPtr style = GetWindowLongPtr((IntPtr) handle, -16); //-16 is GWL_STYLE
-            if (((long)style & WS_POPUP) == WS_POPUP) {
+            if (((long) style & WS_POPUP) == WS_POPUP) {
                 return true;
             }
-            if (((long)style & WS_CAPTION) != WS_CAPTION) {
+            if (((long) style & WS_CAPTION) != WS_CAPTION) {
                 return true;
             }
 
             if (!ignoreClasses.Contains(className.ToString())) {
                 windowList.Add(new Window(title.ToString(), (IntPtr) handle,
-                                          module.ToString(), className.ToString(), IsWindowVisible(handle)));
+                                          module, className.ToString(), IsWindowVisible(handle)));
             }
 
             return true;
@@ -100,7 +108,7 @@ namespace TWiME {
             uint processID;
             if (GetWindowThreadProcessId(handle, out processID) > 0) {
                 try {
-                    return Process.GetProcessById((int)processID).MainModule.FileName;
+                    return Process.GetProcessById((int) processID).MainModule.FileName;
                 }
                 catch (Win32Exception) {
                     return "";

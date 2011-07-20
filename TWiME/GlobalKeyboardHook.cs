@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Extensions;
@@ -10,8 +9,9 @@ namespace TWiME {
     /// A class that manages a global low level keyboard hook
     /// http://www.codeproject.com/KB/cs/CSLLKeyboardHook.aspx
     /// </summary>
-    class globalKeyboardHook {
+    internal class globalKeyboardHook {
         #region Constant, Structure and Delegate Definitions
+
         /// <summary>
         /// defines the callback type for the hook
         /// </summary>
@@ -27,36 +27,44 @@ namespace TWiME {
             public int dwExtraInfo;
         }
 
-        const int WH_KEYBOARD_LL = 13;
-        const int WM_KEYDOWN = 0x100;
-        const int WM_KEYUP = 0x101;
-        const int WM_SYSKEYDOWN = 0x104;
-        const int WM_SYSKEYUP = 0x105;
+        private const int WH_KEYBOARD_LL = 13;
+        private const int WM_KEYDOWN = 0x100;
+        private const int WM_KEYUP = 0x101;
+        private const int WM_SYSKEYDOWN = 0x104;
+        private const int WM_SYSKEYUP = 0x105;
+
         #endregion
 
         #region Instance Variables
+
         /// <summary>
         /// The collections of keys to watch for
         /// </summary>
         public List<Keys> HookedKeys = new List<Keys>();
+
         /// <summary>
         /// Handle to the hook, need this to unhook and call the next hook
         /// </summary>
-        IntPtr hhook = IntPtr.Zero;
+        private IntPtr hhook = IntPtr.Zero;
+
         #endregion
 
         #region Events
+
         /// <summary>
         /// Occurs when one of the hooked keys is pressed
         /// </summary>
         public event KeyEventHandler KeyDown;
+
         /// <summary>
         /// Occurs when one of the hooked keys is released
         /// </summary>
         public event KeyEventHandler KeyUp;
+
         #endregion
 
         #region Constructors and Destructors
+
         /// <summary>
         /// Initializes a new instance of the <see cref="globalKeyboardHook"/> class and installs the keyboard hook.
         /// </summary>
@@ -72,9 +80,11 @@ namespace TWiME {
         ~globalKeyboardHook() {
             unhook();
         }
+
         #endregion
 
         #region Public Methods
+
         /// <summary>
         /// Installs the global hook
         /// </summary>
@@ -91,6 +101,7 @@ namespace TWiME {
         }
 
         private const int KF_UP = 0x8000;
+
         /// <summary>
         /// The callback for the keyboard hook
         /// </summary>
@@ -100,28 +111,30 @@ namespace TWiME {
         /// <returns></returns>
         public int hookProc(int code, int wParam, ref keyboardHookStruct lParam) {
             if (code >= 0) {
-                Keys key = (Keys)lParam.vkCode;
+                Keys key = (Keys) lParam.vkCode;
                 if (HookedKeys.Contains(key)) {
-                    bool blockKeyPress = Manager.isModifierPressed(key, (lParam.flags & (KF_UP >> 8)) == 0);
+                    bool blockKeyPress = Manager.IsModifierPressed(key, (lParam.flags & (KF_UP >> 8)) == 0);
                     KeyEventArgs kea = new KeyEventArgs(key);
                     if ((wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) && (KeyDown != null)) {
-                        Manager.log("Down: {0}".With(lParam.vkCode), 1);
+                        Manager.Log("Down: {0}".With(lParam.vkCode), 1);
                         KeyDown(this, kea);
                     }
                     else if ((wParam == WM_KEYUP || wParam == WM_SYSKEYUP) && (KeyUp != null)) {
-                        Manager.log("Up: {0}".With(lParam.vkCode), 1);
+                        Manager.Log("Up: {0}".With(lParam.vkCode), 1);
                         KeyUp(this, kea);
                     }
-                    if (blockKeyPress)
+                    if (blockKeyPress) {
                         return 1;
-
+                    }
                 }
             }
             return CallNextHookEx(hhook, code, wParam, ref lParam);
         }
+
         #endregion
 
         #region DLL imports
+
         /// <summary>
         /// Sets the windows hook, do the desired event, one of hInstance or threadId must be non-null
         /// </summary>
@@ -131,7 +144,8 @@ namespace TWiME {
         /// <param name="threadId">The thread you want to attach the event to, can be null</param>
         /// <returns>a handle to the desired hook</returns>
         [DllImport("user32.dll")]
-        static extern IntPtr SetWindowsHookEx(int idHook, keyboardHookProc callback, IntPtr hInstance, uint threadId);
+        private static extern IntPtr SetWindowsHookEx(int idHook, keyboardHookProc callback, IntPtr hInstance,
+                                                      uint threadId);
 
         /// <summary>
         /// Unhooks the windows hook.
@@ -139,7 +153,7 @@ namespace TWiME {
         /// <param name="hInstance">The hook handle that was returned from SetWindowsHookEx</param>
         /// <returns>True if successful, false otherwise</returns>
         [DllImport("user32.dll")]
-        static extern bool UnhookWindowsHookEx(IntPtr hInstance);
+        private static extern bool UnhookWindowsHookEx(IntPtr hInstance);
 
         /// <summary>
         /// Calls the next hook.
@@ -150,7 +164,7 @@ namespace TWiME {
         /// <param name="lParam">The lparam.</param>
         /// <returns></returns>
         [DllImport("user32.dll")]
-        static extern int CallNextHookEx(IntPtr idHook, int nCode, int wParam, ref keyboardHookStruct lParam);
+        private static extern int CallNextHookEx(IntPtr idHook, int nCode, int wParam, ref keyboardHookStruct lParam);
 
         /// <summary>
         /// Loads the library.
@@ -158,7 +172,8 @@ namespace TWiME {
         /// <param name="lpFileName">Name of the library</param>
         /// <returns>A handle to the library</returns>
         [DllImport("kernel32.dll")]
-        static extern IntPtr LoadLibrary(string lpFileName);
+        private static extern IntPtr LoadLibrary(string lpFileName);
+
         #endregion
     }
 }

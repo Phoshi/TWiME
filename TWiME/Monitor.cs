@@ -1,46 +1,48 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 
 namespace TWiME {
     public class Monitor {
-        public Rectangle _controlled { get; internal set; }
-        public Bar bar;
+        public Rectangle Controlled { get; internal set; }
+        public Bar Bar;
         private TagScreen[] tagScreens = new TagScreen[9];
-        public TagScreen[] screens { get { return tagScreens; } }
-        public string name { get; internal set; }
-        public int tagEnabled = 0;
-        public Screen screen { get; internal set; }
+
+        public TagScreen[] screens {
+            get { return tagScreens; }
+        }
+
+        public string Name { get; internal set; }
+        public int EnabledTag;
+        public Screen Screen { get; internal set; }
+
         public Monitor(Screen newscreen) {
-            screen = newscreen;
+            EnabledTag = 0;
+            Screen = newscreen;
             createBar();
-            Rectangle temp = screen.WorkingArea;
-            temp.Height = screen.Bounds.Height - bar.Height;
-            temp.Y = bar.Bottom;
-            _controlled = temp;
+            Rectangle temp = Screen.WorkingArea;
+            temp.Height = Screen.Bounds.Height - Bar.Height;
+            temp.Y = Bar.Bottom;
+            Controlled = temp;
             createTagScreens();
-            name = screen.DeviceName;
+            Name = Screen.DeviceName;
 
-            Manager.WindowCreate += new Manager.WindowEventHandler(Manager_WindowCreate);
-            Manager.WindowDestroy += new Manager.WindowEventHandler(Manager_WindowDestroy);
-
+            Manager.WindowCreate += Manager_WindowCreate;
+            Manager.WindowDestroy += Manager_WindowDestroy;
         }
 
-        void Manager_WindowDestroy(object sender, WindowEventArgs args) {
-            bar.redraw();
+        private void Manager_WindowDestroy(object sender, WindowEventArgs args) {
+            Bar.Redraw();
         }
 
-        void Manager_WindowCreate(object sender, WindowEventArgs args) {
-            bar.redraw();
+        private void Manager_WindowCreate(object sender, WindowEventArgs args) {
+            Bar.Redraw();
         }
 
         private void createBar() {
-            bar = new Bar(this);
-            bar.Show();
+            Bar = new Bar(this);
+            Bar.Show();
         }
 
         private void createTagScreens() {
@@ -49,19 +51,19 @@ namespace TWiME {
             }
         }
 
-        public void catchMessage(HotkeyMessage message) {
+        public void CatchMessage(HotkeyMessage message) {
             if (message.level == Level.monitor) {
                 if (message.message == Message.MonitorSwitch) {
-                    int newIndex = Manager.getFocussedMonitorIndex() + message.data;
+                    int newIndex = Manager.GetFocussedMonitorIndex() + message.data;
                     if (newIndex < 0) {
                         newIndex = Manager.monitors.Count - 1;
                     }
                     if (newIndex >= Manager.monitors.Count) {
                         newIndex = 0;
                     }
-                    Console.WriteLine("Switching to window "+Manager.monitors[newIndex].name);
+                    Console.WriteLine("Switching to window {0}", Manager.monitors[newIndex].Name);
                     Manager.monitors[newIndex].activate();
-                    Manager.monitors[newIndex].bar.redraw();
+                    Manager.monitors[newIndex].Bar.Redraw();
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.MonitorFocus) {
@@ -69,73 +71,73 @@ namespace TWiME {
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.Screen) {
-                    if (tagEnabled != message.data) {
+                    if (EnabledTag != message.data) {
                         tagScreens[message.data].enable();
-                        tagScreens[tagEnabled].disable(tagScreens[message.data]);
-                        bar.bar.activate();
-                        tagEnabled = message.data;
+                        tagScreens[EnabledTag].disable(tagScreens[message.data]);
+                        Bar.bar.Activate();
+                        EnabledTag = message.data;
                         Manager.CenterMouseOnActiveWindow();
                     }
                 }
                 if (message.message == Message.ScreenRelative) {
-                    int newIndex = this.tagEnabled + message.data;
+                    int newIndex = this.EnabledTag + message.data;
                     if (newIndex < 0) {
                         newIndex = tagScreens.Count() - 1;
                     }
                     else if (newIndex >= tagScreens.Count()) {
                         newIndex = 0;
                     }
-                    catchMessage(new HotkeyMessage(Message.Screen, Level.monitor, message.handle, newIndex));
+                    CatchMessage(new HotkeyMessage(Message.Screen, Level.monitor, message.handle, newIndex));
                 }
                 if (message.message == Message.TagWindow) {
-                    if (getActiveScreen().getFocusedWindow().Equals(bar.bar)) {
+                    if (GetActiveScreen().getFocusedWindow().Equals(Bar.bar)) {
                         return;
                     }
-                    if (tagScreens[message.data].windows.Contains(getActiveScreen().getFocusedWindow())) {
-                        Window focussedWindow = getActiveScreen().getFocusedWindow();
+                    if (tagScreens[message.data].windows.Contains(GetActiveScreen().getFocusedWindow())) {
+                        Window focussedWindow = GetActiveScreen().getFocusedWindow();
                         tagScreens[message.data].throwWindow(focussedWindow);
-                        focussedWindow.visible = false;
-                        if (message.data == tagEnabled) {
-                            getActiveScreen().enable();
+                        focussedWindow.Visible = false;
+                        if (message.data == EnabledTag) {
+                            GetActiveScreen().enable();
                         }
                     }
                     else {
-                        tagScreens[message.data].catchWindow(getActiveScreen().getFocusedWindow());
+                        tagScreens[message.data].CatchWindow(GetActiveScreen().getFocusedWindow());
                     }
-                    getActiveScreen().assertLayout();
+                    GetActiveScreen().assertLayout();
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.SwapTagWindow) {
-                    if (getActiveScreen().getFocusedWindow().Equals(bar.bar)) {
+                    if (GetActiveScreen().getFocusedWindow().Equals(Bar.bar)) {
                         return;
                     }
-                    Window thrown = getActiveScreen().throwWindow(getActiveScreen().getFocusedWindow());
-                    getActiveScreen().assertLayout();
-                    tagScreens[message.data].catchWindow(thrown);
-                    thrown.visible = false;
+                    Window thrown = GetActiveScreen().throwWindow(GetActiveScreen().getFocusedWindow());
+                    GetActiveScreen().assertLayout();
+                    tagScreens[message.data].CatchWindow(thrown);
+                    thrown.Visible = false;
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.SwapTagWindowRelative) {
-                    if (getActiveScreen().getFocusedWindow().Equals(bar.bar)) {
+                    if (GetActiveScreen().getFocusedWindow().Equals(Bar.bar)) {
                         return;
                     }
-                    int newIndex = getActiveScreen().tag + message.data;
+                    int newIndex = GetActiveScreen().tag + message.data;
                     if (newIndex < 0) {
                         newIndex = tagScreens.Count() - 1;
                     }
                     else if (newIndex >= tagScreens.Count()) {
                         newIndex = 0;
                     }
-                    catchMessage(new HotkeyMessage(Message.SwapTagWindow, Level.monitor, message.handle, newIndex));
-                    catchMessage(new HotkeyMessage(Message.Screen, Level.monitor, message.handle, newIndex));
+                    CatchMessage(new HotkeyMessage(Message.SwapTagWindow, Level.monitor, message.handle, newIndex));
+                    CatchMessage(new HotkeyMessage(Message.Screen, Level.monitor, message.handle, newIndex));
                 }
                 if (message.message == Message.Layout) {
                     int newIndex = message.data;
                     if (newIndex < Manager.layouts.Count) {
-                        TagScreen switchScreen = this.getActiveScreen();
+                        TagScreen switchScreen = this.GetActiveScreen();
                         switchScreen.activeLayout = newIndex;
                         switchScreen.initLayout();
-                        if (switchScreen.tag == tagEnabled) {
+                        if (switchScreen.tag == EnabledTag) {
                             switchScreen.assertLayout();
                             Manager.CenterMouseOnActiveWindow();
                         }
@@ -152,7 +154,7 @@ namespace TWiME {
                     }
                     switchScreen.activeLayout = newIndex;
                     switchScreen.initLayout();
-                    if (switchScreen.tag == tagEnabled) {
+                    if (switchScreen.tag == EnabledTag) {
                         switchScreen.assertLayout();
                         Manager.CenterMouseOnActiveWindow();
                     }
@@ -168,44 +170,61 @@ namespace TWiME {
                     }
                     switchScreen.activeLayout = newIndex;
                     switchScreen.initLayout();
-                    if (switchScreen.tag == tagEnabled) {
+                    if (switchScreen.tag == EnabledTag) {
                         switchScreen.assertLayout();
                         Manager.CenterMouseOnActiveWindow();
                     }
                 }
-
-
             }
             else {
-                tagScreens[tagEnabled].catchMessage(message);
+                tagScreens[EnabledTag].catchMessage(message);
             }
-            bar.redraw();
+            Bar.Redraw();
         }
 
         private void activate() {
-            getActiveScreen().activate();
+            GetActiveScreen().Activate();
         }
 
-        public TagScreen getActiveScreen() {
-            TagScreen screen = tagScreens[tagEnabled];
-            return screen;
+        public TagScreen GetActiveScreen() {
+            TagScreen activeScreen = tagScreens[EnabledTag];
+            return activeScreen;
         }
+
         public override bool Equals(object obj) {
-            if (((Monitor)obj).name == name) {
-                return true;
-            }
-            else {
+            if (ReferenceEquals(null, obj)) {
                 return false;
             }
-            //return base.Equals(obj);
+            if (ReferenceEquals(this, obj)) {
+                return true;
+            }
+            if (obj.GetType() != typeof (Monitor)) {
+                return false;
+            }
+            return Equals((Monitor) obj);
         }
-        public void catchWindow(Window window) {
+
+        public void CatchWindow(Window window) {
             Rectangle location = window.Location;
-            location.X = _controlled.X;
-            location.Y = _controlled.Y;
+            location.X = Controlled.X;
+            location.Y = Controlled.Y;
             window.Location = location;
-            getActiveScreen().catchWindow(window);
-            bar.redraw();
+            GetActiveScreen().CatchWindow(window);
+            Bar.Redraw();
+        }
+
+        public bool Equals(Monitor other) {
+            if (ReferenceEquals(null, other)) {
+                return false;
+            }
+            if (ReferenceEquals(this, other)) {
+                return true;
+            }
+            return Equals(other.Name, Name);
+        }
+
+        public override int GetHashCode() {
+            return (Name != null ? Name.GetHashCode() : 0);
         }
     }
 }

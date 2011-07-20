@@ -1,32 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 
 namespace TWiME {
-    class SingleWindowLayout : Layout, ILayout {
-        private string _name = "Single Window";
-        private Image _symbol = null;
+    internal class SingleWindowLayout : Layout, ILayout {
+        private const string _name = "Single Window";
+        private Image _symbol;
         private Rectangle _owned;
         private List<Window> _windowList;
-        public float splitter = 0.6f; //Don't use this one here
-        public float vsplitter = 0.6f;
+        private float _splitter = 0.6f; //Don't use this one here
+        private float _vSplitter = 0.6f;
         private TagScreen _parent;
+
         public SingleWindowLayout(List<Window> windowList, Rectangle area, TagScreen parent) {
             _windowList = windowList;
             _owned = area;
             _parent = parent;
 
-            splitter =
-                float.Parse(Manager.settings.ReadSettingOrDefault(0.5f, parent.parent.screen.DeviceName.Replace(".", ""),
+            _splitter =
+                float.Parse(Manager.settings.ReadSettingOrDefault(0.5f, parent.parent.Screen.DeviceName.Replace(".", ""),
                                                                   parent.tag.ToString(), "Splitter"));
-            vsplitter =
-                float.Parse(Manager.settings.ReadSettingOrDefault(0.5f, parent.parent.screen.DeviceName.Replace(".", ""),
+            _vSplitter =
+                float.Parse(Manager.settings.ReadSettingOrDefault(0.5f, parent.parent.Screen.DeviceName.Replace(".", ""),
                                                                   parent.tag.ToString(), "VSplitter"));
         }
 
-        public new void updateWindowList(List<Window> windowList) {
+        public new void UpdateWindowList(List<Window> windowList) {
             _windowList = windowList;
         }
 
@@ -36,12 +35,11 @@ namespace TWiME {
             rect.Width -= 1;
             foreach (Window window in _windowList) {
                 layouts[window] = rect;
-
             }
             return layouts;
         }
 
-        public new void assert() {
+        public new void Assert() {
             var windows = generateLayout();
             List<Window> workingList = new List<Window>(_windowList);
             workingList.Reverse();
@@ -51,41 +49,40 @@ namespace TWiME {
         }
 
 
-        public new string name() {
+        public new string Name() {
             return _name;
         }
 
-        public new Image symbol() {
+        public new Image Symbol() {
             throw new NotImplementedException();
         }
-        public new void moveSplitter(float offset, bool vertical = false) {
-            float newSplitter = (vertical ? vsplitter : splitter) + offset;
+
+        public new void MoveSplitter(float offset, bool vertical = false) {
+            float newSplitter = (vertical ? _vSplitter : _splitter) + offset;
             if (newSplitter < 0) {
                 newSplitter = 0;
             }
             if (newSplitter > 1) {
                 newSplitter = 1;
             }
-            if (!vertical)
-                splitter = newSplitter;
-            else {
-                vsplitter = newSplitter;
-            }
-            assert();
-        }
-        public new float getSplitter(bool vertical = false) {
-            if (vertical) {
-                return vsplitter;
+            if (!vertical) {
+                _splitter = newSplitter;
             }
             else {
-                return splitter;
+                _vSplitter = newSplitter;
             }
+            Assert();
         }
+
+        public new float GetSplitter(bool vertical = false) {
+            return vertical ? _vSplitter : _splitter;
+        }
+
         private Image generateStateImage(Size dimensions) {
             Bitmap state = new Bitmap(dimensions.Width, dimensions.Height);
             Graphics gr = Graphics.FromImage(state);
             //1680 * x = 40
-            float scaleFactor = (float)(dimensions.Width) / (_owned.Width);
+            float scaleFactor = (float) (dimensions.Width) / (_owned.Width);
             foreach (KeyValuePair<Window, Rectangle> pair in generateLayout()) {
                 Rectangle newRect = pair.Value;
                 if (newRect.X < 0) {
@@ -94,10 +91,10 @@ namespace TWiME {
                 if (newRect.Y < 0) {
                     newRect.Offset(0, -newRect.Y);
                 }
-                newRect.Width = (int)(newRect.Width * scaleFactor);
-                newRect.Height = (int)(newRect.Height * scaleFactor);
-                newRect.X = (int)(newRect.X * scaleFactor);
-                newRect.Y = (int)(newRect.Y * scaleFactor);
+                newRect.Width = (int) (newRect.Width * scaleFactor);
+                newRect.Height = (int) (newRect.Height * scaleFactor);
+                newRect.X = (int) (newRect.X * scaleFactor);
+                newRect.Y = (int) (newRect.Y * scaleFactor);
                 Color winColor = Color.FromArgb(192, Color.White);
                 if (_parent.getFocusedWindow() == pair.Key) {
                     winColor = Color.FromArgb(255, Color.LightGray);
@@ -107,9 +104,9 @@ namespace TWiME {
             }
             gr.Dispose();
             return state;
-
         }
-        public new Image stateImage(Size dimensions) {
+
+        public new Image StateImage(Size dimensions) {
             _symbol = generateStateImage(dimensions);
             return _symbol;
         }

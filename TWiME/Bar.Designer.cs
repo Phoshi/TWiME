@@ -1,5 +1,5 @@
 ﻿namespace TWiME {
-    partial class Bar {
+    sealed partial class Bar {
         /// <summary>
         /// Required designer variable.
         /// </summary>

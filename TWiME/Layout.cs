@@ -1,45 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 
 namespace TWiME {
     internal interface ILayout {
-        void assert();
-        string name();
-        Image symbol();
-        Image stateImage(Size dimensions);
-        void updateWindowList(List<Window> newList);
-        void moveSplitter(float offset, bool vertical = false);
-        float getSplitter(bool vertical = false);
+        void Assert();
+        string Name();
+        Image Symbol();
+        Image StateImage(Size dimensions);
+        void UpdateWindowList(List<Window> newList);
+        void MoveSplitter(float offset, bool vertical = false);
+        float GetSplitter(bool vertical = false);
     }
-    class Layout : ILayout {
-        public void assert() {
+
+    internal class Layout : ILayout {
+        public void Assert() {
             throw new NotImplementedException();
         }
 
-        public string name() {
+        public string Name() {
             throw new NotImplementedException();
         }
 
-        public Image symbol() {
+        public Image Symbol() {
             throw new NotImplementedException();
         }
 
-        public Image stateImage(Size dimensions) {
+        public Image StateImage(Size dimensions) {
             throw new NotImplementedException();
         }
 
-        public void updateWindowList(List<Window> newList) {
+        public void UpdateWindowList(List<Window> newList) {
             throw new NotImplementedException();
         }
 
-        public void moveSplitter(float offset, bool vertical = false) {
+        public void MoveSplitter(float offset, bool vertical = false) {
             throw new NotImplementedException();
         }
 
-        public float getSplitter(bool vertical = false) {
+        public float GetSplitter(bool vertical = false) {
             throw new NotImplementedException();
         }
     }

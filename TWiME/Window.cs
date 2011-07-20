@@ -1,59 +1,55 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using Timer = System.Windows.Forms.Timer;
 
 namespace TWiME {
     public class Window {
-
         [DllImport("user32.dll")]
         private static extern
             bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
-        [DllImport("user32.dll")]
-        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
         [DllImport("user32.dll")]
         private static extern
             bool SetForegroundWindow(IntPtr hWnd);
+
         [DllImport("user32.dll")]
         private static extern
             bool IsIconic(IntPtr hWnd);
+
         [DllImport("user32.dll")]
         private static extern
             bool IsZoomed(IntPtr hWnd);
+
         [DllImport("user32.dll")]
         private static extern
             IntPtr GetForegroundWindow();
+
         [DllImport("user32.dll")]
         private static extern
-            IntPtr GetWindowThreadProcessId(IntPtr hWnd, IntPtr ProcessId);        
-        [DllImport("user32.dll")]
-        private static extern
-            uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+            IntPtr GetWindowThreadProcessId(IntPtr hWnd, IntPtr ProcessId);
+
         [DllImport("user32.dll")]
         private static extern
             bool AttachThreadInput(IntPtr idAttach, IntPtr idAttachTo, bool fAttach);
+
         [DllImport("user32.dll")]
         private static extern
             int GetWindowText(IntPtr hWnd, StringBuilder title, int size);
-        [DllImport("user32.dll")]
-        private static extern
-            int GetClassName(IntPtr hWnd, StringBuilder className, int size);
-        [DllImport("User32.dll", ExactSpelling = true,
-            CharSet = System.Runtime.InteropServices.CharSet.Auto)]
-        private static extern bool MoveWindow
-            (IntPtr hWnd, int x, int y, int cx, int cy, bool repaint);
+
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool GetWindowRect(IntPtr hwnd, out RECT lpRect);
+
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy,
+                                                uint uFlags);
+
         [DllImport("user32.dll")]
-        static extern bool BringWindowToTop(IntPtr hWnd);
+        private static extern bool BringWindowToTop(IntPtr hWnd);
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool SystemParametersInfo(uint uiAction, uint uiParam, IntPtr pvParam, uint fWinIni);
@@ -62,14 +58,14 @@ namespace TWiME {
         private static extern IntPtr GetWindow(IntPtr handle, uint command);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, int wParam, IntPtr lParam);
+        private static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, int wParam, IntPtr lParam);
+
         public const int WM_SYSCOMMAND = 0x0112;
         public const int SC_CLOSE = 0xF060;
 
 
-
         [StructLayout(LayoutKind.Sequential)]
-        public struct RECT{
+        public struct RECT {
             public int _Left;
             public int _Top;
             public int _Right;
@@ -107,10 +103,8 @@ namespace TWiME {
         public const int SWP_SHOWWINDOW = 0x0040;
 
 
-
         private const uint SPI_GETFOREGROUNDLOCKTIMEOUT = 0x2000;
         private const uint SPI_SETFOREGROUNDLOCKTIMEOUT = 0x2001;
-        private const int SPIF_SENDCHANGE = 0x2;
 
 
         private IntPtr _handle;
@@ -122,29 +116,41 @@ namespace TWiME {
         private Rectangle _location;
         private long lastTitleUpdate = DateTime.Now.Ticks;
 
-        public IntPtr handle { get { return _handle; } }
-        public string title { get {
-            if (lastTitleUpdate < (DateTime.Now.Ticks - new TimeSpan(0,0,0,10).Ticks)) { //If the window title is more than 10 seconds old
-                updateTitle();
-            }
-            return _title;
-        } }
+        public IntPtr handle {
+            get { return _handle; }
+        }
 
-        public void updateTitle() {
-            StringBuilder title = new StringBuilder(256);
-            GetWindowText(_handle, title, 256);
-            _title = title.ToString();
+        public string Title {
+            get {
+                if (lastTitleUpdate < (DateTime.Now.Ticks - new TimeSpan(0, 0, 0, 10).Ticks)) {
+                    //If the window title is more than 10 seconds old
+                    UpdateTitle();
+                }
+                return _title;
+            }
+        }
+
+        public void UpdateTitle() {
+            StringBuilder windowTitle = new StringBuilder(256);
+            GetWindowText(_handle, windowTitle, 256);
+            _title = windowTitle.ToString();
             lastTitleUpdate = DateTime.Now.Ticks;
         }
 
-        public string process { get { return _process; } }
-        public string className { get { return _className; } }
-        public Screen screen { get { return Screen.FromHandle(handle); } }
+        public string Process {
+            get { return _process; }
+        }
 
-        public bool visible { 
-            get {
-                return _visible;
-            } 
+        public string ClassName {
+            get { return _className; }
+        }
+
+        public Screen Screen {
+            get { return Screen.FromHandle(handle); }
+        }
+
+        public bool Visible {
+            get { return _visible; }
 
             set {
                 if (value) {
@@ -172,13 +178,9 @@ namespace TWiME {
         }
 
         public override string ToString() {
-            if (string.IsNullOrEmpty(title)) {
-                return _process;
-            }
-            else {
-                return _title;
-            }
+            return string.IsNullOrEmpty(Title) ? _process : _title;
         }
+
         public override bool Equals(object obj) {
             if (ReferenceEquals(null, obj)) {
                 return false;
@@ -195,11 +197,11 @@ namespace TWiME {
         /// <summary>
         /// Sets window focus. Repeatedly. 
         /// </summary>
-        public void activate() {
+        public void Activate() {
             if (_handle == GetForegroundWindow()) {
                 return;
             }
-            
+
             if (IsIconic(_handle)) {
                 ShowWindowAsync(_handle, SW_RESTORE);
             }
@@ -208,7 +210,7 @@ namespace TWiME {
             bool meAttachedToFore, foreAttachedToTarget;
 
             IntPtr foregroundThread = GetWindowThreadProcessId(GetForegroundWindow(), IntPtr.Zero);
-            IntPtr thisThread = (IntPtr)Thread.CurrentThread.ManagedThreadId;
+            IntPtr thisThread = (IntPtr) Thread.CurrentThread.ManagedThreadId;
             IntPtr targetThread = GetWindowThreadProcessId(_handle, IntPtr.Zero);
 
             meAttachedToFore = AttachThreadInput(thisThread, foregroundThread, true);
@@ -221,10 +223,10 @@ namespace TWiME {
                     break;
                 }
             }
-                
-                //SetForegroundWindow(_handle);
-                AttachThreadInput(foregroundThread, thisThread, false);
-                AttachThreadInput(foregroundThread, targetThread, false);
+
+            //SetForegroundWindow(_handle);
+            AttachThreadInput(foregroundThread, thisThread, false);
+            AttachThreadInput(foregroundThread, targetThread, false);
 
             if (GetForegroundWindow() != _handle) {
                 // Code by Daniel P. Stasinski
@@ -243,7 +245,6 @@ namespace TWiME {
             if (foreAttachedToTarget) {
                 AttachThreadInput(foregroundThread, targetThread, false);
             }
-
         }
 
         private IntPtr attemptSetForeground(IntPtr target, IntPtr foreground) {
@@ -253,22 +254,15 @@ namespace TWiME {
             if (newFore == target) {
                 return target;
             }
-            if (newFore != foreground && target == GetWindow(newFore, 4)) { //4 is GW_OWNER - the window parent
+            if (newFore != foreground && target == GetWindow(newFore, 4)) {
+                //4 is GW_OWNER - the window parent
                 return newFore;
             }
             return IntPtr.Zero;
         }
 
-        private string getWindowModuleName(IntPtr handle) {
-            uint processID;
-            if (GetWindowThreadProcessId(handle, out processID) > 0) {
-                return Process.GetProcessById((int)processID).MainModule.FileName;
-            }
-            return "";
-        }
-
         private void updatePosition() {
-            RECT newRect = new RECT();
+            RECT newRect;
             GetWindowRect(handle, out newRect);
             _location.X = newRect._Left;
             _location.Y = newRect._Top;
@@ -284,13 +278,14 @@ namespace TWiME {
             set {
                 _location = value;
                 ShowWindowAsync(handle, SW_SHOWMAXIMIZED);
-                SetWindowPos(handle, (IntPtr)HWND_TOP, _location.X, _location.Y, _location.Width, _location.Height, SWP_NOACTIVATE);
+                SetWindowPos(handle, (IntPtr) HWND_TOP, _location.X, _location.Y, _location.Width, _location.Height,
+                             SWP_NOACTIVATE);
                 //ShowWindowAsync(handle, SW_RESTORE);
                 //SetWindowPos(handle, (IntPtr)HWND_TOP, _location.X, _location.Y, _location.Width, _location.Height, SWP_NOACTIVATE);
             }
         }
- 
-        public bool maximised {
+
+        public bool Maximised {
             get { return _maximized; }
             set {
                 if (value == _maximized) {
@@ -307,13 +302,13 @@ namespace TWiME {
             }
         }
 
-        public void catchMessage(HotkeyMessage message) {
+        public void CatchMessage(HotkeyMessage message) {
             if (message.message == Message.Close) {
-                this.close();
+                this.Close();
             }
         }
 
-        public void close() {
+        public void Close() {
             SendMessage(_handle, WM_SYSCOMMAND, SC_CLOSE, IntPtr.Zero);
         }
 
