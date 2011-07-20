@@ -80,6 +80,13 @@ namespace TWiME {
             }
         }
 
+        public static void CenterMouseOnActiveWindow() {
+            bool moveMouse = Convert.ToBoolean(Manager.settings.ReadSettingOrDefault("false", "General.Main.MouseFollowsInput"));
+            if (moveMouse) {
+                Cursor.Position = getWindowObjectByHandle(GetForegroundWindow()).Location.Center();
+            }
+        }
+
         public static void log(string toLog, int logLevel = 0) {
             if (logLevel >= LOG_LEVEL) {
                 Console.WriteLine(toLog);

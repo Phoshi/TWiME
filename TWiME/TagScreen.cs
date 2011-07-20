@@ -54,7 +54,7 @@ namespace TWiME {
 
         void Manager_WindowCreate(object sender, WindowEventArgs args) {
             bool rulesThisMonitor = false, rulesThisTag = false;
-            int stackPosition = 0;
+            int stackPosition = Convert.ToInt32(Manager.settings.ReadSettingOrDefault(0, "General.Windows.DefaultStackPosition"));
             foreach (KeyValuePair<Match, Rule> keyValuePair in Manager.windowRules) {
                 if (keyValuePair.Key.windowMatches((Window)sender)) {
                     if (keyValuePair.Value.rule == Rules.monitor) {
@@ -80,6 +80,16 @@ namespace TWiME {
             }
             if ((args.monitor.DeviceName == _parent.name || rulesThisMonitor) && (_parent.tagEnabled == _tag || rulesThisTag)) {
                 Window newWindow = (Window) sender;
+                if (stackPosition < 0) {
+                    stackPosition = windowList.Count() - stackPosition;
+                    if (stackPosition < 0) {
+                        stackPosition = 0;
+                    }
+                }
+                if (stackPosition >= windowList.Count) {
+                    stackPosition = windowList.Count;
+                }
+
                 windowList.Insert(stackPosition, newWindow);
                 Manager.log("Adding Window: " + newWindow.className + " "+newWindow, 1);
                 layout.updateWindowList(windowList);
@@ -120,6 +130,7 @@ namespace TWiME {
                         }
                         Console.WriteLine(newIndex);
                         windowList[newIndex].activate();
+                        Manager.CenterMouseOnActiveWindow();
                     }
                 }
                 if (message.message == Message.Switch) {
@@ -140,6 +151,7 @@ namespace TWiME {
                         windowList[oldIndex] = newWindow;
                         windowList[newIndex] = oldWindow;
                         layout.assert();
+                        Manager.CenterMouseOnActiveWindow();
                     }
                 }
                 if (message.message == Message.SwitchThis) {
@@ -159,10 +171,12 @@ namespace TWiME {
                     windowList[oldIndex] = newWindow;
                     windowList[newIndex] = oldWindow;
                     layout.assert();
+                    Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.FocusThis) {
                     if (message.data < windowList.Count) {
                         windowList[message.data].activate();
+                        Manager.CenterMouseOnActiveWindow();
                     }
                 }
                 if (message.message == Message.Monitor) {
@@ -178,11 +192,13 @@ namespace TWiME {
                     newMonitor.catchWindow(this.throwWindow(focussedWindow));
                     layout.assert();
                     newMonitor.getActiveScreen().enable();
+                    Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.MonitorMoveThis) {
                     Manager.monitors[message.data].catchWindow(throwWindow(getFocusedWindow()));
                     layout.assert();
                     Manager.monitors[message.data].getActiveScreen().activate();
+                    Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.Splitter) {
                     layout.moveSplitter(message.data / 100.0f);

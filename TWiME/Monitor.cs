@@ -62,9 +62,11 @@ namespace TWiME {
                     Console.WriteLine("Switching to window "+Manager.monitors[newIndex].name);
                     Manager.monitors[newIndex].activate();
                     Manager.monitors[newIndex].bar.redraw();
+                    Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.MonitorFocus) {
                     Manager.monitors[message.data].activate();
+                    Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.Screen) {
                     if (tagEnabled != message.data) {
@@ -72,6 +74,7 @@ namespace TWiME {
                         tagScreens[tagEnabled].disable(tagScreens[message.data]);
                         bar.bar.activate();
                         tagEnabled = message.data;
+                        Manager.CenterMouseOnActiveWindow();
                     }
                 }
                 if (message.message == Message.ScreenRelative) {
@@ -100,6 +103,7 @@ namespace TWiME {
                         tagScreens[message.data].catchWindow(getActiveScreen().getFocusedWindow());
                     }
                     getActiveScreen().assertLayout();
+                    Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.SwapTagWindow) {
                     if (getActiveScreen().getFocusedWindow().Equals(bar.bar)) {
@@ -109,6 +113,7 @@ namespace TWiME {
                     getActiveScreen().assertLayout();
                     tagScreens[message.data].catchWindow(thrown);
                     thrown.visible = false;
+                    Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.SwapTagWindowRelative) {
                     if (getActiveScreen().getFocusedWindow().Equals(bar.bar)) {
@@ -132,6 +137,7 @@ namespace TWiME {
                         switchScreen.initLayout();
                         if (switchScreen.tag == tagEnabled) {
                             switchScreen.assertLayout();
+                            Manager.CenterMouseOnActiveWindow();
                         }
                     }
                 }
@@ -148,6 +154,7 @@ namespace TWiME {
                     switchScreen.initLayout();
                     if (switchScreen.tag == tagEnabled) {
                         switchScreen.assertLayout();
+                        Manager.CenterMouseOnActiveWindow();
                     }
                 }
                 if (message.message == Message.LayoutRelativeReverse) {
@@ -163,6 +170,7 @@ namespace TWiME {
                     switchScreen.initLayout();
                     if (switchScreen.tag == tagEnabled) {
                         switchScreen.assertLayout();
+                        Manager.CenterMouseOnActiveWindow();
                     }
                 }
 
