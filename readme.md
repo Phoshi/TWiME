@@ -40,39 +40,39 @@ Configuration is available through a `_TWiMErc` file located in the same directo
         Setting.Name=Value
 
 There are many different settings you can change here.  
-[General]
-    Bar.Height - The height of the taskbars, in pixels. Default is 15px.
-    Bar.Font - The name of the font to use. The default is Segoe UI
-    Windows.DefaultStackPosition - the position in the stack new windows open at. Default is 0, or the main window. Use negative indexes to go from the end of the stack.
-    Many settings for colouring the bar - takes names of colours:
-        Bar.UnselectedForeground - default Black
-        Bar.SelectedForeground - default LightGray
-        Bar.SelectedItemColour - default DarkGray
-        Bar.UnselectedBackgroundColour - default Black
-        Bar.SelectedTagColour - default White
-        Bar.BackColour - default DarkGray 
+[General]  
+    Bar.Height - The height of the taskbars, in pixels. Default is 15px.  
+    Bar.Font - The name of the font to use. The default is Segoe UI  
+    Windows.DefaultStackPosition - the position in the stack new windows open at. Default is 0, or the main window. Use negative indexes to go from the end of the stack.  
+    Many settings for colouring the bar - takes names of colours:  
+        Bar.UnselectedForeground - default Black  
+        Bar.SelectedForeground - default LightGray  
+        Bar.SelectedItemColour - default DarkGray  
+        Bar.UnselectedBackgroundColour - default Black  
+        Bar.SelectedTagColour - default White  
+        Bar.BackColour - default DarkGray   
 
-    Main.AutoSave - "true" or "false", decides whether layout state is saved at the end of the session. TWiMErc values still override saved settings, however. Default false.
-    Main.MouseFollowsInput - "true" or "false", decides whether the mouse is moved whenever TWiME switches focus. Default false.
-    Main.poll - an integer value, decides how often the main polling loop runs, in ms. Lower values produce faster detection of windows, but with an increase in required processor time. 1000ms is default. You probably won't need to mess with this.
-[Window Rules]
-    Window Rules are quite simple, they follow this format:
-    WindowClass.WindowTitle.rule=value
-    Where Window Class is the window class, window title is the window title, and both allow wildcard matches (*).
-    The rule can be:
-        tag - defines what tag the window should default to
-        stack - defines what position in the stack the window should open at - ovverides the default above
-        monitor - defines what monitor the window should open on, as an index where the primary monitor is 0
-        ignore - set this to completely ignore the window and don't take it into account for anything
-    A window can have multiple rules, they are all applied.
-[Display Specific Rules]
-    The header for these rules is the display name - most likely something like `\\\DISPLAY1`. Under that header, the format is as follows:  
-    tagNumber.setting=value
-    where setting is one of:
-        DefaultLayout - Layout Name, where the names are listed above
-        Splitter - The horizontal splitter, from 0-1
-        VSplitter - the vertical splitter, from 0-1
-
+    Main.AutoSave - "true" or "false", decides whether layout state is saved at the end of the session. TWiMErc values still override saved settings, however. Default false.  
+    Main.MouseFollowsInput - "true" or "false", decides whether the mouse is moved whenever TWiME switches focus. Default false.  
+    Main.poll - an integer value, decides how often the main polling loop runs, in ms. Lower values produce faster detection of windows, but with an increase in required processor time. 1000ms is default. You probably won't need to mess with this.  
+[Window Rules]  
+    Window Rules are quite simple, they follow this format:  
+    WindowClass.WindowTitle.rule=value  
+    Where Window Class is the window class, window title is the window title, and both allow wildcard matches (*).  
+    The rule can be:  
+        tag - defines what tag the window should default to  
+        stack - defines what position in the stack the window should open at - ovverides the default above  
+        monitor - defines what monitor the window should open on, as an index where the primary monitor is 0  
+        ignore - set this to completely ignore the window and don't take it into account for anything  
+    A window can have multiple rules, they are all applied.  
+[Display Specific Rules]  
+    The header for these rules is the display name - most likely something like `\\\DISPLAY1`. Under that header, the format is as follows:    
+    tagNumber.setting=value  
+    where setting is one of:  
+        DefaultLayout - Layout Name, where the names are listed above  
+        Splitter - The horizontal splitter, from 0-1  
+        VSplitter - the vertical splitter, from 0-1  
+  
 If General.Main.AutoSave is true, a `_runtimerc` file will be created on exit. This is exactly the same format as the `_TWiMErc`, and is automatically generated from the settings at the time.
 Disclaimer
 ----------
