@@ -10,7 +10,7 @@ using HumanReadableSettings;
 
 namespace TWiME {
     public static class Manager {
-        private const int LOG_LEVEL = 3;
+        private const int LOG_LEVEL = 99;
 
         private static List<Window> _windowList = new List<Window>();
         public static List<Window> hiddenWindows = new List<Window>();
@@ -104,7 +104,7 @@ namespace TWiME {
 
         private static void setupLayouts() {
             foreach (string file in Directory.GetFiles("Layouts", "*.dll")) {
-                Assembly asm = Assembly.LoadFile(Path.Combine(Directory.GetCurrentDirectory(), file));
+                Assembly asm = Assembly.UnsafeLoadFrom(Path.Combine(Directory.GetCurrentDirectory(), file));
                 foreach (Type type in asm.GetTypes()) {
                     if (type.BaseType == typeof(Layout)) {
                         layouts.Add(type);
@@ -371,10 +371,16 @@ namespace TWiME {
         }
 
         private static IntPtr focusTrack = IntPtr.Zero;
-
+        private static int checkCount = 0;
         private static void pollWindows_Tick(object sender, EventArgs e) {
             _globalHook.unhook();
             _globalHook.hook();
+
+            if (++checkCount % 10 == 0) {
+                foreach (Monitor monitor in monitors) {
+                    monitor.GetActiveScreen().AssertLayout();
+                }
+            }
 
             if (GetForegroundWindow() != focusTrack) {
                 focusTrack = GetForegroundWindow();
