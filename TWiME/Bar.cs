@@ -288,7 +288,7 @@ namespace TWiME {
             int selectedWindowID = -1;
             int index = 0;
             foreach (Window window in _parent.GetActiveScreen().windows) {
-                Window focussedWindow = Manager.GetFocussedMonitor().GetActiveScreen().getFocusedWindow();
+                Window focussedWindow = Manager.GetFocussedMonitor().GetActiveScreen().GetFocusedWindow();
                 if (focussedWindow != null) {
                     if (focussedWindow.handle == window.handle) {
                         selectedWindowID = index;

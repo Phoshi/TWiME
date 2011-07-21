@@ -115,7 +115,12 @@ namespace TWiME {
                 _windowList.Insert(stackPosition, newWindow);
                 Manager.Log("Adding Window: " + newWindow.ClassName + " " + newWindow, 1);
                 layout.UpdateWindowList(_windowList);
-                layout.Assert();
+                if (_parent.EnabledTag == _tag) {
+                    layout.Assert();
+                }
+                else {
+                    newWindow.Visible = false;
+                }
             }
         }
 
@@ -126,7 +131,7 @@ namespace TWiME {
             }
         }
 
-        private int getFocusedWindowIndex() {
+        private int GetFocusedWindowIndex() {
             IntPtr hWnd = GetForegroundWindow();
             for (int i = 0; i < _windowList.Count; i++) {
                 if (_windowList[i].handle == hWnd) {
@@ -143,7 +148,7 @@ namespace TWiME {
                         return;
                     }
                     if (Screen.FromHandle(message.handle).DeviceName == _parent.Name) {
-                        int newIndex = getFocusedWindowIndex() + message.data;
+                        int newIndex = GetFocusedWindowIndex() + message.data;
                         if (newIndex >= _windowList.Count) {
                             newIndex = 0;
                         }
@@ -160,7 +165,7 @@ namespace TWiME {
                         return;
                     }
                     if (Screen.FromHandle(message.handle).DeviceName == _parent.Name) {
-                        int oldIndex = getFocusedWindowIndex();
+                        int oldIndex = GetFocusedWindowIndex();
                         int newIndex = oldIndex + message.data;
                         if (newIndex >= _windowList.Count) {
                             newIndex = 0;
@@ -177,7 +182,7 @@ namespace TWiME {
                     }
                 }
                 if (message.message == Message.SwitchThis) {
-                    int oldIndex = getFocusedWindowIndex();
+                    int oldIndex = GetFocusedWindowIndex();
                     if (oldIndex == -1) {
                         oldIndex = 0;
                     }
@@ -210,14 +215,14 @@ namespace TWiME {
                         newMonitorIndex = 0;
                     }
                     Monitor newMonitor = Manager.monitors[newMonitorIndex];
-                    Window focussedWindow = getFocusedWindow();
-                    newMonitor.CatchWindow(this.throwWindow(focussedWindow));
+                    Window focussedWindow = GetFocusedWindow();
+                    newMonitor.CatchWindow(this.ThrowWindow(focussedWindow));
                     layout.Assert();
-                    newMonitor.GetActiveScreen().enable();
+                    newMonitor.GetActiveScreen().Enable();
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.MonitorMoveThis) {
-                    Manager.monitors[message.data].CatchWindow(throwWindow(getFocusedWindow()));
+                    Manager.monitors[message.data].CatchWindow(ThrowWindow(GetFocusedWindow()));
                     layout.Assert();
                     Manager.monitors[message.data].GetActiveScreen().Activate();
                     Manager.CenterMouseOnActiveWindow();
@@ -243,18 +248,18 @@ namespace TWiME {
                 }
             }
             else {
-                getFocusedWindow().CatchMessage(message);
+                GetFocusedWindow().CatchMessage(message);
                 layout.Assert();
             }
         }
 
-        public Window throwWindow(Window window) {
+        public Window ThrowWindow(Window window) {
             _windowList.Remove(window);
             return window;
         }
 
-        public Window getFocusedWindow() {
-            int index = getFocusedWindowIndex();
+        public Window GetFocusedWindow() {
+            int index = GetFocusedWindowIndex();
             if (index == -1) {
                 return new Window("", parent.Bar.Handle, "", "", true);
             }
@@ -278,13 +283,13 @@ namespace TWiME {
             return layout.StateImage(previewSize);
         }
 
-        public void disable() {
+        public void Disable() {
             foreach (Window window in windows) {
                 window.Visible = false;
             }
         }
 
-        public void disable(TagScreen swappingWith) {
+        public void Disable(TagScreen swappingWith) {
             foreach (Window window in windows) {
                 if (!swappingWith.windows.Contains(window)) {
                     window.Visible = false;
@@ -292,14 +297,14 @@ namespace TWiME {
             }
         }
 
-        public void enable() {
+        public void Enable() {
             foreach (Window window in windows) {
                 window.Visible = true;
             }
             layout.Assert();
         }
 
-        public void assertLayout() {
+        public void AssertLayout() {
             layout.Assert();
         }
     }

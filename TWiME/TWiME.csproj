@@ -55,22 +55,23 @@
     <Compile Include="Bar.Designer.cs">
       <DependentUpon>Bar.cs</DependentUpon>
     </Compile>
-    <Compile Include="DefaultLayout.cs" />
+    <Compile Include="Layouts\SquaresLayout.cs" />
+    <Compile Include="Layouts\DefaultLayout.cs" />
     <Compile Include="GlobalKeyboardHook.cs" />
     <Compile Include="HotkeyMessage.cs" />
-    <Compile Include="Layout.cs" />
+    <Compile Include="Layouts\Layout.cs" />
     <Compile Include="Manager.cs" />
     <Compile Include="Monitor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="rectangleExtensions.cs" />
-    <Compile Include="ReversedDefaultLayout.cs" />
-    <Compile Include="SingleWindowLayout.cs" />
-    <Compile Include="SpiralLayout.cs" />
+    <Compile Include="Layouts\ReversedDefaultLayout.cs" />
+    <Compile Include="Layouts\SingleWindowLayout.cs" />
+    <Compile Include="Layouts\SpiralLayout.cs" />
     <Compile Include="stringExtensions.cs" />
     <Compile Include="TagScreen.cs" />
     <Compile Include="Taskbar.cs" />
-    <Compile Include="VerticalDockLayout.cs" />
+    <Compile Include="Layouts\VerticalDockLayout.cs" />
     <Compile Include="Window.cs" />
     <Compile Include="WindowEventArgs.cs" />
     <Compile Include="WindowRules.cs" />

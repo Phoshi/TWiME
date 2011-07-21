@@ -113,7 +113,7 @@ namespace TWiME {
                 newRect.X = (int) (newRect.X * scaleFactor);
                 newRect.Y = (int) (newRect.Y * scaleFactor);
                 Color winColor = Color.FromArgb(192, Color.White);
-                if (_parent.getFocusedWindow() == pair.Key) {
+                if (_parent.GetFocusedWindow() == pair.Key) {
                     winColor = Color.FromArgb(255, Color.LightGray);
                 }
                 gr.FillRectangle(new SolidBrush(winColor), newRect);

@@ -385,6 +385,9 @@ namespace TWiME {
             List<Window> hiddenNotShownByMeWindows = new List<Window>();
             foreach (Window window in windows) {
                 bool windowIgnored = false;
+                if ((from win in hiddenWindows select win.handle).Contains(window.handle)) {
+                    hiddenNotShownByMeWindows.Add(window);
+                }
                 if (!_handles.Contains(window.handle)) {
                     Manager.Log("Found a new window! {0} isn't in the main listing".With(window.Title));
                     foreach (KeyValuePair<WindowMatch, WindowRule> kvPair in windowRules) {
@@ -401,9 +404,6 @@ namespace TWiME {
                     _windowList.Add(window);
                     _handles.Add(window.handle);
                     OnWindowCreate(window, new WindowEventArgs(window.Screen));
-                }
-                if ((from win in hiddenWindows select win.handle).Contains(window.handle)) {
-                    hiddenNotShownByMeWindows.Add(window);
                 }
                 allCurrentlyVisibleWindows.Add(window);
             }
