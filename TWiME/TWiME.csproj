@@ -55,6 +55,7 @@
     <Compile Include="Bar.Designer.cs">
       <DependentUpon>Bar.cs</DependentUpon>
     </Compile>
+    <Compile Include="Layouts\HalfSquaresLayout.cs" />
     <Compile Include="Layouts\SquaresLayout.cs" />
     <Compile Include="Layouts\DefaultLayout.cs" />
     <Compile Include="GlobalKeyboardHook.cs" />
