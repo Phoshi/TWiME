@@ -11,6 +11,8 @@ ReversedDefaultLayout: Primary pane on the right, all other windows stacked to t
 VerticalDockLayout: Primary pane along the top, all other windows stacked along the bottom.  
 SpiralLayout: Windows spiral towards the middle - the primary pane is half the monitor, the second is 1/4, the third is 1/8, so on.  
 SingleWindowLayout: The focussed window is the only visible window. Maximised, in effect. You can still manipulate the stack as normal, but it will have no effect on this layout.  
+SquaresLayout: The windows are laid out in equal tiles.
+HalfSquaresLayout: The primary window is given the left hand pane, all others are tiled equally on the right.
 
 
 Usage:
