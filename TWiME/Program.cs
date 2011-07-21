@@ -12,7 +12,7 @@ namespace TWiME {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             try {
-            Manager.Setup();
+                Manager.Setup();
                 Application.Run();
             }
             catch (Exception ex) {
