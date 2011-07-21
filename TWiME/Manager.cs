@@ -9,7 +9,7 @@ using Extensions;
 using HumanReadableSettings;
 
 namespace TWiME {
-    internal static class Manager {
+    public static class Manager {
         private const int LOG_LEVEL = 3;
 
         private static List<Window> _windowList = new List<Window>();
@@ -103,11 +103,12 @@ namespace TWiME {
         }
 
         private static void setupLayouts() {
-            //TODO: Shift layouts to plugins and iterate them here
-            Assembly asm = Assembly.GetExecutingAssembly();
-            foreach (Type type in asm.GetTypes()) {
-                if (type.BaseType == typeof (Layout)) {
-                    layouts.Add(type);
+            foreach (string file in Directory.GetFiles("Layouts", "*.dll")) {
+                Assembly asm = Assembly.LoadFile(Path.Combine(Directory.GetCurrentDirectory(), file));
+                foreach (Type type in asm.GetTypes()) {
+                    if (type.BaseType == typeof(Layout)) {
+                        layouts.Add(type);
+                    }
                 }
             }
         }

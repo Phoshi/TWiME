@@ -2,7 +2,7 @@
 using System.Windows.Forms;
 
 namespace TWiME {
-    internal class WindowEventArgs : EventArgs {
+    public class WindowEventArgs : EventArgs {
         private Screen _monitor;
 
         public Screen monitor {

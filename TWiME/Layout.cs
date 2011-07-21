@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 
 namespace TWiME {
-    internal interface ILayout {
+    public interface ILayout {
         void Assert();
         string Name();
         Image Symbol();
@@ -13,7 +13,7 @@ namespace TWiME {
         float GetSplitter(bool vertical = false);
     }
 
-    internal class Layout : ILayout {
+    public class Layout : ILayout {
         public void Assert() {
             throw new NotImplementedException();
         }
