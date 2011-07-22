@@ -20,6 +20,7 @@ namespace TWiME {
                 ohgodeverythingisfailingWriter.WriteLine("Critical Failure: "+ex.Message);
                 ohgodeverythingisfailingWriter.Close();
                 Taskbar.hidden = false;
+                throw ex;
                 Application.Exit();
             }
         }

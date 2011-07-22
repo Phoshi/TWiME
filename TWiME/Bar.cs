@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -35,9 +36,9 @@ namespace TWiME {
         private Screen _screen;
         private Monitor _parent;
 
-        private Dictionary<MouseButtons, Dictionary<Rectangle, Action>> clicks =
+        private Dictionary<MouseButtons, Dictionary<Rectangle, Action>> _clicks =
             new Dictionary<MouseButtons, Dictionary<Rectangle, Action>>();
-
+        private Dictionary<string, BarItem> _items = new Dictionary<string, BarItem>();
         public Bar(Monitor monitor) {
             InitializeComponent();
             barHeight = Convert.ToInt32(Manager.settings.ReadSettingOrDefault(15, "General.Bar.Height"));
@@ -72,9 +73,59 @@ namespace TWiME {
             //RegisterBar();
             Color bColor = Color.FromName(Manager.settings.ReadSettingOrDefault("DarkGray", "General.Bar.BackColour"));
             this.BackColor = bColor;
-
             this.ShowInTaskbar = false;
             bar = new Window("", this.Handle, "", "", true);
+            loadAdditionalItems();
+        }
+
+        private void loadAdditionalItems() {
+            if (Manager.settings.sections.Contains("Bar Items")) {
+                foreach (List<string> list in Manager.settings.KeysUnderSection("Bar Items")) {
+                    string itemName = list[1];
+                    string settingName = list[2];
+                    string value = Manager.settings.ReadSetting(list.ToArray());
+                    if (_items.ContainsKey(itemName)) {
+                        BarItem item = _items[itemName];
+                        switch (settingName) {
+                            case "MaximumWidth":
+                                item.MaximumWidth = int.Parse(value);
+                                break;
+                            case "MinimumWidth":
+                                item.MinimumWidth = int.Parse(value);
+                                break;
+                            case "IsBuiltIn":
+                                item.IsBuiltIn = bool.Parse(value);
+                                break;
+                            case "Foreground":
+                                item.ForeColour = new SolidBrush(Color.FromName(value));
+                                break;
+                            case "Background":
+                                item.BackColour = new SolidBrush(Color.FromName(value));
+                                break;
+                            case "Argument":
+                                item.Argument = value;
+                                break;
+                            case "Monitor":
+                                string monitorName = Screen.AllScreens[int.Parse(value)].DeviceName;
+                                if (_parent.Screen.DeviceName != monitorName) {
+                                    _items.Remove(itemName);
+                                    continue;
+                                }
+                                break;
+                            case "Interval":
+                                TimeSpan newInterval = new TimeSpan(0, 0, 0, int.Parse(value));
+                                item.RenewInterval = newInterval;
+                                break;
+                        }
+                        _items[itemName] = item;
+                    }
+                    else {
+                        if (settingName == "Path") {
+                            _items[itemName] = new BarItem(value);
+                        }
+                    }
+                }
+            }
         }
 
         private void Bar_Load(object sender, EventArgs e) {
@@ -211,19 +262,20 @@ namespace TWiME {
             Rectangle rect = thisWindow.Location;
             rect.Height = barHeight;
             rect.Y = Screen.FromHandle(this.Handle).Bounds.Y;
+            rect.Width = thisWindow.Screen.WorkingArea.Width;
             thisWindow.Maximised = false;
             thisWindow.Location = rect;
         }
 
         private void addMouseAction(MouseButtons button, Rectangle area, Action action) {
-            if (!clicks.ContainsKey(button)) {
-                clicks[button] = new Dictionary<Rectangle, Action>();
+            if (!_clicks.ContainsKey(button)) {
+                _clicks[button] = new Dictionary<Rectangle, Action>();
             }
-            clicks[button][area] = action;
+            _clicks[button][area] = action;
         }
 
         private void Bar_Paint(object sender, PaintEventArgs e) {
-            clicks.Clear();
+            _clicks.Clear();
 
             Pen seperatorPen = new Pen(Color.Blue, 3);
             Manager.Log(new string('=', 30));
@@ -267,21 +319,63 @@ namespace TWiME {
                 currentWidth += width;
             }
 
-            //Draw the datetime display
+            //Draw the additional items
+            List<Image> additionalImages = new List<Image>();
+            foreach (BarItem item in (from kvPair in _items select kvPair.Value)) {
 
-            DateTime now = DateTime.Now;
-            string dateString = now.ToString("yyyy/MM/dd | HH:mm");
-            int dateWidth = dateString.Width(titleFont);
-            Bitmap dateMap = new Bitmap(dateWidth + 15, height);
+                if (item.LastRenew > DateTime.Now.Ticks - item.RenewInterval.Ticks) {
+                    additionalImages.Add(item.Value);
+                    continue;
+                }
+                if (item.IsBuiltIn) {
+                    if (item.Path == "time") {
+                        DateTime now = DateTime.Now;
+                        string dateString = now.ToString(item.Argument);
+                        int dateWidth = dateString.Width(titleFont);
+                        Bitmap timeMap = new Bitmap(dateWidth + 5, height);
 
-            using (Graphics gr = Graphics.FromImage(dateMap)) {
-                gr.FillRectangle(backgroundBrush2, 0, 0, dateMap.Width, dateMap.Height);
-                gr.DrawString(dateString, titleFont, foregroundBrush2, 0, 0);
+                        using (Graphics gr = Graphics.FromImage(timeMap)) {
+                            gr.FillRectangle(item.BackColour, 0, 0, timeMap.Width, timeMap.Height);
+                            gr.DrawString(dateString, titleFont, item.ForeColour, 0, 0);
+                        }
+
+                        additionalImages.Add(timeMap);
+                        item.Value = timeMap;
+                    }
+                    if (item.Path == "Layout") {
+                        Image layoutSymbol = _parent.GetActiveScreen().GetLayoutSymbol(previewSize);
+                        additionalImages.Add(layoutSymbol);
+                        item.Value = layoutSymbol;
+                    }
+                }
+                else {
+                    Process process = new Process();
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.FileName = item.Path;
+                    process.StartInfo.Arguments = item.Argument;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.Start();
+                    string output = process.StandardOutput.ReadToEnd();
+                    process.WaitForExit();
+
+                    int itemWidth = output.Width(titleFont);
+                    Bitmap itemMap = new Bitmap(itemWidth+5, height);
+
+                    using (Graphics gr = Graphics.FromImage(itemMap)) {
+                        gr.FillRectangle(item.BackColour, 0, 0, itemMap.Width, itemMap.Height);
+                        gr.DrawString(output, titleFont, item.ForeColour, 0, 0);
+                    }
+
+                    additionalImages.Add(itemMap);
+                    item.Value = itemMap;
+                }
+                item.LastRenew = DateTime.Now.Ticks;
             }
 
             //Draw the window list in the space remaining
             int startingPoint = currentWidth;
-            int remainingWidth = screenWidth - startingPoint - dateMap.Width;
+            int remainingWidth = screenWidth - startingPoint - (from image in additionalImages select image.Width).Sum();
             Manager.Log(
                 "Between the tag display and date display, there is {0}px remaining for windows".With(remainingWidth));
             List<Bitmap> windowTiles = new List<Bitmap>();
@@ -384,8 +478,14 @@ namespace TWiME {
                 }
             }
 
-            //Draw the time bit to the form
-            e.Graphics.DrawImage(dateMap, screenWidth - dateMap.Width, 0);
+            currentWidth = Width - (from image in additionalImages select image.Width).Sum();
+
+            //Draw the additional bits to the form
+            foreach (Image additionalImage in additionalImages) {
+                e.Graphics.DrawImage(additionalImage, currentWidth, 0);
+                currentWidth += additionalImage.Width;
+                e.Graphics.DrawLine(seperatorPen, currentWidth - 1, 0, currentWidth - 1, barHeight);
+            }
 
             if (Manager.GetFocussedMonitor() != _parent) {
                 Brush coverBrush = new SolidBrush(Color.FromArgb(128, Color.Black));
@@ -402,8 +502,8 @@ namespace TWiME {
                 bar.Activate();
             }
             Manager.Log("Caught click event on bar", 4);
-            if (clicks.ContainsKey(e.Button)) {
-                Dictionary<Rectangle, Action> clickType = clicks[e.Button];
+            if (_clicks.ContainsKey(e.Button)) {
+                Dictionary<Rectangle, Action> clickType = _clicks[e.Button];
                 foreach (KeyValuePair<Rectangle, Action> click in clickType) {
                     if (click.Key.ContainsPoint(this.PointToClient(MousePosition))) {
                         Manager.Log(
@@ -421,6 +521,28 @@ namespace TWiME {
                 param.ExStyle = (param.ExStyle | WS_EX_NOACTIVATE);
                 return param;
             }
+        }
+    }
+    class BarItem {
+        public int MaximumWidth, MinimumWidth;
+        public bool IsBuiltIn;
+        public string Path;
+        public string Argument;
+        public Brush ForeColour, BackColour;
+        public Image Value;
+        public long LastRenew;
+        public TimeSpan RenewInterval;
+        public BarItem(string path, string argument="", bool builtIn = false, int minWidth = -1, int maxWidth = -1, Brush forecolour = null, Brush backcolour = null) {
+            Path = path;
+            Argument = argument;
+            IsBuiltIn = builtIn;
+            MinimumWidth = minWidth;
+            MaximumWidth = maxWidth;
+            BackColour = backcolour ?? new SolidBrush(
+                    Color.FromName(Manager.settings.ReadSettingOrDefault("Black", "General.Bar.UnselectedBackgroundColour")));
+            ForeColour = forecolour ?? new SolidBrush(
+                    Color.FromName(Manager.settings.ReadSettingOrDefault("LightGray", "General.Bar.SelectedForeground")));
+            RenewInterval = new TimeSpan(0, 0, 0, 5); //5 seconds
         }
     }
 }

@@ -52,6 +52,18 @@ namespace TWiME {
             layout = instance;
         }
 
+        public Image GetLayoutSymbol(Size size) {
+            List<Window> tempWindowList = new List<Window>();
+            for (int i = 0; i < 5; i++) { //5 seems like a good number
+                Window tempWindow = new Window("", (IntPtr) i, "", "", true); //The window object will never /do/ anything so it doesn't need a real handle, just a unique one.
+                tempWindowList.Add(tempWindow);
+            }
+            layout.UpdateWindowList(tempWindowList);
+            Image layoutSymbol = layout.StateImage(size);
+            layout.UpdateWindowList(_windowList);
+            return layoutSymbol;
+        }
+
         [DllImport("user32.dll")]
         private static extern
             IntPtr GetForegroundWindow();

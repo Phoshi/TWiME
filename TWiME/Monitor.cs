@@ -95,6 +95,11 @@ namespace TWiME {
                     }
                     if (tagScreens[message.data].windows.Contains(GetActiveScreen().GetFocusedWindow())) {
                         Window focussedWindow = GetActiveScreen().GetFocusedWindow();
+                        int numTags =(from screen in tagScreens select screen.windows).SelectMany(window => window).Where(
+                            window => window == focussedWindow).Count();
+                        if (numTags == 1) {
+                            return;
+                        }
                         tagScreens[message.data].ThrowWindow(focussedWindow);
                         focussedWindow.Visible = false;
                         if (message.data == EnabledTag) {
@@ -109,6 +114,9 @@ namespace TWiME {
                 }
                 if (message.message == Message.SwapTagWindow) {
                     if (GetActiveScreen().GetFocusedWindow().Equals(Bar.bar)) {
+                        return;
+                    }
+                    if (message.data == GetActiveScreen().tag) {
                         return;
                     }
                     Window thrown = GetActiveScreen().ThrowWindow(GetActiveScreen().GetFocusedWindow());
