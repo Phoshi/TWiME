@@ -24,6 +24,7 @@ namespace TWiME {
         private Brush backgroundBrush;
         private Brush backgroundBrush2;
         private Brush selectedBrush;
+        Pen seperatorPen;
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr GetWindowLong(IntPtr hWnd, int nIndex);
@@ -61,6 +62,10 @@ namespace TWiME {
                 new SolidBrush(Color.FromArgb(128,
                                               Color.FromName(Manager.settings.ReadSettingOrDefault("White",
                                                                                                    "General.Bar.SelectedTagColour"))));
+            Color seperatorColour =
+                Color.FromName(Manager.settings.ReadSettingOrDefault("Blue", "General.Bar.SeperatorColour"));
+            int seperatorWidth = int.Parse(Manager.settings.ReadSettingOrDefault("3", "General.Bar.SeperatorWidth"));
+            seperatorPen = new Pen(seperatorColour, seperatorWidth);
             _screen = monitor.Screen;
             _parent = monitor;
             //this.TopMost = true;
@@ -277,7 +282,6 @@ namespace TWiME {
         private void Bar_Paint(object sender, PaintEventArgs e) {
             _clicks.Clear();
 
-            Pen seperatorPen = new Pen(Color.Blue, 3);
             Manager.Log(new string('=', 30));
             Manager.Log("Starting draw");
 
@@ -319,7 +323,7 @@ namespace TWiME {
                 currentWidth += width;
             }
 
-            //Draw the additional items
+            //Generate the additional items
             List<Image> additionalImages = new List<Image>();
             foreach (BarItem item in (from kvPair in _items select kvPair.Value)) {
 
@@ -364,7 +368,7 @@ namespace TWiME {
 
                     using (Graphics gr = Graphics.FromImage(itemMap)) {
                         gr.FillRectangle(item.BackColour, 0, 0, itemMap.Width, itemMap.Height);
-                        gr.DrawString(output, titleFont, item.ForeColour, 0, 0);
+                        gr.DrawString(output, titleFont, item.ForeColour, 2, 0);
                     }
 
                     additionalImages.Add(itemMap);
