@@ -40,6 +40,7 @@ namespace TWiME {
         private Dictionary<MouseButtons, Dictionary<Rectangle, Action>> _clicks =
             new Dictionary<MouseButtons, Dictionary<Rectangle, Action>>();
         private Dictionary<string, BarItem> _items = new Dictionary<string, BarItem>();
+
         public Bar(Monitor monitor) {
             InitializeComponent();
             barHeight = Convert.ToInt32(Manager.settings.ReadSettingOrDefault(15, "General.Bar.Height"));
@@ -121,6 +122,15 @@ namespace TWiME {
                                 TimeSpan newInterval = new TimeSpan(0, 0, 0, int.Parse(value));
                                 item.RenewInterval = newInterval;
                                 break;
+                            case "Click":
+                                item.ClickExecutePath = value;
+                                break;
+                            case "Prepend":
+                                item.PrependValue = value;
+                                break;
+                            case "Append":
+                                item.AppendValue = value;
+                                break;
                         }
                         _items[itemName] = item;
                     }
@@ -142,7 +152,7 @@ namespace TWiME {
             Manager.WindowFocusChange += Manager_WindowFocusChange;
             Timer t = new Timer();
             t.Tick += (parent, args) => this.Redraw();
-            t.Interval = 10000;
+            t.Interval = int.Parse(Manager.settings.ReadSettingOrDefault("10000", "General.Bar.Refresh"));
             t.Start();
 
             int winStyles = (int) GetWindowLong(this.Handle, GWL_EXSTYLE);
@@ -334,7 +344,7 @@ namespace TWiME {
                 if (item.IsBuiltIn) {
                     if (item.Path == "time") {
                         DateTime now = DateTime.Now;
-                        string dateString = now.ToString(item.Argument);
+                        string dateString = item.PrependValue+now.ToString(item.Argument)+item.AppendValue;
                         int dateWidth = dateString.Width(titleFont);
                         Bitmap timeMap = new Bitmap(dateWidth + 5, height);
 
@@ -351,6 +361,18 @@ namespace TWiME {
                         additionalImages.Add(layoutSymbol);
                         item.Value = layoutSymbol;
                     }
+                    if (item.Path == "Window Count") {
+                        string countString = item.PrependValue + Manager.Windows.Count.ToString() + item.AppendValue;
+                        int countWidth = countString.Width(titleFont);
+                        Bitmap countMap = new Bitmap(countWidth + 5, height);
+
+                        using (Graphics gr = Graphics.FromImage(countMap)) {
+                            gr.FillRectangle(item.BackColour, 0, 0, countMap.Width, countMap.Height);
+                            gr.DrawString(countString, titleFont, item.ForeColour, 0, 0);
+                        }
+                        additionalImages.Add(countMap);
+                        item.Value = countMap;
+                    }
                 }
                 else {
                     Process process = new Process();
@@ -362,7 +384,7 @@ namespace TWiME {
                     process.Start();
                     string output = process.StandardOutput.ReadToEnd();
                     process.WaitForExit();
-
+                    output = "{0}{1}{2}".With(item.PrependValue, output, item.AppendValue);
                     int itemWidth = output.Width(titleFont);
                     Bitmap itemMap = new Bitmap(itemWidth+5, height);
 
@@ -485,8 +507,21 @@ namespace TWiME {
             currentWidth = Width - (from image in additionalImages select image.Width).Sum();
 
             //Draw the additional bits to the form
+            int itemIndex = 0;
             foreach (Image additionalImage in additionalImages) {
                 e.Graphics.DrawImage(additionalImage, currentWidth, 0);
+                BarItem item = _items.ElementAt(itemIndex++).Value;
+                if (item.ClickExecutePath != "") {
+                    Rectangle drawTangle = new Rectangle(currentWidth, 0, additionalImage.Width, height);
+                    Action action;
+                    if (item.ClickExecutePath == "Next Layout") {
+                        action = (() => Manager.SendMessage(Message.LayoutRelative, Level.monitor, _parent.EnabledTag));
+                    }
+                    else {
+                        action = (() => Process.Start(item.ClickExecutePath));
+                    }
+                    addMouseAction(MouseButtons.Left, drawTangle, action);
+                }
                 currentWidth += additionalImage.Width;
                 e.Graphics.DrawLine(seperatorPen, currentWidth - 1, 0, currentWidth - 1, barHeight);
             }
@@ -536,6 +571,10 @@ namespace TWiME {
         public Image Value;
         public long LastRenew;
         public TimeSpan RenewInterval;
+        public string ClickExecutePath = "";
+        public string PrependValue;
+        public string AppendValue;
+
         public BarItem(string path, string argument="", bool builtIn = false, int minWidth = -1, int maxWidth = -1, Brush forecolour = null, Brush backcolour = null) {
             Path = path;
             Argument = argument;
