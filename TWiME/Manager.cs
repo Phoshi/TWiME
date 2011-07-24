@@ -13,6 +13,9 @@ namespace TWiME {
         private const int LOG_LEVEL = 99;
 
         private static List<Window> _windowList = new List<Window>();
+        public static List<Window> Windows {
+            get { return _windowList; }
+        }
         public static List<Window> hiddenWindows = new List<Window>();
         private static HashSet<IntPtr> _handles = new HashSet<IntPtr>();
         public static List<Monitor> monitors = new List<Monitor>();
@@ -371,7 +374,7 @@ namespace TWiME {
         }
 
         private static IntPtr focusTrack = IntPtr.Zero;
-        private static int checkCount = 0;
+        private static int checkCount;
         private static void pollWindows_Tick(object sender, EventArgs e) {
             _globalHook.unhook();
             _globalHook.hook();
