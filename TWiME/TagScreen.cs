@@ -288,7 +288,25 @@ namespace TWiME {
         }
 
         public void CatchWindow(Window window) {
-            _windowList.Add(window);
+            int stackPosition =
+                Convert.ToInt32(Manager.settings.ReadSettingOrDefault(0, "General.Windows.DefaultStackPosition"));
+            foreach (KeyValuePair<WindowMatch, WindowRule> kvPair in Manager.windowRules) {
+                if (kvPair.Key.windowMatches(window)) {
+                    if (kvPair.Value.rule == WindowRules.stack) {
+                        stackPosition = kvPair.Value.data;
+                    }
+                }
+            }
+            if (stackPosition < 0) {
+                stackPosition = _windowList.Count - stackPosition;
+            }
+            if (stackPosition > _windowList.Count) {
+                stackPosition = _windowList.Count - 1;
+            }
+            if (stackPosition < 0) {
+                stackPosition = 0;
+            }
+            _windowList.Insert(stackPosition, window);
         }
 
         public Image getStateImage(Size previewSize) {
