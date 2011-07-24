@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
 
@@ -20,7 +21,9 @@ namespace TWiME {
                 ohgodeverythingisfailingWriter.WriteLine("Critical Failure: "+ex.Message);
                 ohgodeverythingisfailingWriter.Close();
                 Taskbar.hidden = false;
-                throw ex;
+                if (Debugger.IsAttached) {
+                    throw;
+                }
                 Application.Exit();
             }
         }
