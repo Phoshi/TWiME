@@ -76,6 +76,7 @@ namespace TWiME {
                         tagScreens[EnabledTag].Disable(tagScreens[message.data]);
                         Bar.bar.Activate();
                         EnabledTag = message.data;
+                        tagScreens[EnabledTag].Activate();
                         Manager.CenterMouseOnActiveWindow();
                     }
                 }
