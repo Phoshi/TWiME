@@ -157,6 +157,7 @@ namespace TWiME {
                             }));
 
             hook(Keys.Q, (() => SendMessage(Message.Close, Level.global, 0)));
+            hook(Keys.R, (() => SendMessage(Message.Close, Level.global, 1)));
             hook(Keys.Space, (() => SendMessage(Message.Switch, Level.global, 0)));
 
 
@@ -184,7 +185,7 @@ namespace TWiME {
 
             hook(Keys.J, (() => SendMessage(Message.ScreenRelative, Level.monitor, 1)), Keys.Control);
             hook(Keys.K, (() => SendMessage(Message.ScreenRelative, Level.monitor, -1)), Keys.Control);
-            hook(Keys.Return, (() => SendMessage(Message.ScreenRelative, Level.monitor, 0)), Keys.Control);
+            hook(Keys.Return, (() => SendMessage(Message.Screen, Level.monitor, -1)), Keys.Control);
             hook(Keys.J, (() => SendMessage(Message.SwapTagWindowRelative, Level.monitor, 1)), Keys.Control | Keys.Shift);
             hook(Keys.K, (() => SendMessage(Message.SwapTagWindowRelative, Level.monitor, -1)),
                  Keys.Control | Keys.Shift);
@@ -243,7 +244,12 @@ namespace TWiME {
                 }
                 Manager.Log("Showing taskbar", 10);
                 Taskbar.hidden = false;
-                Application.Exit();
+                if (message.data == 0) {
+                    Application.Exit();
+                }
+                else {
+                    Application.Restart();
+                }
             }
             if (message.message == Message.Restart) {
                 Manager.Log("Beginning shutdown loop", 10);
