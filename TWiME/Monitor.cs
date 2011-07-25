@@ -13,6 +13,8 @@ namespace TWiME {
             get { return tagScreens; }
         }
 
+        private int _lastFocussedTagScreen;
+
         public string Name { get; internal set; }
         public int EnabledTag;
         public Screen Screen { get; internal set; }
@@ -71,6 +73,10 @@ namespace TWiME {
                 }
                 if (message.message == Message.Screen) {
                     if (EnabledTag != message.data) {
+                        if (message.data < 0) {
+                            message.data = _lastFocussedTagScreen;
+                        }
+                        _lastFocussedTagScreen = EnabledTag;
                         tagScreens[message.data].Enable();
                         tagScreens[EnabledTag].Disable(tagScreens[message.data]);
                         Bar.bar.Activate();
