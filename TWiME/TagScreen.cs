@@ -229,6 +229,7 @@ namespace TWiME {
                     Monitor newMonitor = Manager.monitors[newMonitorIndex];
                     Window focussedWindow = GetFocusedWindow();
                     newMonitor.CatchWindow(this.ThrowWindow(focussedWindow));
+                    _parent.screens.Where(screen => screen.windows.Contains(focussedWindow)).ToList().ForEach(screen => screen._windowList.Remove(focussedWindow));
                     layout.Assert();
                     newMonitor.GetActiveScreen().Enable();
                     Manager.CenterMouseOnActiveWindow();
