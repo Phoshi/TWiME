@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows.Forms;
 using Extensions;
+using Microsoft.Win32;
+using Tree;
 
 namespace TWiME {
     public sealed partial class Bar : Form {
@@ -40,6 +44,8 @@ namespace TWiME {
         private Dictionary<MouseButtons, Dictionary<Rectangle, Action>> _clicks =
             new Dictionary<MouseButtons, Dictionary<Rectangle, Action>>();
         private Dictionary<string, BarItem> _items = new Dictionary<string, BarItem>();
+
+        private ContextMenuStrip menu;
 
         public Bar(Monitor monitor) {
             InitializeComponent();
@@ -82,6 +88,138 @@ namespace TWiME {
             this.ShowInTaskbar = false;
             bar = new Window("", this.Handle, "", "", true);
             loadAdditionalItems();
+            generateMenu();
+        }
+
+        private void generateMenu() {
+            menu = new ContextMenuStrip();
+            menu.ShowImageMargin = false;
+            menu.Font = titleFont;
+            menu.BackColor = Color.FromName(Manager.settings.ReadSettingOrDefault("DarkGray", "General.Menu.Background"));
+            menu.ForeColor =
+                Color.FromName(Manager.settings.ReadSettingOrDefault("LightGray", "General.Menu.Foreground"));
+            Node<Action> root = new Node<Action>();
+            if (Manager.settings.sections.Contains("Menu Items")) {
+                foreach (List<string> list in Manager.settings.KeysUnderSection("Menu Items")) {
+                    string itemName = list.Last();
+                    string itemValue = Manager.settings.ReadSetting(list.ToArray());
+                    //Drop the first element, flip it round, drop the last, and flip it back.
+                    List<string> treeNodes = list.Skip(1).Reverse().Skip(1).Reverse().ToList();
+                    List<Node<Action>> currentNodes = new List<Node<Action>>();
+                    currentNodes.Add(root);
+                    foreach (string node in treeNodes) {
+                        if (currentNodes.Last().ContainsNamedChildNode(node)) {
+                            currentNodes.Add(currentNodes.Last().GetNamedChildNode(node));
+                        }
+                        else {
+                            Node<Action> newNode = new Node<Action>(node, null);
+                            currentNodes.Last().Add(newNode);
+                            currentNodes.Add(newNode);
+                        }
+                    }
+                    Node<Action> bottomMostNode = new Node<Action>(itemName, (()=>runCommand(itemValue)));
+                    currentNodes.Last().Add(bottomMostNode);
+                }
+            }
+            ToolStripMenuItem items = buildMenu(root);
+            ToolStripItemCollection collection = items.DropDownItems;
+            int collectionCount = collection.Count;
+            for (int i = 0; i < collectionCount; i++) {
+                menu.Items.Add(collection[0]);
+            }
+        }
+
+        [DllImport("Shlwapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern uint AssocQueryString(AssocF flags, AssocStr str, string pszAssoc, string pszExtra,
+           [Out] StringBuilder pszOut, [In][Out] ref uint pcchOut);
+
+        [Flags]
+        enum AssocF {
+            Init_NoRemapCLSID = 0x1,
+            Init_ByExeName = 0x2,
+            Open_ByExeName = 0x2,
+            Init_DefaultToStar = 0x4,
+            Init_DefaultToFolder = 0x8,
+            NoUserSettings = 0x10,
+            NoTruncate = 0x20,
+            Verify = 0x40,
+            RemapRunDll = 0x80,
+            NoFixUps = 0x100,
+            IgnoreBaseClass = 0x200
+        }
+
+        enum AssocStr {
+            Command = 1,
+            Executable,
+            FriendlyDocName,
+            FriendlyAppName,
+            NoOpen,
+            ShellNewValue,
+            DDECommand,
+            DDEIfExec,
+            DDEApplication,
+            DDETopic
+        }
+
+        public string GetAssociation(string doctype) {
+            uint pcchOut = 0;   // size of output buffer
+
+            // First call is to get the required size of output buffer
+            AssocQueryString(AssocF.Verify, AssocStr.Executable, doctype, null, null, ref pcchOut);
+
+            // Allocate the output buffer
+            StringBuilder pszOut = new StringBuilder((int)pcchOut);
+
+            // Get the full pathname to the program in pszOut
+            AssocQueryString(AssocF.Verify, AssocStr.Executable, doctype, null, pszOut, ref pcchOut);
+            string doc = pszOut.ToString();
+            return doc;
+        }
+
+
+        private void runCommand(string command) {
+            Dictionary<string, Action> specialCommands = new Dictionary<string, Action>();
+            specialCommands["Edit TWiMErc"] = (() => {
+                                                   Process.Start(GetAssociation(@".txt"), "_TWiMErc");
+                                               });
+            specialCommands["Quit"] = (() => Manager.SendMessage(Message.Close, Level.global, 0));
+            specialCommands["Restart"] = (() => Manager.SendMessage(Message.Close, Level.global, 1));
+
+            if (specialCommands.ContainsKey(command)) {
+                specialCommands[command]();
+            }
+            else {
+                try {
+                    Process.Start(command);
+                }
+                catch (Win32Exception) {
+                    //how do I handle this? :(
+                }
+            }
+        }
+
+        private ToolStripMenuItem buildMenu(Node<Action> root, int depth = 0) {
+            if (root.Children.Count > 0) {
+                ToolStripMenuItem thisItem = new ToolStripMenuItem(root.Name);
+                ((ToolStripDropDownMenu) (thisItem.DropDown)).ShowImageMargin = false;
+                thisItem.Font = titleFont;
+                thisItem.BackColor = Color.FromName(Manager.settings.ReadSettingOrDefault("DarkGray", "General.Menu.Background"));
+                thisItem.ForeColor =
+                    Color.FromName(Manager.settings.ReadSettingOrDefault("LightGray", "General.Menu.Foreground"));
+                foreach (Node<Action> child in root.Children) {
+                    thisItem.DropDownItems.Add(buildMenu(child, depth + 1));
+                }
+                return thisItem;
+            }
+            else {
+                ToolStripMenuItem thisItem = new ToolStripMenuItem(root.Name, null, ((sender, eventargs)=>root.Data()));
+                thisItem.DisplayStyle = ToolStripItemDisplayStyle.Text;
+                thisItem.Font = titleFont;
+                thisItem.BackColor = Color.FromName(Manager.settings.ReadSettingOrDefault("DarkGray", "General.Menu.Background"));
+                thisItem.ForeColor =
+                    Color.FromName(Manager.settings.ReadSettingOrDefault("LightGray", "General.Menu.Foreground"));
+                return thisItem;
+            }
         }
 
         private void loadAdditionalItems() {
@@ -305,7 +443,10 @@ namespace TWiME {
             Manager.Log("Screen is {0}x{1}".With(screenWidth, screenHeight));
             int width = (int) ((screenWidth * height) / (float) screenHeight);
             Manager.Log("Each tag display is {0}x{1}".With(width, height));
-            int currentWidth = 0;
+            int currentWidth = 20;
+
+            addMouseAction(MouseButtons.Left, new Rectangle(0,0,20,barHeight),menu.Show);
+
             Size previewSize = new Size(width, height);
             int tag = 1;
             foreach (TagScreen screen in _parent.screens) {
