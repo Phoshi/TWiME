@@ -20,6 +20,8 @@ namespace TWiME {
         private static HashSet<IntPtr> _handles = new HashSet<IntPtr>();
         public static List<Monitor> monitors = new List<Monitor>();
         private static globalKeyboardHook _globalHook = new globalKeyboardHook();
+        public static WindowSwitcher Switcher { get; internal set; }
+        private static Window _windowSwitcherWindow;
 
         private static Dictionary<Keys, Dictionary<Keys, Action>> hooked =
             new Dictionary<Keys, Dictionary<Keys, Action>>();
@@ -58,6 +60,9 @@ namespace TWiME {
             setupMonitors();
             setupTimers();
             logger = new StreamWriter("log.txt");
+
+            Switcher = new WindowSwitcher();
+            _windowSwitcherWindow = new Window("", Switcher.Handle, "", "", false);
 
             Application.ApplicationExit += Application_ApplicationExit;
         }
@@ -140,6 +145,16 @@ namespace TWiME {
             _globalHook.HookedKeys.Add(Keys.LControlKey);
 
             #endregion
+
+            hook(Keys.Tab, (() => {
+                                if (Switcher.Visible) {
+                                    Switcher.Hide();
+                                }
+                                else {
+                                    Switcher.Show();
+                                    _windowSwitcherWindow.Activate();
+                                }
+                            }));
 
             hook(Keys.Q, (() => SendMessage(Message.Close, Level.global, 0)));
             hook(Keys.Space, (() => SendMessage(Message.Switch, Level.global, 0)));
@@ -373,6 +388,10 @@ namespace TWiME {
             pollTimer.Start();
         }
 
+        public static void ForcePoll() {
+            pollWindows_Tick(new object(), new EventArgs());
+        }
+
         private static IntPtr focusTrack = IntPtr.Zero;
         private static int checkCount;
         private static void pollWindows_Tick(object sender, EventArgs e) {
@@ -426,6 +445,10 @@ namespace TWiME {
                      select screen);
                 TagScreen firstScreenWithWindow = screensWithWindow.First();
                 SendMessage(Message.Screen, Level.monitor, firstScreenWithWindow.tag);
+                window.Activate();
+            }
+            if (hiddenNotShownByMeWindows.Count > 0) {
+                return;
             }
             foreach (Window window in new List<Window>(_windowList)) {
                 if (!allCurrentlyVisibleWindows.Contains(window)) {

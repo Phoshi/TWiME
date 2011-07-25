@@ -25,9 +25,8 @@ namespace TWiME {
             temp.Height = Screen.Bounds.Height - Bar.Height;
             temp.Y = Bar.Bottom;
             Controlled = temp;
-            createTagScreens();
             Name = Screen.DeviceName;
-
+            createTagScreens();
             Manager.WindowCreate += Manager_WindowCreate;
             Manager.WindowDestroy += Manager_WindowDestroy;
         }

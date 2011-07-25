@@ -70,6 +70,12 @@
     <Compile Include="WindowEventArgs.cs" />
     <Compile Include="WindowRules.cs" />
     <Compile Include="Windows.cs" />
+    <Compile Include="WindowSwitcher.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="WindowSwitcher.Designer.cs">
+      <DependentUpon>WindowSwitcher.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="Bar.resx">
       <DependentUpon>Bar.cs</DependentUpon>
     </EmbeddedResource>
@@ -82,6 +88,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="WindowSwitcher.resx">
+      <DependentUpon>WindowSwitcher.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

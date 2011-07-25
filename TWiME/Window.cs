@@ -120,10 +120,12 @@ namespace TWiME {
             get { return _handle; }
         }
 
+        public bool AsyncResizing = true;
+
         public string Title {
             get {
-                if (lastTitleUpdate < (DateTime.Now.Ticks - new TimeSpan(0, 0, 0, 10).Ticks)) {
-                    //If the window title is more than 10 seconds old
+                if (lastTitleUpdate < (DateTime.Now.Ticks - new TimeSpan(0, 0, 0, 1).Ticks)) {
+                    //If the window title is more than 1 second old
                     UpdateTitle();
                 }
                 return _title;
@@ -147,6 +149,13 @@ namespace TWiME {
 
         public Screen Screen {
             get { return Screen.FromHandle(handle); }
+        }
+
+        public void ForceVisible() {
+            if (!_visible) {
+                ShowWindowAsync(_handle, _maximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
+                _visible = true;
+            }
         }
 
         public bool Visible {
@@ -247,18 +256,18 @@ namespace TWiME {
             }
         }
 
-        private IntPtr attemptSetForeground(IntPtr target, IntPtr foreground) {
-            bool result = SetForegroundWindow(target);
+        private void attemptSetForeground(IntPtr target, IntPtr foreground) {
+            SetForegroundWindow(target);
             Thread.Sleep(10);
             IntPtr newFore = GetForegroundWindow();
             if (newFore == target) {
-                return target;
+                return;
             }
             if (newFore != foreground && target == GetWindow(newFore, 4)) {
                 //4 is GW_OWNER - the window parent
-                return newFore;
+                return;
             }
-            return IntPtr.Zero;
+            return;
         }
 
         private void updatePosition() {
@@ -276,13 +285,19 @@ namespace TWiME {
                 return _location;
             }
             set {
-                _location = value;
                 ShowWindowAsync(handle, SW_SHOWMAXIMIZED);
-                SetWindowPos(handle, (IntPtr) HWND_TOP, _location.X, _location.Y, _location.Width, _location.Height,
-                             SWP_NOACTIVATE);
-                //ShowWindowAsync(handle, SW_RESTORE);
-                //SetWindowPos(handle, (IntPtr)HWND_TOP, _location.X, _location.Y, _location.Width, _location.Height, SWP_NOACTIVATE);
+                Thread moveThread = new Thread((()=>assertLocation(value)));
+                moveThread.Start();
+                if (!AsyncResizing) {
+                    moveThread.Join();
+                }
+                _location = value;
             }
+        }
+
+        private void assertLocation(Rectangle whereTo) {
+            SetWindowPos(handle, (IntPtr) HWND_TOP, whereTo.X, whereTo.Y, whereTo.Width, whereTo.Height,
+                            SWP_NOACTIVATE);
         }
 
         public bool Maximised {

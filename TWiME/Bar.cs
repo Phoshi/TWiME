@@ -24,7 +24,7 @@ namespace TWiME {
         private Brush backgroundBrush;
         private Brush backgroundBrush2;
         private Brush selectedBrush;
-        Pen seperatorPen;
+        private Pen seperatorPen;
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr GetWindowLong(IntPtr hWnd, int nIndex);
@@ -147,7 +147,9 @@ namespace TWiME {
             Window thisWindow = new Window(this.Text, this.Handle, "", "", true);
             Rectangle rect = thisWindow.Location;
             rect.Height = barHeight;
+            thisWindow.AsyncResizing = false;
             thisWindow.Location = rect;
+            bar = thisWindow;
             registerBar();
             Manager.WindowFocusChange += Manager_WindowFocusChange;
             Timer t = new Timer();
@@ -307,6 +309,9 @@ namespace TWiME {
             Size previewSize = new Size(width, height);
             int tag = 1;
             foreach (TagScreen screen in _parent.screens) {
+                if (screen == null) {
+                    return; //We're not set up yet, just give up and try again later
+                }
                 Rectangle drawTangle = new Rectangle(currentWidth, 0, width - 1, this.Height - 1);
 
                 int tag1 = tag - 1;
@@ -362,7 +367,7 @@ namespace TWiME {
                         item.Value = layoutSymbol;
                     }
                     if (item.Path == "Window Count") {
-                        string countString = item.PrependValue + Manager.Windows.Count.ToString() + item.AppendValue;
+                        string countString = item.PrependValue + Manager.Windows.Count + item.AppendValue;
                         int countWidth = countString.Width(titleFont);
                         Bitmap countMap = new Bitmap(countWidth + 5, height);
 
