@@ -47,6 +47,9 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="Tree, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>Tree.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bar.cs">
