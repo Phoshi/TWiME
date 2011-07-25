@@ -43,19 +43,36 @@ Configuration is available through a `_TWiMErc` file located in the same directo
 
 There are many different settings you can change here.  
 [General]  
+    Windows.DefaultStackPosition - the position in the stack new windows open at. Default is 0, or the main window. Use negative indexes to go from the end of the stack.  
+
     Bar.Height - The height of the taskbars, in pixels. Default is 15px.  
     Bar.Font - The name of the font to use. The default is Segoe UI  
-    Windows.DefaultStackPosition - the position in the stack new windows open at. Default is 0, or the main window. Use negative indexes to go from the end of the stack.  
-    Many settings for colouring the bar - takes names of colours:  
+    Bar.Refresh - refresh rate for the bar, in ms. It will always refresh on window actions or focus changes, but also on this timer. Default 10000
+  Many settings for colouring the bar - takes names of colours:  
     Bar.UnselectedForeground - default Black  
     Bar.SelectedForeground - default LightGray  
     Bar.SelectedItemColour - default DarkGray  
     Bar.UnselectedBackgroundColour - default Black  
     Bar.SelectedTagColour - default White  
     Bar.BackColour - default DarkGray   
+    Bar.SeperatorColour - default Blue
+
+    Bar.SperatorWidth - the width of the seperator. Default 3.
+
+    Menu.Foreground - Foreground colour for the main menu. Default LightGray
+    Menu.Background - Background colour for the main menu, Default DarkGray
+    
     Main.AutoSave - "true" or "false", decides whether layout state is saved at the end of the session. TWiMErc values still override saved settings, however. Default false.  
     Main.MouseFollowsInput - "true" or "false", decides whether the mouse is moved whenever TWiME switches focus. Default false.  
-    Main.poll - an integer value, decides how often the main polling loop runs, in ms. Lower values produce faster detection of windows, but with an increase in required processor time. 1000ms is default. You probably won't need to mess with this.  
+    Main.Poll - an integer value, decides how often the main polling loop runs, in ms. Lower values produce faster detection of windows, but with an increase in required processor time. 1000ms is default. You probably won't need to mess with this.  
+
+    WindowSwitcher.Font.Name - The font to use in the window switcher, Default Segoe UI
+    WindowSwitcher.Font.Size - the size of that font, Default 8
+    WindowSwitcher.Foreground - the colour of the windowswitcher's text
+    WindowSwitcher.Background - the colour of the windowswitcher's background
+    WindowSwitcher.Inactive - the colour of inactive items, Default Gray
+    WindowSwitcher.Selected - the colour of selected items, default DarkGray
+
 [Window Rules]  
     Window Rules are quite simple, they follow this format:  
     WindowClass.WindowTitle.rule=value  
@@ -66,6 +83,7 @@ There are many different settings you can change here.
         monitor - defines what monitor the window should open on, as an index where the primary monitor is 0  
         ignore - set this to completely ignore the window and don't take it into account for anything  
     A window can have multiple rules, they are all applied.  
+
 [Display Specific Rules]  
     The header for these rules is the display name - most likely something like `\\\DISPLAY1`. Under that header, the format is as follows:    
     tagNumber.setting=value  
@@ -74,6 +92,19 @@ There are many different settings you can change here.
         Splitter - The horizontal splitter, from 0-1  
         VSplitter - the vertical splitter, from 0-1  
   
+[Menu Items]
+    Menu items are also quite simple, the items follow this format:
+        Category.Subcategory.Subcategory.Item=Path Or Command to run
+    An item can have as many subcategories as you want. If the path to run is not a special command, that path will be executed.
+    Categories will produce a menu with submenus as you'd expect.
+    Windows handles executing things quite well, give it a file and it'll open the associated application, give it a path and you'll get an explorer window there, give it an executable and you'll launch that.
+
+    Special commands are:
+        Edit TWiMErc - opens the TWiMErc in your default text editor
+        Restart - what it says on the tin
+        Quit - as before
+
+
 If General.Main.AutoSave is true, a `_runtimerc` file will be created on exit. This is exactly the same format as the `_TWiMErc`, and is automatically generated from the settings at the time.
 Disclaimer
 ----------
@@ -82,7 +113,7 @@ I'm sorry, that's just how it is.
 
 By
 --
-Application by me, Phoshi. 
+Application by me, Phoshi, or PY. 
 Pinvoke.net has been an invaluable resource for figuring out the WinAPI functions neccesary to make this all come together.
 Any code taken from other sources, or heavily based on other sources, is marked as such in a comment at the top of the area.
 Window focussing logic was partially translated from AutoHotKey's WinActivate function.
