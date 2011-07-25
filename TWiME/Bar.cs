@@ -225,9 +225,15 @@ namespace TWiME {
         private void loadAdditionalItems() {
             if (Manager.settings.sections.Contains("Bar Items")) {
                 foreach (List<string> list in Manager.settings.KeysUnderSection("Bar Items")) {
-                    string itemName = list[1];
-                    string settingName = list[2];
-                    string value = Manager.settings.ReadSetting(list.ToArray());
+                    string itemName, settingName, value;
+                    try {
+                        itemName = list[1];
+                        settingName = list[2];
+                        value = Manager.settings.ReadSetting(list.ToArray());
+                    }
+                    catch (IndexOutOfRangeException) {
+                        continue;
+                    }
                     if (_items.ContainsKey(itemName)) {
                         BarItem item = _items[itemName];
                         switch (settingName) {
@@ -250,10 +256,12 @@ namespace TWiME {
                                 item.Argument = value;
                                 break;
                             case "Monitor":
-                                string monitorName = Screen.AllScreens[int.Parse(value)].DeviceName;
-                                if (_parent.Screen.DeviceName != monitorName) {
-                                    _items.Remove(itemName);
-                                    continue;
+                                if (Screen.AllScreens.Length > int.Parse(value)) {
+                                    string monitorName = Screen.AllScreens[int.Parse(value)].DeviceName;
+                                    if (_parent.Screen.DeviceName != monitorName) {
+                                        _items.Remove(itemName);
+                                        continue;
+                                    }
                                 }
                                 break;
                             case "Interval":
@@ -521,26 +529,31 @@ namespace TWiME {
                     }
                 }
                 else {
-                    Process process = new Process();
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.FileName = item.Path;
-                    process.StartInfo.Arguments = item.Argument;
-                    process.StartInfo.CreateNoWindow = true;
-                    process.Start();
-                    string output = process.StandardOutput.ReadToEnd();
-                    process.WaitForExit();
-                    output = "{0}{1}{2}".With(item.PrependValue, output, item.AppendValue);
-                    int itemWidth = output.Width(titleFont);
-                    Bitmap itemMap = new Bitmap(itemWidth+5, height);
+                    try {
+                        Process process = new Process();
+                        process.StartInfo.UseShellExecute = false;
+                        process.StartInfo.RedirectStandardOutput = true;
+                        process.StartInfo.FileName = item.Path;
+                        process.StartInfo.Arguments = item.Argument;
+                        process.StartInfo.CreateNoWindow = true;
+                        process.Start();
+                        string output = process.StandardOutput.ReadToEnd();
+                        process.WaitForExit();
+                        output = "{0}{1}{2}".With(item.PrependValue, output, item.AppendValue);
+                        int itemWidth = output.Width(titleFont);
+                        Bitmap itemMap = new Bitmap(itemWidth + 5, height);
 
-                    using (Graphics gr = Graphics.FromImage(itemMap)) {
-                        gr.FillRectangle(item.BackColour, 0, 0, itemMap.Width, itemMap.Height);
-                        gr.DrawString(output, titleFont, item.ForeColour, 2, 0);
+                        using (Graphics gr = Graphics.FromImage(itemMap)) {
+                            gr.FillRectangle(item.BackColour, 0, 0, itemMap.Width, itemMap.Height);
+                            gr.DrawString(output, titleFont, item.ForeColour, 2, 0);
+                        }
+
+                        additionalImages.Add(itemMap);
+                        item.Value = itemMap;
                     }
-
-                    additionalImages.Add(itemMap);
-                    item.Value = itemMap;
+                    catch (Win32Exception) {
+                        continue; //Oh god everything is exploding (404: File Not Found)
+                    }
                 }
                 item.LastRenew = DateTime.Now.Ticks;
             }
