@@ -87,27 +87,28 @@ namespace TWiME {
 
             _currentVisibleWindows.Clear();
             int drawIndex = 0;
-            foreach (Window window in (from window in Manager.Windows orderby window.Visible descending, window.Title select window)) {
-                if (window.Title.Glob(filter.Text)) {
-                    if (drawIndex == _selectedIndex) {
-                        e.Graphics.FillRectangle(_selected, 0, currentHeight, Width, window.Title.Height(_windowFont));
-                    }
-                    var activeTags =
-                        (from tag in (from monitor in Manager.monitors select monitor.screens).SelectMany(x => x)
-                         where tag.windows.Contains(window)
-                         select tag.tag+1);
-                    int numTags = Manager.GetFocussedMonitor().screens.Length;
-                    int reverseWidthPosition = Width;
-                    for (int i = numTags; i > 0; i--) {
-                        int numberWidth = i.ToString().Width(_windowFont);
-                        reverseWidthPosition -= numberWidth;
-                        e.Graphics.DrawString(i.ToString(), _windowFont, activeTags.Contains(i) ? _foreground : _inactiveForeground, reverseWidthPosition, currentHeight);
-                    }
-                    e.Graphics.DrawString(window.Title, _windowFont, _foreground, 0, currentHeight);
-                    _currentVisibleWindows.Add(window);
-                    currentHeight += window.Title.Height(_windowFont);
-                    drawIndex++;
+            foreach (Window window in (from window in (from screen in Manager.GetFocussedMonitor().screens select screen.windows).SelectMany(window=>window)
+                                       orderby window.Visible descending, window.Title
+                                       where window.Title.Glob(filter.Text)
+                                       select window)) {
+                if (drawIndex == _selectedIndex) {
+                    e.Graphics.FillRectangle(_selected, 0, currentHeight, Width, window.Title.Height(_windowFont));
                 }
+                var activeTags =
+                    (from tag in (from monitor in Manager.monitors select monitor.screens).SelectMany(x => x)
+                        where tag.windows.Contains(window)
+                        select tag.tag+1);
+                int numTags = Manager.GetFocussedMonitor().screens.Length;
+                int reverseWidthPosition = Width;
+                for (int i = numTags; i > 0; i--) {
+                    int numberWidth = i.ToString().Width(_windowFont);
+                    reverseWidthPosition -= numberWidth;
+                    e.Graphics.DrawString(i.ToString(), _windowFont, activeTags.Contains(i) ? _foreground : _inactiveForeground, reverseWidthPosition, currentHeight);
+                }
+                e.Graphics.DrawString(window.Title, _windowFont, _foreground, 0, currentHeight);
+                _currentVisibleWindows.Add(window);
+                currentHeight += window.Title.Height(_windowFont);
+                drawIndex++;
             }
             if (Manager.GetFocussedMonitor().Screen.Bounds.Height < currentHeight) {
                 currentHeight = Manager.GetFocussedMonitor().Screen.Bounds.Height;
