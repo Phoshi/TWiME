@@ -87,6 +87,8 @@ namespace TWiME {
             bool rulesThisMonitor = false, rulesThisTag = false;
             int stackPosition =
                 Convert.ToInt32(Manager.settings.ReadSettingOrDefault(0, "General.Windows.DefaultStackPosition"));
+            int monitorPosition =
+                Convert.ToInt32(Manager.settings.ReadSettingOrDefault(-1, "General.Monitor.DefaultMonitor"));
             foreach (KeyValuePair<WindowMatch, WindowRule> keyValuePair in Manager.windowRules) {
                 if (keyValuePair.Key.windowMatches((Window) sender)) {
                     if (keyValuePair.Value.rule == WindowRules.monitor) {
@@ -111,7 +113,14 @@ namespace TWiME {
                     }
                 }
             }
-            if ((args.monitor.DeviceName == _parent.Name || rulesThisMonitor) &&
+            string monitorNameToOpenOn;
+            if (monitorPosition == -1) { //no preference, grab the monitor the window opened on
+                monitorNameToOpenOn = args.monitor.DeviceName;
+            }
+            else {
+                monitorNameToOpenOn = Manager.monitors[monitorPosition].Screen.DeviceName;
+            }
+            if ((monitorNameToOpenOn == _parent.Name || rulesThisMonitor) &&
                 (_parent.EnabledTag == _tag || rulesThisTag)) {
                 Window newWindow = (Window) sender;
                 if (stackPosition < 0) {
@@ -262,7 +271,7 @@ namespace TWiME {
             }
             else {
                 GetFocusedWindow().CatchMessage(message);
-                layout.Assert();
+                AssertLayout();
             }
         }
 
