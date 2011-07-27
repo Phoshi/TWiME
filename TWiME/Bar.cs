@@ -29,6 +29,7 @@ namespace TWiME {
         private Brush backgroundBrush2;
         private Brush selectedBrush;
         private Pen seperatorPen;
+        private Brush coverBrush;
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr GetWindowLong(IntPtr hWnd, int nIndex);
@@ -69,6 +70,11 @@ namespace TWiME {
                 new SolidBrush(Color.FromArgb(128,
                                               Color.FromName(Manager.settings.ReadSettingOrDefault("White",
                                                                                                    "General.Bar.SelectedTagColour"))));
+            coverBrush = new SolidBrush(Color.FromArgb(
+                int.Parse(Manager.settings.ReadSettingOrDefault("128", "General.Bar.Inactive.Opacity")),
+                Color.FromName(Manager.settings.ReadSettingOrDefault("Black", "General.Bar.Inactive.Colour"))
+                ));
+
             Color seperatorColour =
                 Color.FromName(Manager.settings.ReadSettingOrDefault("Blue", "General.Bar.SeperatorColour"));
             int seperatorWidth = int.Parse(Manager.settings.ReadSettingOrDefault("3", "General.Bar.SeperatorWidth"));
@@ -451,9 +457,19 @@ namespace TWiME {
             Manager.Log("Screen is {0}x{1}".With(screenWidth, screenHeight));
             int width = (int) ((screenWidth * height) / (float) screenHeight);
             Manager.Log("Each tag display is {0}x{1}".With(width, height));
-            int currentWidth = 20;
+            int currentWidth = 0;
 
-            addMouseAction(MouseButtons.Left, new Rectangle(0,0,20,barHeight),menu.Show);
+            if (_parent.Screen == Screen.PrimaryScreen) { //We're primary
+                Bitmap menuMap = new Bitmap(width, barHeight);
+                using (Graphics gr = Graphics.FromImage(menuMap)) {
+                    gr.DrawRectangle(seperatorPen, 0, 0, width - 1, barHeight - 1);
+                    gr.DrawString("T", titleFont, foregroundBrush, (width / 2) - "T".Width(titleFont) / 2,
+                                  height / 2 - "T".Height(titleFont) / 2);
+                }
+                e.Graphics.DrawImage(menuMap, 0, 0);
+                addMouseAction(MouseButtons.Left, new Rectangle(0, 0, width, barHeight), menu.Show);
+                currentWidth += width;
+            }
 
             Size previewSize = new Size(width, height);
             int tag = 1;
@@ -686,7 +702,6 @@ namespace TWiME {
             }
 
             if (Manager.GetFocussedMonitor() != _parent) {
-                Brush coverBrush = new SolidBrush(Color.FromArgb(128, Color.Black));
                 e.Graphics.FillRectangle(coverBrush, this.ClientRectangle);
             }
         }
