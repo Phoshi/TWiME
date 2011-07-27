@@ -68,6 +68,14 @@ namespace TWiME {
                 this.Hide();
                 Manager.ForcePoll();
             }
+            if (keyData == (Keys.Shift | Keys.Return)) {
+                _currentVisibleWindows[_selectedIndex].Visible = true;
+                Manager.GetFocussedMonitor().GetActiveScreen().CatchWindow(_currentVisibleWindows[_selectedIndex]);
+                Manager.GetFocussedMonitor().GetActiveScreen().AssertLayout();
+                _currentVisibleWindows[_selectedIndex].Activate();
+                Manager.ForcePoll();
+                this.Hide();
+            }
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
