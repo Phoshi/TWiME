@@ -692,6 +692,9 @@ namespace TWiME {
                     if (item.ClickExecutePath == "Next Layout") {
                         action = (() => Manager.SendMessage(Message.LayoutRelative, Level.monitor, _parent.EnabledTag));
                     }
+                    else if (item.ClickExecutePath == "Switcher") {
+                        action = (() => Manager.Switcher.Show());
+                    }
                     else {
                         action = (() => Process.Start(item.ClickExecutePath));
                     }
