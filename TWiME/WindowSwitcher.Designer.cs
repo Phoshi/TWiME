@@ -51,6 +51,7 @@
             this.Load += new System.EventHandler(this.WindowSwitcher_Load);
             this.VisibleChanged += new System.EventHandler(this.WindowSwitcher_VisibleChanged);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.WindowSwitcher_Paint);
+            this.MouseClick += new System.Windows.Forms.MouseEventHandler(this.WindowSwitcher_MouseClick);
             this.ResumeLayout(false);
             this.PerformLayout();
 

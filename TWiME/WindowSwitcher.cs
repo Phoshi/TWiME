@@ -87,7 +87,7 @@ namespace TWiME {
 
             _currentVisibleWindows.Clear();
             int drawIndex = 0;
-            foreach (Window window in (from window in (from screen in Manager.GetFocussedMonitor().screens select screen.windows).SelectMany(window=>window)
+            foreach (Window window in (from window in (from screen in Manager.GetFocussedMonitor().screens select screen.windows).SelectMany(window=>window).Distinct()
                                        orderby window.Visible descending, window.Title
                                        where window.Title.Glob(filter.Text)
                                        select window)) {
@@ -126,6 +126,23 @@ namespace TWiME {
 
         private void WindowSwitcher_Deactivate(object sender, EventArgs e) {
             this.Hide();
+        }
+
+        private void WindowSwitcher_MouseClick(object sender, MouseEventArgs e) {
+            int windowIndex = (e.Y - filter.Height) / ((this.Height - filter.Height) / _currentVisibleWindows.Count);
+            if (e.Button == MouseButtons.Left) {
+                if (_currentVisibleWindows.Count > windowIndex) {
+                    _currentVisibleWindows[windowIndex].ForceVisible();
+                    _currentVisibleWindows[windowIndex].Activate();
+                }
+            }
+            else if (e.Button==MouseButtons.Right) {
+                _currentVisibleWindows[windowIndex].Visible = true;
+                Manager.GetFocussedMonitor().GetActiveScreen().CatchWindow(_currentVisibleWindows[windowIndex]);
+                Manager.GetFocussedMonitor().GetActiveScreen().AssertLayout();
+                _currentVisibleWindows[windowIndex].Activate();
+            }
+            Manager.ForcePoll();
         }
     }
 }
