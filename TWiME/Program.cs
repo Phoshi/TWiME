@@ -20,6 +20,9 @@ namespace TWiME {
                 StreamWriter ohgodeverythingisfailingWriter = new StreamWriter("error.log");
                 ohgodeverythingisfailingWriter.WriteLine("Critical Failure: "+ex);
                 ohgodeverythingisfailingWriter.Close();
+                foreach (var window in Manager.Windows) {
+                    window.ForceVisible();
+                }
                 Taskbar.hidden = false;
                 if (Debugger.IsAttached) {
                     throw;
