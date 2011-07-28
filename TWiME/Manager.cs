@@ -65,6 +65,11 @@ namespace TWiME {
             _windowSwitcherWindow = new Window("", Switcher.Handle, "", "", false);
 
             Application.ApplicationExit += Application_ApplicationExit;
+            Microsoft.Win32.SystemEvents.DisplaySettingsChanged += new EventHandler(SystemEvents_DisplaySettingsChanged);
+        }
+
+        static void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e) {
+            SendMessage(Message.Close, Level.global, 1); //Just restart, for now. 
         }
 
         private static void setupWindowRules() {
@@ -448,7 +453,7 @@ namespace TWiME {
                 window.Activate();
                 Window window1 = window;
                 var screensWithWindow =
-                    (from screen in Manager.GetFocussedMonitor().screens
+                    (from screen in (from monitor in monitors select monitor.screens).SelectMany(x=>x)
                      where screen.windows.Contains(window1)
                      select screen);
                 TagScreen firstScreenWithWindow = screensWithWindow.First();
@@ -473,6 +478,11 @@ namespace TWiME {
                     }
                 }
             }
+        }
+
+        public static void ForceUnhandle(Window window) {
+            _windowList.Remove(window);
+            _handles.Remove(window.handle);
         }
 
         public static int GetFocussedMonitorIndex() {
