@@ -532,7 +532,7 @@ namespace TWiME {
                         item.Value = layoutSymbol;
                     }
                     if (item.Path == "Window Count") {
-                        string countString = item.PrependValue + Manager.Windows.Count + item.AppendValue;
+                        string countString = item.PrependValue + (from screen in _parent.screens select screen.windows).SelectMany(window=>window).Distinct().Count() + item.AppendValue;
                         int countWidth = countString.Width(titleFont);
                         Bitmap countMap = new Bitmap(countWidth + 5, height);
 
