@@ -457,6 +457,7 @@ namespace TWiME {
                      where screen.windows.Contains(window1)
                      select screen);
                 TagScreen firstScreenWithWindow = screensWithWindow.First();
+                firstScreenWithWindow.parent.Bar.bar.Activate();
                 SendMessage(Message.Screen, Level.monitor, firstScreenWithWindow.tag);
                 window.Activate();
             }
