@@ -89,6 +89,7 @@ namespace TWiME {
                 Convert.ToInt32(Manager.settings.ReadSettingOrDefault(0, "General.Windows.DefaultStackPosition"));
             int monitorPosition =
                 Convert.ToInt32(Manager.settings.ReadSettingOrDefault(-1, "General.Monitor.DefaultMonitor"));
+            List<int> tagsToOpenOn = new List<int>();
             foreach (KeyValuePair<WindowMatch, WindowRule> keyValuePair in Manager.windowRules) {
                 if (keyValuePair.Key.windowMatches((Window) sender)) {
                     if (keyValuePair.Value.rule == WindowRules.monitor) {
@@ -100,16 +101,7 @@ namespace TWiME {
                         }
                     }
                     if (keyValuePair.Value.rule == WindowRules.tag) {
-                        if (keyValuePair.Value.data - 1 == _tag) {
-                            //-1 because tag 1 is index 0, etc
-                            rulesThisTag = true;
-                        }
-                        else {
-                            return;
-                        }
-                    }
-                    if (keyValuePair.Value.rule == WindowRules.stack) {
-                        stackPosition = keyValuePair.Value.data;
+                            tagsToOpenOn.Add(keyValuePair.Value.data - 1);
                     }
                 }
             }
@@ -120,26 +112,19 @@ namespace TWiME {
             else {
                 monitorNameToOpenOn = Manager.monitors[monitorPosition].Screen.DeviceName;
             }
+            if (!tagsToOpenOn.Contains(_tag) && tagsToOpenOn.Count > 0) {
+                return;
+            }
             if ((monitorNameToOpenOn == _parent.Name || rulesThisMonitor) &&
-                (_parent.EnabledTag == _tag || rulesThisTag)) {
+                (_parent.EnabledTag == _tag || tagsToOpenOn.Contains(_tag))) {
                 Window newWindow = (Window) sender;
-                if (stackPosition < 0) {
-                    stackPosition = _windowList.Count() - stackPosition;
-                    if (stackPosition < 0) {
-                        stackPosition = 0;
-                    }
-                }
-                if (stackPosition >= _windowList.Count) {
-                    stackPosition = _windowList.Count;
-                }
-
-                _windowList.Insert(stackPosition, newWindow);
+                CatchWindow(newWindow);
                 Manager.Log("Adding Window: " + newWindow.ClassName + " " + newWindow, 1);
                 layout.UpdateWindowList(_windowList);
                 if (_parent.EnabledTag == _tag) {
                     layout.Assert();
                 }
-                else {
+                else if (!tagsToOpenOn.Contains(_parent.EnabledTag)) {
                     newWindow.Visible = false;
                 }
             }

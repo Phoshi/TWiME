@@ -2,10 +2,18 @@
 
 namespace TWiME {
     public enum WindowRules {
-        tag, //Window should be tagged with this when it opens
-        stack, //Window should take this place in the stack
-        monitor, //Window should be on this monitor
-        ignore //Window should not be managed by TWiME at all
+        tag,        //Window should be tagged with this when it opens
+        tag2 = tag,
+        tag3 = tag,
+        tag4 = tag,
+        tag5 = tag,
+        tag6 = tag,
+        tag7 = tag,
+        tag8 = tag,
+        tag9 = tag,
+        stack,      //Window should take this place in the stack
+        monitor,    //Window should be on this monitor
+        ignore      //Window should not be managed by TWiME at all
     }
 
     public class WindowRule {
@@ -23,6 +31,10 @@ namespace TWiME {
         public WindowRule(WindowRules rule, int data) {
             _rule = rule;
             _data = data;
+        }
+        public override string ToString() {
+            return "{0}: {1}".With(_rule, _data);
+            return base.ToString();
         }
     }
 
@@ -47,6 +59,10 @@ namespace TWiME {
                 return true;
             }
             return false;
+        }
+        public override string ToString() {
+            return "{0} - {1}".With(_class, _title);
+            return base.ToString();
         }
     }
 }
