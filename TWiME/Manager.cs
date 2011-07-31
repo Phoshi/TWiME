@@ -258,17 +258,6 @@ namespace TWiME {
                     Application.Restart();
                 }
             }
-            if (message.message == Message.Restart) {
-                Manager.Log("Beginning shutdown loop", 10);
-                foreach (Window window in _windowList) {
-                    Manager.Log("Setting {0} visible and not maximised".With(window), 10);
-                    window.Visible = true;
-                    window.Maximised = false;
-                }
-                Manager.Log("Showing taskbar", 10);
-                Taskbar.hidden = false;
-                Application.Restart();
-            }
             if (message.message == Message.Switch) {
                 Manager.Log("Toggling taskbar");
                 Taskbar.hidden = !Taskbar.hidden;
@@ -486,12 +475,23 @@ namespace TWiME {
             _handles.Remove(window.handle);
         }
 
-        public static int GetFocussedMonitorIndex() {
-            IntPtr handle = GetForegroundWindow();
-            Screen screen = Screen.FromHandle(handle);
+        public static int GetMonitorIndex(Monitor monitor) {
+            Screen screen = monitor.Screen;
             int index = 0;
-            foreach (Monitor monitor in monitors) {
-                if (monitor.Name == screen.DeviceName) {
+            foreach (Monitor mon in monitors) {
+                if (mon.Name == screen.DeviceName) {
+                    return index;
+                }
+                index++;
+            }
+            return -1;
+        }
+
+        public static int GetFocussedMonitorIndex() {
+            Screen screen = Screen.FromHandle(GetForegroundWindow());
+            int index = 0;
+            foreach (Monitor mon in monitors) {
+                if (mon.Name == screen.DeviceName) {
                     return index;
                 }
                 index++;
