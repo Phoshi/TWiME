@@ -71,6 +71,7 @@
     <Compile Include="Taskbar.cs" />
     <Compile Include="Window.cs" />
     <Compile Include="WindowEventArgs.cs" />
+    <Compile Include="windowExtensions.cs" />
     <Compile Include="WindowRules.cs" />
     <Compile Include="Windows.cs" />
     <Compile Include="WindowSwitcher.cs">
