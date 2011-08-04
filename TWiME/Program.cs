@@ -24,9 +24,6 @@ namespace TWiME {
                     window.ForceVisible();
                 }
                 Taskbar.hidden = false;
-                if (Debugger.IsAttached) {
-                    throw;
-                }
                 Application.Exit();
             }
         }
