@@ -163,8 +163,10 @@ namespace TWiME {
 
             set {
                 if (value) {
-                    ShowWindowAsync(_handle, _maximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
-                    _visible = true;
+                    if (!_visible) {
+                        ShowWindowAsync(_handle, Maximised ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
+                        _visible = true;
+                    }
                     if (Manager.hiddenWindows.Contains(this)) {
                         Manager.hiddenWindows.Remove(this);
                     }
@@ -254,6 +256,7 @@ namespace TWiME {
             if (foreAttachedToTarget) {
                 AttachThreadInput(foregroundThread, targetThread, false);
             }
+            Visible = true;
         }
 
         private void attemptSetForeground(IntPtr target, IntPtr foreground) {
