@@ -9,7 +9,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Extensions;
-using Microsoft.Win32;
 using Tree;
 
 namespace TWiME {
@@ -204,7 +203,7 @@ namespace TWiME {
             }
         }
 
-        private ToolStripMenuItem buildMenu(Node<Action> root, int depth = 0) {
+        private ToolStripMenuItem buildMenu(Node<Action> root) {
             if (root.Children.Count > 0) {
                 ToolStripMenuItem thisItem = new ToolStripMenuItem(root.Name);
                 ((ToolStripDropDownMenu) (thisItem.DropDown)).ShowImageMargin = false;
@@ -213,7 +212,7 @@ namespace TWiME {
                 thisItem.ForeColor =
                     Color.FromName(Manager.settings.ReadSettingOrDefault("LightGray", "General.Menu.Foreground"));
                 foreach (Node<Action> child in root.Children) {
-                    thisItem.DropDownItems.Add(buildMenu(child, depth + 1));
+                    thisItem.DropDownItems.Add(buildMenu(child));
                 }
                 return thisItem;
             }

@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Extensions;
 
@@ -97,7 +94,7 @@ namespace TWiME {
                 var activeTags =
                     (from tag in (from monitor in Manager.monitors select monitor.screens).SelectMany(x => x)
                         where tag.windows.Contains(window)
-                        select tag.tag+1);
+                        select tag.tag+1).ToList();
                 int numTags = Manager.GetFocussedMonitor().screens.Length;
                 int reverseWidthPosition = Width;
                 for (int i = numTags; i > 0; i--) {

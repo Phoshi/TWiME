@@ -34,7 +34,6 @@ namespace TWiME {
         }
         public override string ToString() {
             return "{0}: {1}".With(_rule, _data);
-            return base.ToString();
         }
     }
 
