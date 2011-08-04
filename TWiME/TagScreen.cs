@@ -84,9 +84,8 @@ namespace TWiME {
         }
 
         private void Manager_WindowCreate(object sender, WindowEventArgs args) {
-            bool rulesThisMonitor = false, rulesThisTag = false;
-            int stackPosition =
-                Convert.ToInt32(Manager.settings.ReadSettingOrDefault(0, "General.Windows.DefaultStackPosition"));
+            bool rulesThisMonitor = false;
+            Convert.ToInt32(Manager.settings.ReadSettingOrDefault(0, "General.Windows.DefaultStackPosition"));
             int monitorPosition =
                 Convert.ToInt32(Manager.settings.ReadSettingOrDefault(-1, "General.Monitor.DefaultMonitor"));
             List<int> tagsToOpenOn = new List<int>();
