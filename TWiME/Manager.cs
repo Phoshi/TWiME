@@ -65,11 +65,27 @@ namespace TWiME {
             _windowSwitcherWindow = new Window("", Switcher.Handle, "", "", false);
 
             Application.ApplicationExit += Application_ApplicationExit;
-            Microsoft.Win32.SystemEvents.DisplaySettingsChanged += new EventHandler(SystemEvents_DisplaySettingsChanged);
+            Microsoft.Win32.SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
         }
 
         static void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e) {
-            SendMessage(Message.Close, Level.global, 1); //Just restart, for now. 
+            int screenID = 0;
+            bool displaySettingsHaveChanged = false;
+            if (Screen.AllScreens.Length != monitors.Count) {
+                displaySettingsHaveChanged = true;
+            }
+            else {
+                foreach (Screen allScreen in Screen.AllScreens) {
+                    if (allScreen != monitors[screenID].Screen) {
+                        displaySettingsHaveChanged = true;
+                        break;
+                    }
+                    screenID++;
+                }
+            }
+            if (displaySettingsHaveChanged) {
+                SendMessage(Message.Close, Level.global, 1); //Just restart, for now. 
+            }
         }
 
         private static void setupWindowRules() {
@@ -395,16 +411,9 @@ namespace TWiME {
         }
 
         private static IntPtr focusTrack = IntPtr.Zero;
-        private static int checkCount;
         private static void pollWindows_Tick(object sender, EventArgs e) {
             _globalHook.unhook();
             _globalHook.hook();
-
-            if (++checkCount % 10 == 0) {
-                foreach (Monitor monitor in monitors) {
-                    monitor.GetActiveScreen().AssertLayout();
-                }
-            }
 
             if (GetForegroundWindow() != focusTrack) {
                 focusTrack = GetForegroundWindow();
@@ -468,6 +477,9 @@ namespace TWiME {
                     }
                 }
             }
+            foreach (Monitor monitor in monitors) {
+                monitor.GetActiveScreen().AssertLayout();
+            }
         }
 
         public static void ForceUnhandle(Window window) {
@@ -484,7 +496,7 @@ namespace TWiME {
                 }
                 index++;
             }
-            return -1;
+            return 0;
         }
 
         public static int GetFocussedMonitorIndex() {
@@ -496,7 +508,7 @@ namespace TWiME {
                 }
                 index++;
             }
-            return -1;
+            return 0;
         }
 
         public static Monitor GetFocussedMonitor() {
