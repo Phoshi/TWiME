@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -39,6 +41,14 @@ namespace TWiME {
         [DllImport("user32.dll")]
         private static extern bool PostMessage(IntPtr hWnd, UInt32 Msg, int wParam, int lParam);
 
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern Int32 SystemParametersInfo(
+            UInt32 action, UInt32 uParam, String vParam, UInt32 winIni);
+
+        private static readonly UInt32 SPI_SETDESKWALLPAPER = 0x14;
+        private static readonly UInt32 SPIF_UPDATEINIFILE = 0x01;
+        private static readonly UInt32 SPIF_SENDWININICHANGE = 0x02;
+
         private const UInt32 WM_KEYDOWN = 0x0100;
         private const UInt32 WM_KEYUP = 0x0101;
         private const int VK_LWIN = 0x5B;
@@ -66,6 +76,24 @@ namespace TWiME {
 
             Application.ApplicationExit += Application_ApplicationExit;
             Microsoft.Win32.SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
+        }
+
+        public static void SetWallpaper(string path) {
+            if (!File.Exists(path)) {
+                return;
+            }
+            string newPath = Path.GetTempPath();
+            string oldName = Path.GetFileNameWithoutExtension(path);
+            string newName = Path.Combine(newPath, oldName + ".bmp");
+            try {
+                Image image = Image.FromFile(path);
+                image.Save(newName, ImageFormat.Bmp);
+                image.Dispose();
+                SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, newName,
+                              SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+            }
+            catch {//Because /fuck GDI+/, seriously.
+            }
         }
 
         static void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e) {
@@ -241,6 +269,8 @@ namespace TWiME {
             }
 
             #endregion
+
+            hook(Keys.Z, (()=>monitors[0].Bar.Menu.Show(Cursor.Position)));
 
             _globalHook.KeyDown += hook_KeyDown;
             _globalHook.KeyUp += globalHook_KeyUp;
