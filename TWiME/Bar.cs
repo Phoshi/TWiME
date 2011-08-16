@@ -45,7 +45,7 @@ namespace TWiME {
             new Dictionary<MouseButtons, Dictionary<Rectangle, Action>>();
         private Dictionary<string, BarItem> _items = new Dictionary<string, BarItem>();
 
-        private ContextMenuStrip menu;
+        public ContextMenuStrip Menu { get; private set; }
 
         public Bar(Monitor monitor) {
             InitializeComponent();
@@ -97,11 +97,11 @@ namespace TWiME {
         }
 
         private void generateMenu() {
-            menu = new ContextMenuStrip();
-            menu.ShowImageMargin = false;
-            menu.Font = titleFont;
-            menu.BackColor = Color.FromName(Manager.settings.ReadSettingOrDefault("DarkGray", "General.Menu.Background"));
-            menu.ForeColor =
+            Menu = new ContextMenuStrip();
+            Menu.ShowImageMargin = false;
+            Menu.Font = titleFont;
+            Menu.BackColor = Color.FromName(Manager.settings.ReadSettingOrDefault("DarkGray", "General.Menu.Background"));
+            Menu.ForeColor =
                 Color.FromName(Manager.settings.ReadSettingOrDefault("LightGray", "General.Menu.Foreground"));
             Node<Action> root = new Node<Action>();
             if (Manager.settings.sections.Contains("Menu Items")) {
@@ -130,7 +130,7 @@ namespace TWiME {
             ToolStripItemCollection collection = items.DropDownItems;
             int collectionCount = collection.Count;
             for (int i = 0; i < collectionCount; i++) {
-                menu.Items.Add(collection[0]);
+                Menu.Items.Add(collection[0]);
             }
         }
 
@@ -466,7 +466,8 @@ namespace TWiME {
                                   height / 2 - "T".Height(titleFont) / 2);
                 }
                 e.Graphics.DrawImage(menuMap, 0, 0);
-                addMouseAction(MouseButtons.Left, new Rectangle(0, 0, width, barHeight), menu.Show);
+                addMouseAction(MouseButtons.Left, new Rectangle(0, 0, width, barHeight),
+                               (() => Menu.Show(new Point(0, 0))));
                 currentWidth += width;
             }
 
