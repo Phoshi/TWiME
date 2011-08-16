@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows.Forms;
 using Extensions;
 
@@ -31,7 +32,7 @@ namespace TWiME {
             activeLayout =
                 Manager.GetLayoutIndexFromName(Manager.settings.ReadSettingOrDefault("DefaultLayout",
                                                                                      parent.Screen.DeviceName.Replace(
-                                                                                         ".", ""), tag.ToString(),
+                                                                                         ".", ""), (tag + 1).ToString(),
                                                                                      "DefaultLayout"));
             _parent = parent;
             _tag = tag;
@@ -43,7 +44,7 @@ namespace TWiME {
         public void initLayout() {
             if (!Manager.settings.readOnly) {
                 Manager.settings.AddSetting(Manager.GetLayoutNameFromIndex(activeLayout),
-                                            parent.Screen.DeviceName.Replace(".", ""), _tag.ToString(), "DefaultLayout");
+                                            parent.Screen.DeviceName.Replace(".", ""), (_tag + 1).ToString(), "DefaultLayout");
             }
             Layout instance =
                 (Layout)
@@ -236,12 +237,12 @@ namespace TWiME {
                 if (message.message == Message.Splitter) {
                     layout.MoveSplitter(message.data / 100.0f);
                     Manager.settings.AddSetting(layout.GetSplitter(), parent.Screen.DeviceName.Replace(".", ""),
-                                                _tag.ToString(), "Splitter");
+                                                (_tag + 1).ToString(), "Splitter");
                 }
                 if (message.message == Message.VSplitter) {
                     layout.MoveSplitter(message.data / 100.0f, true);
                     Manager.settings.AddSetting(layout.GetSplitter(true), parent.Screen.DeviceName.Replace(".", ""),
-                                                _tag.ToString(), "VSplitter");
+                                                (_tag + 1).ToString(), "VSplitter");
                 }
                 if (message.message == Message.Close) {
                     foreach (Window window in _windowList) {
@@ -326,6 +327,13 @@ namespace TWiME {
                 window.Visible = true;
             }
             layout.Assert();
+            string wallpaperPath = Manager.settings.ReadSettingOrDefault("", _parent.Screen.DeviceName.Replace(
+                ".", ""),
+                (_tag + 1).ToString(), "Wallpaper");
+            if (wallpaperPath != "") {
+                Thread wallThread = new Thread((() => Manager.SetWallpaper(wallpaperPath)));
+                wallThread.Start();
+            }
         }
 
         public void AssertLayout() {
