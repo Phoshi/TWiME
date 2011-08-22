@@ -97,6 +97,9 @@ namespace TWiME {
         }
 
         static void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e) {
+            if (!bool.Parse(settings.ReadSettingOrDefault("true", "General.Main.RestartOnDisplayChange"))) {
+                return;
+            }
             int screenID = 0;
             bool displaySettingsHaveChanged = false;
             if (Screen.AllScreens.Length != monitors.Count) {
