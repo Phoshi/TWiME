@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Security.Principal;
 using System.Windows.Forms;
 
 namespace TWiME {
@@ -10,6 +11,10 @@ namespace TWiME {
         /// </summary>
         [STAThread]
         private static void Main() {
+            if (!isAdmin()) {
+                restartWithAdminRights();
+                return;
+            }
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             try {
@@ -26,6 +31,25 @@ namespace TWiME {
                 Taskbar.hidden = false;
                 Application.Exit();
             }
+        }
+
+        private static bool isAdmin() {
+            WindowsIdentity wi = WindowsIdentity.GetCurrent();
+            WindowsPrincipal wp = new WindowsPrincipal(wi);
+            return wp.IsInRole(WindowsBuiltInRole.Administrator);
+        }
+
+        private static void restartWithAdminRights() {
+            try {
+                Process.Start(new ProcessStartInfo() {
+                    Verb = "runas",
+                    FileName = Application.ExecutablePath
+                });
+            }
+            catch (Exception) {
+                return;
+            }
+            Application.Exit();
         }
     }
 }
