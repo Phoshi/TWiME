@@ -17,6 +17,7 @@ namespace TWiME {
 
         private ILayout layout;
         private readonly Monitor _parent;
+        private Rectangle _controlled;
         private readonly int _tag;
         public int activeLayout;
 
@@ -36,12 +37,23 @@ namespace TWiME {
                                                                                      "DefaultLayout"));
             _parent = parent;
             _tag = tag;
-            initLayout();
+            _controlled = _parent.Controlled;
+            InitLayout();
             Manager.WindowCreate += Manager_WindowCreate;
             Manager.WindowDestroy += Manager_WindowDestroy;
         }
 
-        public void initLayout() {
+        public void UpdateControlledArea(Rectangle newArea = new Rectangle()) {
+            if (newArea.IsEmpty) {
+                _controlled = _parent.Controlled;
+            }
+            else {
+                _controlled = newArea;
+            }
+            InitLayout();
+        }
+
+        public void InitLayout() {
             if (!Manager.settings.readOnly) {
                 Manager.settings.AddSetting(Manager.GetLayoutNameFromIndex(activeLayout),
                                             parent.Screen.DeviceName.Replace(".", ""), (_tag + 1).ToString(), "DefaultLayout");
@@ -49,7 +61,7 @@ namespace TWiME {
             Layout instance =
                 (Layout)
                 Activator.CreateInstance(Manager.layouts[activeLayout],
-                                         new object[] {_windowList, _parent.Controlled, this});
+                                         new object[] {_windowList, _controlled, this});
             layout = instance;
         }
 
@@ -78,7 +90,7 @@ namespace TWiME {
                 _windowList.Remove(toRemove);
                 Manager.Log("Removing window: {0} {1}".With(toRemove.ClassName, toRemove.Title), 1);
                 layout.UpdateWindowList(_windowList);
-                if (parent.EnabledTag == tag) {
+                if (parent.IsTagEnabled(tag)) {
                     layout.Assert();
                 }
             }
@@ -116,15 +128,15 @@ namespace TWiME {
                 return;
             }
             if ((monitorNameToOpenOn == _parent.Name || rulesThisMonitor) &&
-                (_parent.EnabledTag == _tag || tagsToOpenOn.Contains(_tag))) {
+                (_parent.IsTagEnabled(_tag) || tagsToOpenOn.Contains(_tag))) {
                 Window newWindow = (Window) sender;
                 CatchWindow(newWindow);
                 Manager.Log("Adding Window: " + newWindow.ClassName + " " + newWindow, 1);
                 layout.UpdateWindowList(_windowList);
-                if (_parent.EnabledTag == _tag) {
+                if (_parent.IsTagEnabled(_tag)) {
                     layout.Assert();
                 }
-                else if (!tagsToOpenOn.Contains(_parent.EnabledTag)) {
+                else if ((from tag in tagsToOpenOn where _parent.IsTagEnabled(tag) select tag).Count() >0){
                     newWindow.Visible = false;
                 }
             }

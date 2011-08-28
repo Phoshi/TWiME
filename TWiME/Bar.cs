@@ -493,7 +493,7 @@ namespace TWiME {
                 tagPos.X = (currentWidth) + (width / 2) - (tag.ToString().Width(titleFont) / 2);
                 tagPos.Y = height / 2 - tag.ToString().Height(titleFont) / 2;
                 e.Graphics.DrawImage(state, drawTangle);
-                if (tag1 == _parent.EnabledTag) {
+                if (_parent.IsTagEnabled(tag1)) {
                     e.Graphics.FillRectangle(selectedBrush, drawTangle);
                     e.Graphics.DrawString(tag++.ToString(), boldFont, foregroundBrush, tagPos);
                 }
@@ -690,7 +690,7 @@ namespace TWiME {
                     Rectangle drawTangle = new Rectangle(currentWidth, 0, additionalImage.Width, height);
                     Action action;
                     if (item.ClickExecutePath == "Next Layout") {
-                        action = (() => Manager.SendMessage(Message.LayoutRelative, Level.monitor, _parent.EnabledTag));
+                        action = (() => Manager.SendMessage(Message.LayoutRelative, Level.monitor, _parent.GetEnabledTags().First()));
                     }
                     else if (item.ClickExecutePath == "Switcher") {
                         action = (() => Manager.Switcher.Show());

@@ -238,7 +238,7 @@ namespace TWiME {
             hook(Keys.J, (() => SendMessage(Message.ScreenRelative, Level.monitor, 1)), Keys.Control);
             hook(Keys.K, (() => SendMessage(Message.ScreenRelative, Level.monitor, -1)), Keys.Control);
             hook(Keys.Return, (() => SendMessage(Message.Screen, Level.monitor, -1)), Keys.Control);
-            hook(Keys.Back, (() => SendMessage(Message.TagWindow, Level.monitor, Manager.GetFocussedMonitor().EnabledTag)), Keys.Control | Keys.Shift);
+            hook(Keys.Back, (() => SendMessage(Message.TagWindow, Level.monitor, Manager.GetFocussedMonitor().GetEnabledTags().First())), Keys.Control | Keys.Shift);
 
             hook(Keys.J, (() => SendMessage(Message.SwapTagWindowRelative, Level.monitor, 1)), Keys.Control | Keys.Shift);
             hook(Keys.K, (() => SendMessage(Message.SwapTagWindowRelative, Level.monitor, -1)),
