@@ -34,6 +34,7 @@ namespace TWiME {
 
         private const long WS_POPUP = 0x80000000L;
         private const long WS_CAPTION = 0x00C00000L;
+        private const long WS_THICKFRAME = 0x00040000L;
 
         public delegate bool EnumWindowsProc(int hWnd, int lParam);
 
@@ -88,11 +89,18 @@ namespace TWiME {
             if (myHandles.Contains((IntPtr) handle)) {
                 return true;
             }
+            if (title.ToString().EndsWith("(Not Responding)")) {
+                return true;
+            }
+
             IntPtr style = GetWindowLongPtr((IntPtr) handle, -16); //-16 is GWL_STYLE
             if (((long) style & WS_POPUP) == WS_POPUP) {
                 return true;
             }
             if (((long) style & WS_CAPTION) != WS_CAPTION) {
+                return true;
+            }
+            if (((long)style & WS_THICKFRAME) == 0) {
                 return true;
             }
 
