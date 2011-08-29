@@ -26,7 +26,12 @@ namespace TWiME {
 
         public void SetTagState(int tagNumber, bool state, bool exclusive = true) {
             if (state) {
+                tagScreens[tagNumber].Enable();
+                tagScreens[_enabledTag].Disable(tagScreens[tagNumber]);
+                Bar.bar.Activate();
                 _enabledTag = tagNumber;
+                tagScreens[tagNumber].Activate();
+
             }
         }
         
@@ -87,16 +92,12 @@ namespace TWiME {
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.message == Message.Screen) {
-                    if (_enabledTag != message.data) {
+                    if (!IsTagEnabled(message.data)) {
                         if (message.data < 0) {
                             message.data = _lastFocussedTagScreen;
                         }
-                        _lastFocussedTagScreen = _enabledTag;
-                        tagScreens[message.data].Enable();
-                        tagScreens[_enabledTag].Disable(tagScreens[message.data]);
-                        Bar.bar.Activate();
-                        _enabledTag = message.data;
-                        tagScreens[_enabledTag].Activate();
+                        _lastFocussedTagScreen = GetEnabledTags().First();
+                        SetTagState(message.data, true);
                         Manager.CenterMouseOnActiveWindow();
                     }
                 }
@@ -123,7 +124,7 @@ namespace TWiME {
                         }
                         tagScreens[message.data].ThrowWindow(focussedWindow);
                         focussedWindow.Visible = false;
-                        if (message.data == _enabledTag) {
+                        if (IsTagEnabled(message.data)) {
                             GetActiveScreen().Enable();
                         }
                     }
@@ -183,7 +184,7 @@ namespace TWiME {
                     }
                     switchScreen.activeLayout = newIndex;
                     switchScreen.InitLayout();
-                    if (switchScreen.tag == _enabledTag) {
+                    if (IsTagEnabled(switchScreen.tag)) {
                         switchScreen.AssertLayout();
                         Manager.CenterMouseOnActiveWindow();
                     }
@@ -199,14 +200,14 @@ namespace TWiME {
                     }
                     switchScreen.activeLayout = newIndex;
                     switchScreen.InitLayout();
-                    if (switchScreen.tag == _enabledTag) {
+                    if (IsTagEnabled(switchScreen.tag)) {
                         switchScreen.AssertLayout();
                         Manager.CenterMouseOnActiveWindow();
                     }
                 }
             }
             else {
-                tagScreens[_enabledTag].catchMessage(message);
+                GetActiveScreen().catchMessage(message);
             }
             Bar.Redraw();
         }
@@ -216,7 +217,7 @@ namespace TWiME {
         }
 
         public TagScreen GetActiveScreen() {
-            TagScreen activeScreen = tagScreens[_enabledTag];
+            TagScreen activeScreen = tagScreens[GetEnabledTags().First()];
             return activeScreen;
         }
 
