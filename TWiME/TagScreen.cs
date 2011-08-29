@@ -192,7 +192,7 @@ namespace TWiME {
                         else if (newIndex < 0) {
                             newIndex = _windowList.Count - 1;
                         }
-                        if (oldIndex > 0) {
+                        if (oldIndex >= 0) {
                             Window oldWindow = _windowList[oldIndex];
                             Window newWindow = _windowList[newIndex];
                             _windowList[oldIndex] = newWindow;
