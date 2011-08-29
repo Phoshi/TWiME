@@ -137,7 +137,7 @@ namespace TWiME {
                 if (_parent.IsTagEnabled(_tag)) {
                     layout.Assert();
                 }
-                else if ((from tag in tagsToOpenOn where _parent.IsTagEnabled(tag) select tag).Count() >0){
+                else if ((from tag in tagsToOpenOn where _parent.IsTagEnabled(tag) select tag).Count() == 0){
                     newWindow.Visible = false;
                 }
             }
