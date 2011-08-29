@@ -321,7 +321,7 @@ namespace TWiME {
         }
 
         public void CatchMessage(HotkeyMessage message) {
-            if (message.message == Message.Close) {
+            if (message.Message == Message.Close) {
                 this.Close();
             }
         }

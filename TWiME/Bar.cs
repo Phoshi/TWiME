@@ -187,8 +187,8 @@ namespace TWiME {
             specialCommands["Edit TWiMErc"] = (() => {
                                                    Process.Start(GetAssociation(@".txt"), "_TWiMErc");
                                                });
-            specialCommands["Quit"] = (() => Manager.SendMessage(Message.Close, Level.global, 0));
-            specialCommands["Restart"] = (() => Manager.SendMessage(Message.Close, Level.global, 1));
+            specialCommands["Quit"] = (() => Manager.SendMessage(Message.Close, Level.Global, 0));
+            specialCommands["Restart"] = (() => Manager.SendMessage(Message.Close, Level.Global, 1));
 
             if (specialCommands.ContainsKey(command)) {
                 specialCommands[command]();
@@ -481,11 +481,11 @@ namespace TWiME {
 
                 int tag1 = tag - 1;
                 addMouseAction(MouseButtons.Left, drawTangle,
-                               (() => Manager.SendMessage(Message.Screen, Level.monitor, tag1)));
+                               (() => Manager.SendMessage(Message.Screen, Level.Monitor, tag1)));
                 addMouseAction(MouseButtons.Middle, drawTangle,
-                               (() => Manager.SendMessage(Message.LayoutRelative, Level.monitor, tag1)));
+                               (() => Manager.SendMessage(Message.LayoutRelative, Level.Monitor, tag1)));
                 addMouseAction(MouseButtons.Right, drawTangle,
-                               (() => Manager.SendMessage(Message.SwapTagWindow, Level.monitor, tag1)));
+                               (() => Manager.SendMessage(Message.SwapTagWindow, Level.Monitor, tag1)));
 
                 Image state = screen.getStateImage(previewSize);
                 e.Graphics.DrawRectangle(new Pen(Color.White), drawTangle);
@@ -495,7 +495,7 @@ namespace TWiME {
                 e.Graphics.DrawImage(state, drawTangle);
                 if (_parent.IsTagEnabled(tag1)) {
                     e.Graphics.FillRectangle(selectedBrush, drawTangle);
-                    e.Graphics.DrawString(tag++.ToString(), boldFont, foregroundBrush, tagPos);
+                    e.Graphics.DrawString(tag++.ToString(), tag1 == _parent.GetActiveTag() ? boldFont : titleFont, foregroundBrush, tagPos);
                 }
                 else {
                     e.Graphics.DrawString(tag++.ToString(), titleFont, foregroundBrush, tagPos);
@@ -654,16 +654,16 @@ namespace TWiME {
 
                     int index1 = drawIndex;
                     addMouseAction(MouseButtons.Left, drawRect,
-                                   (() => Manager.SendMessage(Message.FocusThis, Level.screen, index1)));
+                                   (() => Manager.SendMessage(Message.FocusThis, Level.Screen, index1)));
                     addMouseAction(MouseButtons.Middle, drawRect,
-                                   (() => Manager.SendMessage(Message.Close, Level.screen, index1)));
+                                   (() => Manager.SendMessage(Message.Close, Level.Screen, index1)));
                     addMouseAction(MouseButtons.Right, drawRect, (() => {
                                                                       Manager.SendMessage(Message.FocusThis,
-                                                                                          Level.screen, 0);
+                                                                                          Level.Screen, 0);
                                                                       Manager.SendMessage(Message.SwitchThis,
-                                                                                          Level.screen, index1);
+                                                                                          Level.Screen, index1);
                                                                       Manager.SendMessage(Message.FocusThis,
-                                                                                          Level.screen, 0);
+                                                                                          Level.Screen, 0);
                                                                   }));
 
                     Rectangle newRect = drawRect;
@@ -690,7 +690,7 @@ namespace TWiME {
                     Rectangle drawTangle = new Rectangle(currentWidth, 0, additionalImage.Width, height);
                     Action action;
                     if (item.ClickExecutePath == "Next Layout") {
-                        action = (() => Manager.SendMessage(Message.LayoutRelative, Level.monitor, _parent.GetEnabledTags().First()));
+                        action = (() => Manager.SendMessage(Message.LayoutRelative, Level.Monitor, _parent.GetEnabledTags().First()));
                     }
                     else if (item.ClickExecutePath == "Switcher") {
                         action = (() => Manager.Switcher.Show());

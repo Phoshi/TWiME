@@ -115,7 +115,7 @@ namespace TWiME {
                 }
             }
             if (displaySettingsHaveChanged) {
-                SendMessage(Message.Close, Level.global, 1); //Just restart, for now. 
+                SendMessage(Message.Close, Level.Global, 1); //Just restart, for now. 
             }
         }
 
@@ -208,53 +208,53 @@ namespace TWiME {
                                 }
                             }));
 
-            hook(Keys.Q, (() => SendMessage(Message.Close, Level.global, 0)));
-            hook(Keys.R, (() => SendMessage(Message.Close, Level.global, 1)));
-            hook(Keys.Space, (() => SendMessage(Message.Switch, Level.global, 0)));
+            hook(Keys.Q, (() => SendMessage(Message.Close, Level.Global, 0)));
+            hook(Keys.R, (() => SendMessage(Message.Close, Level.Global, 1)));
+            hook(Keys.Space, (() => SendMessage(Message.Switch, Level.Global, 0)));
 
 
-            hook(Keys.J, (() => SendMessage(Message.Focus, Level.screen, 1)));
-            hook(Keys.K, (() => SendMessage(Message.Focus, Level.screen, -1)));
-            hook(Keys.Return, (() => SendMessage(Message.FocusThis, Level.screen, 0)));
-            hook(Keys.J, (() => SendMessage(Message.Switch, Level.screen, 1)), Keys.Shift);
-            hook(Keys.K, (() => SendMessage(Message.Switch, Level.screen, -1)), Keys.Shift);
-            hook(Keys.Return, (() => SendMessage(Message.SwitchThis, Level.screen, 0)), Keys.Shift);
-            hook(Keys.C, (() => SendMessage(Message.Close, Level.window, 0)));
+            hook(Keys.J, (() => SendMessage(Message.Focus, Level.Screen, 1)));
+            hook(Keys.K, (() => SendMessage(Message.Focus, Level.Screen, -1)));
+            hook(Keys.Return, (() => SendMessage(Message.FocusThis, Level.Screen, 0)));
+            hook(Keys.J, (() => SendMessage(Message.Switch, Level.Screen, 1)), Keys.Shift);
+            hook(Keys.K, (() => SendMessage(Message.Switch, Level.Screen, -1)), Keys.Shift);
+            hook(Keys.Return, (() => SendMessage(Message.SwitchThis, Level.Screen, 0)), Keys.Shift);
+            hook(Keys.C, (() => SendMessage(Message.Close, Level.Window, 0)));
 
 
-            hook(Keys.J, (() => SendMessage(Message.Monitor, Level.screen, 1)), Keys.Shift | Keys.Alt);
-            hook(Keys.K, (() => SendMessage(Message.Monitor, Level.screen, -1)), Keys.Shift | Keys.Alt);
-            hook(Keys.Return, (() => SendMessage(Message.MonitorMoveThis, Level.screen, 0)), Keys.Shift | Keys.Alt);
+            hook(Keys.J, (() => SendMessage(Message.Monitor, Level.Screen, 1)), Keys.Shift | Keys.Alt);
+            hook(Keys.K, (() => SendMessage(Message.Monitor, Level.Screen, -1)), Keys.Shift | Keys.Alt);
+            hook(Keys.Return, (() => SendMessage(Message.MonitorMoveThis, Level.Screen, 0)), Keys.Shift | Keys.Alt);
 
-            hook(Keys.Left, (() => SendMessage(Message.Splitter, Level.screen, -1)));
-            hook(Keys.Left, (() => SendMessage(Message.Splitter, Level.screen, -10)), Keys.Shift);
-            hook(Keys.Right, (() => SendMessage(Message.Splitter, Level.screen, 1)));
-            hook(Keys.Right, (() => SendMessage(Message.Splitter, Level.screen, 10)), Keys.Shift);
-            hook(Keys.Up, (() => SendMessage(Message.VSplitter, Level.screen, -1)));
-            hook(Keys.Up, (() => SendMessage(Message.VSplitter, Level.screen, -10)), Keys.Shift);
-            hook(Keys.Down, (() => SendMessage(Message.VSplitter, Level.screen, 1)));
-            hook(Keys.Down, (() => SendMessage(Message.VSplitter, Level.screen, 10)), Keys.Shift);
+            hook(Keys.Left, (() => SendMessage(Message.Splitter, Level.Screen, -1)));
+            hook(Keys.Left, (() => SendMessage(Message.Splitter, Level.Screen, -10)), Keys.Shift);
+            hook(Keys.Right, (() => SendMessage(Message.Splitter, Level.Screen, 1)));
+            hook(Keys.Right, (() => SendMessage(Message.Splitter, Level.Screen, 10)), Keys.Shift);
+            hook(Keys.Up, (() => SendMessage(Message.VSplitter, Level.Screen, -1)));
+            hook(Keys.Up, (() => SendMessage(Message.VSplitter, Level.Screen, -10)), Keys.Shift);
+            hook(Keys.Down, (() => SendMessage(Message.VSplitter, Level.Screen, 1)));
+            hook(Keys.Down, (() => SendMessage(Message.VSplitter, Level.Screen, 10)), Keys.Shift);
 
-            hook(Keys.J, (() => SendMessage(Message.ScreenRelative, Level.monitor, 1)), Keys.Control);
-            hook(Keys.K, (() => SendMessage(Message.ScreenRelative, Level.monitor, -1)), Keys.Control);
-            hook(Keys.Return, (() => SendMessage(Message.Screen, Level.monitor, -1)), Keys.Control);
-            hook(Keys.Back, (() => SendMessage(Message.TagWindow, Level.monitor, Manager.GetFocussedMonitor().GetEnabledTags().First())), Keys.Control | Keys.Shift);
+            hook(Keys.J, (() => SendMessage(Message.ScreenRelative, Level.Monitor, 1)), Keys.Control);
+            hook(Keys.K, (() => SendMessage(Message.ScreenRelative, Level.Monitor, -1)), Keys.Control);
+            hook(Keys.Return, (() => SendMessage(Message.Screen, Level.Monitor, -1)), Keys.Control);
+            hook(Keys.Back, (() => SendMessage(Message.TagWindow, Level.Monitor, Manager.GetFocussedMonitor().GetEnabledTags().First())), Keys.Control | Keys.Shift);
 
-            hook(Keys.J, (() => SendMessage(Message.SwapTagWindowRelative, Level.monitor, 1)), Keys.Control | Keys.Shift);
-            hook(Keys.K, (() => SendMessage(Message.SwapTagWindowRelative, Level.monitor, -1)),
+            hook(Keys.J, (() => SendMessage(Message.SwapTagWindowRelative, Level.Monitor, 1)), Keys.Control | Keys.Shift);
+            hook(Keys.K, (() => SendMessage(Message.SwapTagWindowRelative, Level.Monitor, -1)),
                  Keys.Control | Keys.Shift);
-            hook(Keys.Return, (() => SendMessage(Message.SwapTagWindow, Level.monitor, 0)), Keys.Control | Keys.Shift);
+            hook(Keys.Return, (() => SendMessage(Message.SwapTagWindow, Level.Monitor, 0)), Keys.Control | Keys.Shift);
 
-            hook(Keys.J, (() => SendMessage(Message.MonitorSwitch, Level.monitor, 1)), Keys.Alt);
-            hook(Keys.K, (() => SendMessage(Message.MonitorSwitch, Level.monitor, -1)), Keys.Alt);
-            hook(Keys.Return, (() => SendMessage(Message.MonitorFocus, Level.monitor, 0)), Keys.Alt);
+            hook(Keys.J, (() => SendMessage(Message.MonitorSwitch, Level.Monitor, 1)), Keys.Alt);
+            hook(Keys.K, (() => SendMessage(Message.MonitorSwitch, Level.Monitor, -1)), Keys.Alt);
+            hook(Keys.Return, (() => SendMessage(Message.MonitorFocus, Level.Monitor, 0)), Keys.Alt);
 
             hook(Keys.Space,
-                 (() => SendMessage(Message.LayoutRelative, Level.monitor, GetFocussedMonitor().GetActiveScreen().tag)),
+                 (() => SendMessage(Message.LayoutRelative, Level.Monitor, GetFocussedMonitor().GetActiveScreen().tag)),
                  Keys.Control);
             hook(Keys.Space,
                  (() =>
-                  SendMessage(Message.LayoutRelativeReverse, Level.monitor, GetFocussedMonitor().GetActiveScreen().tag)),
+                  SendMessage(Message.LayoutRelativeReverse, Level.Monitor, GetFocussedMonitor().GetActiveScreen().tag)),
                  Keys.Control | Keys.Shift);
 
             #region TagStuff
@@ -263,17 +263,19 @@ namespace TWiME {
             foreach (Keys key in new[] {Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9}
                 ) {
                 int index = tagIndex++;
-                hook(key, (() => SendMessage(Message.Screen, Level.monitor, index)), Keys.Control);
-                hook(key, (() => SendMessage(Message.TagWindow, Level.monitor, index)), Keys.Shift | Keys.Control);
-                hook(key, (() => SendMessage(Message.FocusThis, Level.screen, index)));
-                hook(key, (() => SendMessage(Message.SwitchThis, Level.screen, index)), Keys.Shift);
-                hook(key, (() => SendMessage(Message.MonitorMoveThis, Level.screen, index)), Keys.Shift | Keys.Alt);
-                hook(key, (() => SendMessage(Message.MonitorFocus, Level.monitor, index)), Keys.Alt);
+                hook(key, (() => SendMessage(Message.Screen, Level.Monitor, index)), Keys.Control);
+                hook(key, (() => SendMessage(Message.TagWindow, Level.Monitor, index)), Keys.Shift | Keys.Control);
+                hook(key, (() => SendMessage(Message.FocusThis, Level.Screen, index)));
+                hook(key, (() => SendMessage(Message.SwitchThis, Level.Screen, index)), Keys.Shift);
+                hook(key, (() => SendMessage(Message.MonitorMoveThis, Level.Screen, index)), Keys.Shift | Keys.Alt);
+                hook(key, (() => SendMessage(Message.MonitorFocus, Level.Monitor, index)), Keys.Alt);
             }
 
             #endregion
 
             hook(Keys.Z, (()=>monitors[0].Bar.Menu.Show(Cursor.Position)));
+            hook(Keys.S, (()=>SendMessage(Message.Split, Level.Monitor, 0)));
+            hook(Keys.A, (()=>SendMessage(Message.OnlyShow, Level.Monitor, 0)));
 
             _globalHook.KeyDown += hook_KeyDown;
             _globalHook.KeyUp += globalHook_KeyUp;
@@ -282,7 +284,7 @@ namespace TWiME {
         public static void SendMessage(Message type, Level level, int data) {
             IntPtr focussed = GetForegroundWindow();
             HotkeyMessage message = new HotkeyMessage(type, level, focussed, data);
-            if (message.level == Level.global) {
+            if (message.level == Level.Global) {
                 CatchMessage(message);
             }
             else {
@@ -291,7 +293,7 @@ namespace TWiME {
         }
 
         private static void CatchMessage(HotkeyMessage message) {
-            if (message.message == Message.Close) {
+            if (message.Message == Message.Close) {
                 Manager.Log("Beginning shutdown loop", 10);
                 foreach (Window window in _windowList) {
                     Manager.Log("Setting {0} visible and not maximised".With(window), 10);
@@ -307,7 +309,7 @@ namespace TWiME {
                     Application.Restart();
                 }
             }
-            if (message.message == Message.Switch) {
+            if (message.Message == Message.Switch) {
                 Manager.Log("Toggling taskbar");
                 Taskbar.hidden = !Taskbar.hidden;
             }
@@ -489,7 +491,7 @@ namespace TWiME {
                      select screen);
                 TagScreen firstScreenWithWindow = screensWithWindow.First();
                 firstScreenWithWindow.parent.Bar.bar.Activate();
-                SendMessage(Message.Screen, Level.monitor, firstScreenWithWindow.tag);
+                SendMessage(Message.Screen, Level.Monitor, firstScreenWithWindow.tag);
                 window.Activate();
             }
             if (hiddenNotShownByMeWindows.Count > 0) {

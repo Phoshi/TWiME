@@ -23,24 +23,27 @@ namespace TWiME {
         MonitorMoveThis, //Move window to another indexed monitor
         MonitorMove, //Move the entire monitor object elsewhere
         Close, //Close TWiME
-        Restart //Restart TWiME
+        Restart, //Restart TWiME
+        Split, //Split the working area into multiple tagspaces
+        Hide, //Hide the current tagspace
+        OnlyShow, //Only show this tagspace
     }
 
     public enum Level {
-        global,
-        monitor,
-        screen,
-        window
+        Global,
+        Monitor,
+        Screen,
+        Window
     }
 
     public class HotkeyMessage {
-        public Message message { get; internal set; }
+        public Message Message { get; internal set; }
         public Level level { get; internal set; }
         public int data { get; internal set; }
         public IntPtr handle { get; internal set; }
 
         public HotkeyMessage(Message messageType, Level messageLevel, IntPtr hWnd, int Data) {
-            message = messageType;
+            Message = messageType;
             level = messageLevel;
             handle = hWnd;
             data = Data;
