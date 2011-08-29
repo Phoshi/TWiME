@@ -27,6 +27,7 @@ namespace TWiME {
         Split, //Split the working area into multiple tagspaces
         Hide, //Hide the current tagspace
         OnlyShow, //Only show this tagspace
+        ShowAll, //Show all tags
     }
 
     public enum Level {

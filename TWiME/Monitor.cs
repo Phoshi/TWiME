@@ -25,14 +25,17 @@ namespace TWiME {
             return _enabledTags.Contains(tagNumber);
         }
 
-        public void SetTagState(int tagNumber, bool state, bool exclusive = true) {
+        public void SetTagState(int tagNumber, bool state, bool exclusive = true, bool surpressLayoutUpdate = false) {
             if (state) {
                 if (!_enabledTags.Contains(tagNumber)) {
                     int index = _enabledTags.IndexOf(GetActiveTag());
                     if (index == -1) {
                         index = 0;
                     }
-                    _enabledTags.Insert(index, tagNumber);
+                    if (surpressLayoutUpdate) {
+                        index = _enabledTags.Count - 1;
+                    }
+                    _enabledTags.Insert(index + 1, tagNumber);
                 }
                 if (exclusive) {
                     tagScreens[GetActiveTag()].Disable(tagScreens[tagNumber]);
@@ -44,10 +47,12 @@ namespace TWiME {
                 tagScreens[tagNumber].Activate();
             }
             else if (_enabledTags.Count > 1) {
-                tagScreens[tagNumber].Disable();
                 _enabledTags.Remove(tagNumber);
+                tagScreens[tagNumber].Disable();
             }
-            reorganiseActiveTagSpaces();
+            if (!surpressLayoutUpdate) {
+                reorganiseActiveTagSpaces();
+            }
         }
         
         public List<int> GetEnabledTags() {
@@ -348,9 +353,28 @@ namespace TWiME {
                 if (message.Message == Message.OnlyShow) {
                     foreach (int enabledTag in new List<int>(GetEnabledTags())) {
                         if (enabledTag != GetActiveTag()) {
-                            SetTagState(enabledTag, false);
+                            SetTagState(enabledTag, false, true, true);
                         }
                     }
+                    reorganiseActiveTagSpaces();
+                }
+                if (message.Message == Message.Hide) {
+                    int activeTag = GetActiveTag();
+                    if (GetEnabledTags().Count == 2) {
+                        TagScreen newActiveScreen = GetEnabledScreens().First(screen=>screen.tag!=activeTag);
+                        _activeTag = newActiveScreen.tag;
+                        Manager.SendMessage(Message.OnlyShow, Level.Monitor, 0);
+                        return;
+                    }
+                    SetTagState(activeTag, false);
+                }
+                if (message.Message == Message.ShowAll) {
+                    foreach (TagScreen tagScreen in tagScreens) {
+                        if (tagScreen.windows.Count > 0) {
+                            SetTagState(tagScreen.tag, true, false, true);
+                        }
+                    }
+                    reorganiseActiveTagSpaces();
                 }
             }
             else {

@@ -130,14 +130,16 @@ namespace TWiME {
             }
             Window newWindow = (Window) sender;
             if ((monitorNameToOpenOn == _parent.Name || rulesThisMonitor) &&
-                ((_parent.IsTagEnabled(_tag) && !_parent.GetVisibleWindows().Contains(newWindow)) || tagsToOpenOn.Contains(_tag))) {
-                CatchWindow(newWindow);
+                (_parent.IsTagEnabled(_tag) || tagsToOpenOn.Contains(_tag))) {
+                if (_parent.GetActiveTag() == _tag) {
+                    CatchWindow(newWindow);
+                }
                 Manager.Log("Adding Window: " + newWindow.ClassName + " " + newWindow, 1);
                 layout.UpdateWindowList(_windowList);
                 if (_parent.IsTagEnabled(_tag)) {
                     layout.Assert();
                 }
-                else if ((from tag in tagsToOpenOn where _parent.IsTagEnabled(tag) select tag).Count() == 0){
+                else if ((from tag in tagsToOpenOn where _parent.GetFocussedTag() == tag select tag).Count() == 0) {
                     newWindow.Visible = false;
                 }
             }

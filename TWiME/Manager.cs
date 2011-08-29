@@ -275,7 +275,9 @@ namespace TWiME {
 
             hook(Keys.Z, (()=>monitors[0].Bar.Menu.Show(Cursor.Position)));
             hook(Keys.S, (()=>SendMessage(Message.Split, Level.Monitor, 0)));
-            hook(Keys.A, (()=>SendMessage(Message.OnlyShow, Level.Monitor, 0)));
+            hook(Keys.X, (()=>SendMessage(Message.Hide, Level.Monitor, 0)));
+            hook(Keys.A, (()=>SendMessage(Message.ShowAll, Level.Monitor, 0)));
+            hook(Keys.D, (()=>SendMessage(Message.OnlyShow, Level.Monitor, 0)));
 
             _globalHook.KeyDown += hook_KeyDown;
             _globalHook.KeyUp += globalHook_KeyUp;
