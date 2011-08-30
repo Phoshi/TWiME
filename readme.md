@@ -27,6 +27,12 @@ many tagspaces.
 
 Combinations of these modifiers work generally as you'd expect - Win-Alt-Shift-J moves the active window to the next monitor, for example.
 
+You can also split the monitor to display multiple tags at once:
+Win-S - Split - creates a new split to the right of the currently focused tag, and puts the next inactive tagspace in it.
+Win-A - Split All - shows all non-empty tags
+Win-D - Show one - Hides all tags other than the currently selected one
+Win-X - Hide - closes the currently selected tag
+
 Additional bindings are:
 Win-Q - Quit, making absolutely sure all windows are visible and restoring the taskbar.
 Win-Space, to toggle the windows taskbar (Because I have *never* seen a perfect notification tray emulation, and I'm not going to settle for less than perfect)
@@ -34,6 +40,7 @@ Win-Left/Right, to move the layout's horizontal splitter
 Win-Up/Down, to move the layout's vertical splitter
 Though note that the above two may have no effect depending on the loaded layout, and you can hold shift while pressing either to move further in each jump.
 Win-Control-Space and Win-Control-Shift-Space switch between loaded layouts for the active tag.
+Win-Control-Left/Right moves the monitor splitter for displaying multiple tags
 
 Configuration:
 --------------
@@ -91,6 +98,8 @@ There are many different settings you can change here.
         DefaultLayout - Layout Name, where the names are listed above  
         Splitter - The horizontal splitter, from 0-1  
         VSplitter - the vertical splitter, from 0-1  
+        Wallpaper - the wallpaper to use for this tag
+    Setting the `Splitter` for a monitor changes the splitter for showing multiple tags at the same time
   
 [Menu Items]
     Menu items are also quite simple, the items follow this format:
