@@ -19,6 +19,7 @@ namespace TWiME {
         public string Name { get; internal set; }
         private List<int> _enabledTags = new List<int>();
         private int _activeTag;
+        private float _splitter = 0.8f;
         public Screen Screen { get; internal set; }
 
         public bool IsTagEnabled(int tagNumber) {
@@ -38,6 +39,7 @@ namespace TWiME {
                     _enabledTags.Insert(index + 1, tagNumber);
                 }
                 if (exclusive) {
+                    tagScreens[GetActiveTag()].UpdateControlledArea(Controlled);
                     tagScreens[GetActiveTag()].Disable(tagScreens[tagNumber]);
                     _enabledTags.Remove(GetActiveTag());
                 }
@@ -48,6 +50,7 @@ namespace TWiME {
             }
             else if (_enabledTags.Count > 1) {
                 _enabledTags.Remove(tagNumber);
+                tagScreens[tagNumber].UpdateControlledArea(Controlled);
                 tagScreens[tagNumber].Disable();
             }
             if (!surpressLayoutUpdate) {
@@ -77,25 +80,48 @@ namespace TWiME {
 
         private Dictionary<TagScreen, Rectangle> generateLayout() {
             Dictionary<TagScreen, Rectangle> layouts = new Dictionary<TagScreen, Rectangle>();
-            double numRows = Math.Ceiling(Math.Pow(GetEnabledScreens().Count(), 0.5));
-            double numColumns = Math.Ceiling(GetEnabledScreens().Count() / numRows);
-            int winWidth = (int)(Controlled.Width / numRows);
-            int winHeight = (int)(Controlled.Height / numColumns);
-            int row = 0, column = 0;
-            foreach (TagScreen screen in GetEnabledScreens()) {
-                if (column == numColumns - 1) {
-                    if ((numRows * numColumns) != GetEnabledScreens().Count()) {
-                        int shortfall = (int)((numRows * numColumns) - GetEnabledScreens().Count());
-                        winWidth = (int)(Controlled.Width / (numRows - shortfall));
+            if (GetEnabledScreens().Count() > 3) {
+                double numRows = Math.Ceiling(Math.Pow(GetEnabledScreens().Count(), 0.5));
+                double numColumns = Math.Ceiling(GetEnabledScreens().Count() / numRows);
+                int winWidth = (int) (Controlled.Width / numRows);
+                int winHeight = (int) (Controlled.Height / numColumns);
+                int row = 0, column = 0;
+                foreach (TagScreen screen in GetEnabledScreens()) {
+                    if (column == numColumns - 1) {
+                        if ((numRows * numColumns) != GetEnabledScreens().Count()) {
+                            int shortfall = (int) ((numRows * numColumns) - GetEnabledScreens().Count());
+                            winWidth = (int) (Controlled.Width / (numRows - shortfall));
+                        }
+                    }
+                    int thisWinLeft = Controlled.Left + (winWidth * row);
+                    int thisWinTop = Controlled.Top + (winHeight * column);
+                    Rectangle thisWinRect = new Rectangle(thisWinLeft, thisWinTop, winWidth, winHeight);
+                    layouts[screen] = thisWinRect;
+                    if (++row >= numRows) {
+                        row = 0;
+                        column++;
                     }
                 }
-                int thisWinLeft = Controlled.Left + (winWidth * row);
-                int thisWinTop = Controlled.Top + (winHeight * column);
-                Rectangle thisWinRect = new Rectangle(thisWinLeft, thisWinTop, winWidth, winHeight);
-                layouts[screen] = thisWinRect;
-                if (++row >= numRows) {
-                    row = 0;
-                    column++;
+            }
+            else {
+                TagScreen mainWindow = GetEnabledScreens().First();
+                int width = (int)(Controlled.Width * _splitter);
+                int height = Controlled.Height;
+                int x = Controlled.X;
+                int y = Controlled.Y;
+                Rectangle newRect = new Rectangle(x, y, width, height);
+                layouts[mainWindow] = newRect;
+
+                if (GetEnabledScreens().Count() > 1) {
+                    int secondaryHeight = Controlled.Height / (GetEnabledScreens().Count() - 1);
+                    for (int i = 1; i < GetEnabledScreens().Count(); i++) {
+                        TagScreen window = GetEnabledScreens().ElementAt(i);
+                        int nx = Controlled.Left + width;
+                        int ny = Controlled.Top + secondaryHeight * (i - 1);
+                        int nwidth = Controlled.Width - width;
+                        Rectangle secondaryRect = new Rectangle(nx, ny, nwidth, secondaryHeight);
+                        layouts[window] = secondaryRect;
+                    }
                 }
             }
             return layouts;
@@ -105,6 +131,10 @@ namespace TWiME {
         private void reorganiseActiveTagSpaces() {
             int numActiveSpaces = GetEnabledTags().Count;
             if (numActiveSpaces == 0) {
+                return;
+            }
+            if (numActiveSpaces == 1) {
+                GetEnabledScreens().First().UpdateControlledArea(Controlled);
                 return;
             }
             Dictionary<TagScreen, Rectangle> layouts = generateLayout();
@@ -153,6 +183,7 @@ namespace TWiME {
             Controlled = temp;
             Name = Screen.DeviceName;
             createTagScreens();
+            _splitter = float.Parse(Manager.settings.ReadSettingOrDefault("0.5", Screen.DeviceName.Replace(".", ""), "Splitter"));
             Manager.WindowCreate += Manager_WindowCreate;
             Manager.WindowDestroy += Manager_WindowDestroy;
             Manager.WindowFocusChange += new Manager.WindowEventHandler(Manager_WindowFocusChange);
@@ -374,6 +405,11 @@ namespace TWiME {
                             SetTagState(tagScreen.tag, true, false, true);
                         }
                     }
+                    reorganiseActiveTagSpaces();
+                }
+                if (message.Message == Message.Splitter) {
+                    _splitter += message.data / 100.0f;
+                    Manager.settings.AddSetting(_splitter, Screen.DeviceName.Replace(".", ""), "Splitter");
                     reorganiseActiveTagSpaces();
                 }
             }
