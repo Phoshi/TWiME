@@ -35,13 +35,16 @@ namespace TWiME {
 
         private static bool isAdmin() {
             WindowsIdentity wi = WindowsIdentity.GetCurrent();
-            WindowsPrincipal wp = new WindowsPrincipal(wi);
-            return wp.IsInRole(WindowsBuiltInRole.Administrator);
+            if (wi != null) {
+                WindowsPrincipal wp = new WindowsPrincipal(wi);
+                return wp.IsInRole(WindowsBuiltInRole.Administrator);
+            }
+            return false;
         }
 
         private static void restartWithAdminRights() {
             try {
-                Process.Start(new ProcessStartInfo() {
+                Process.Start(new ProcessStartInfo {
                     Verb = "runas",
                     FileName = Application.ExecutablePath
                 });

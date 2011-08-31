@@ -45,7 +45,7 @@ namespace TWiME {
             new Dictionary<MouseButtons, Dictionary<Rectangle, Action>>();
         private Dictionary<string, BarItem> _items = new Dictionary<string, BarItem>();
 
-        public ContextMenuStrip Menu { get; private set; }
+        public new ContextMenuStrip Menu { get; private set; }
 
         public Bar(Monitor monitor) {
             InitializeComponent();

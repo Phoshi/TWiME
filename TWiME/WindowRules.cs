@@ -61,7 +61,6 @@ namespace TWiME {
         }
         public override string ToString() {
             return "{0} - {1}".With(_class, _title);
-            return base.ToString();
         }
     }
 }
