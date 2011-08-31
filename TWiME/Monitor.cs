@@ -152,11 +152,9 @@ namespace TWiME {
             if (GetEnabledTags().Count == 1) {
                 return GetActiveTag();
             }
-            else {
-                foreach (TagScreen screen in GetEnabledScreens()) {
-                    if (screen.GetFocusedWindowIndex() > -1) {
-                        return screen.tag;
-                    }
+            foreach (TagScreen screen in GetEnabledScreens()) {
+                if (screen.GetFocusedWindowIndex() > -1) {
+                    return screen.tag;
                 }
             }
             return -1;
@@ -167,9 +165,7 @@ namespace TWiME {
             if (focussed !=-1) {
                 return tagScreens[focussed];
             }
-            else {
-                return null;
-            }
+            return null;
         }
 
         public Monitor(Screen newscreen) {
@@ -186,7 +182,7 @@ namespace TWiME {
             _splitter = float.Parse(Manager.settings.ReadSettingOrDefault("0.5", Screen.DeviceName.Replace(".", ""), "Splitter"));
             Manager.WindowCreate += Manager_WindowCreate;
             Manager.WindowDestroy += Manager_WindowDestroy;
-            Manager.WindowFocusChange += new Manager.WindowEventHandler(Manager_WindowFocusChange);
+            Manager.WindowFocusChange += Manager_WindowFocusChange;
         }
 
         void Manager_WindowFocusChange(object sender, WindowEventArgs args) {
@@ -378,7 +374,7 @@ namespace TWiME {
                 if (message.Message == Message.Split) {
                     var inactiveTags = GetDisabledTags();
                     if (inactiveTags.Count > 0) {
-                        SetTagState(inactiveTags.First(), true, false);
+                        SetTagState((from tag in inactiveTags orderby tagScreens[tag].windows.Count() > 0 descending select tag).First(), true, false);
                     }
                 }
                 if (message.Message == Message.OnlyShow) {
