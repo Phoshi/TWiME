@@ -28,6 +28,7 @@ namespace TWiME {
         Hide, //Hide the current tagspace
         OnlyShow, //Only show this tagspace
         ShowAll, //Show all tags
+        SplitRotate, //Rotate shown tags
     }
 
     public enum Level {

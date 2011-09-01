@@ -408,6 +408,19 @@ namespace TWiME {
                     Manager.settings.AddSetting(_splitter, Screen.DeviceName.Replace(".", ""), "Splitter");
                     reorganiseActiveTagSpaces();
                 }
+                if (message.Message == Message.SplitRotate) {
+                    if (message.data > 0) {
+                        int poppedTag = _enabledTags.ElementAt(0);
+                        _enabledTags.RemoveAt(0);
+                        _enabledTags.Add(poppedTag);
+                    }
+                    else {
+                        int poppedTag = _enabledTags.Last();
+                        _enabledTags.RemoveAt(_enabledTags.Count - 1);
+                        _enabledTags.Insert(0, poppedTag);
+                    }
+                    reorganiseActiveTagSpaces();
+                }
             }
             else {
                 GetActiveScreen().CatchMessage(message);
