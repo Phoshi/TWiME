@@ -7,6 +7,7 @@ using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Extensions;
 using Tree;
@@ -282,6 +283,9 @@ namespace TWiME {
                             case "Append":
                                 item.AppendValue = value;
                                 break;
+                            case "DoNotShow":
+                                item.DoNotShowMatch = value.Split(';');
+                                break;
                         }
                         _items[itemName] = item;
                     }
@@ -555,6 +559,9 @@ namespace TWiME {
                         process.Start();
                         string output = process.StandardOutput.ReadToEnd();
                         process.WaitForExit();
+                        if (output.Length == 0 || (item.DoNotShowMatch!=null && item.DoNotShowMatch.Any(match => Regex.IsMatch(output, match)))) {
+                            continue;
+                        }
                         output = "{0}{1}{2}".With(item.PrependValue, output, item.AppendValue);
                         int itemWidth = output.Width(titleFont);
                         Bitmap itemMap = new Bitmap(itemWidth + 5, height);
@@ -751,6 +758,7 @@ namespace TWiME {
         public string ClickExecutePath = "";
         public string PrependValue;
         public string AppendValue;
+        public string[] DoNotShowMatch;
 
         public BarItem(string path, string argument="", bool builtIn = false, int minWidth = -1, int maxWidth = -1, Brush forecolour = null, Brush backcolour = null) {
             Path = path;
