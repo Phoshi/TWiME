@@ -118,7 +118,7 @@ namespace TWiME {
                 try {
                     return Process.GetProcessById((int) processID).MainModule.FileName;
                 }
-                catch (Win32Exception) {
+                catch (ArgumentException) {
                     return "";
                 }
             }
