@@ -39,9 +39,12 @@ namespace TWiME {
                     _enabledTags.Insert(index + 1, tagNumber);
                 }
                 if (exclusive) {
-                    tagScreens[GetActiveTag()].UpdateControlledArea(Controlled);
-                    tagScreens[GetActiveTag()].Disable(tagScreens[tagNumber]);
                     _enabledTags.Remove(GetActiveTag());
+                    tagScreens[GetActiveTag()].Disable(tagScreens[tagNumber]);
+                    tagScreens[GetActiveTag()].UpdateControlledArea(Controlled);
+                }
+                if (!surpressLayoutUpdate) {
+                    reorganiseActiveTagSpaces();
                 }
                 tagScreens[tagNumber].Enable();
                 Bar.bar.Activate();
@@ -50,11 +53,11 @@ namespace TWiME {
             }
             else if (_enabledTags.Count > 1) {
                 _enabledTags.Remove(tagNumber);
-                tagScreens[tagNumber].UpdateControlledArea(Controlled);
                 tagScreens[tagNumber].Disable();
+                tagScreens[tagNumber].UpdateControlledArea(Controlled);
             }
             if (!surpressLayoutUpdate) {
-                reorganiseActiveTagSpaces();
+                //reorganiseActiveTagSpaces();
             }
         }
         
@@ -317,7 +320,25 @@ namespace TWiME {
                     if (GetActiveScreen().GetFocusedWindow().Equals(Bar.bar)) {
                         return;
                     }
-                    int newIndex = GetActiveScreen().tag + message.data;
+                    int newIndex;
+
+                    if (GetEnabledTags().Count == 1) {
+                        newIndex = GetActiveScreen().tag + message.data;
+                    }
+                    else {
+                        List<int> enabledTags = GetEnabledTags();
+                        enabledTags.Sort();
+                        int newIndexPosition = enabledTags.IndexOf(GetActiveTag()) + message.data;
+                        if (newIndexPosition <= GetEnabledTags().Count - 1 && newIndexPosition >= 0) {
+                            newIndex = enabledTags[newIndexPosition];
+                        }
+                        else if (newIndexPosition == 0) {
+                            newIndex = enabledTags.Last();
+                        }
+                        else {
+                            newIndex = enabledTags.First();
+                        }
+                    }
                     if (newIndex < 0) {
                         newIndex = tagScreens.Count() - 1;
                     }
