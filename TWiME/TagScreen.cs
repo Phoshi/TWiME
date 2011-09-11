@@ -51,7 +51,9 @@ namespace TWiME {
                 _controlled = newArea;
             }
             InitLayout();
-            AssertLayout();
+            if (_parent.IsTagEnabled(_tag)) {
+                AssertLayout();
+            }
         }
 
         public void InitLayout() {
