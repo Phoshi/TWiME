@@ -12,6 +12,9 @@ namespace TWiME {
             bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
 
         [DllImport("user32.dll")]
+        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll")]
         private static extern
             bool SetForegroundWindow(IntPtr hWnd);
 
@@ -162,21 +165,27 @@ namespace TWiME {
             get { return _visible; }
 
             set {
-                if (value) {
-                    if (!_visible) {
-                        ShowWindowAsync(_handle, Maximised ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
-                        _visible = true;
-                    }
-                    if (Manager.hiddenWindows.Contains(this)) {
-                        Manager.hiddenWindows.Remove(this);
-                    }
-                }
-                else {
-                    _maximized = IsZoomed(_handle);
-                    ShowWindowAsync(_handle, SW_HIDE);
-                    _visible = false;
-                    Manager.hiddenWindows.Add(this);
-                }
+                Action visibleUpdateAction = (() => {
+                                                  if (value) {
+                                                      if (!_visible) {
+                                                          ShowWindow(_handle, Maximised ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
+                                                          _visible = true;
+                                                      }
+                                                      if (Manager.hiddenWindows.Contains(this)) {
+                                                          Manager.hiddenWindows.Remove(this);
+                                                      }
+                                                  }
+                                                  else {
+                                                      _maximized = IsZoomed(_handle);
+                                                      ShowWindow(_handle, SW_HIDE);
+                                                      _visible = false;
+                                                      Manager.hiddenWindows.Add(this);
+                                                  }
+                                              }
+                                             );
+                Thread visibleUpdateThread = new Thread((()=>visibleUpdateAction()));
+                visibleUpdateThread.Start();
+
             }
         }
 
