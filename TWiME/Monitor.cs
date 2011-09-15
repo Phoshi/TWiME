@@ -38,26 +38,28 @@ namespace TWiME {
                     }
                     _enabledTags.Insert(index + 1, tagNumber);
                 }
-                if (exclusive) {
-                    _enabledTags.Remove(GetActiveTag());
-                    tagScreens[GetActiveTag()].Disable(tagScreens[tagNumber]);
-                    tagScreens[GetActiveTag()].UpdateControlledArea(Controlled);
-                }
-                if (!surpressLayoutUpdate) {
-                    reorganiseActiveTagSpaces();
-                }
+                int currentActiveTag = GetActiveTag();
                 tagScreens[tagNumber].Enable();
                 Bar.bar.Activate();
                 _activeTag = tagNumber;
                 tagScreens[tagNumber].Activate();
+                if (exclusive) {
+                    _enabledTags.Remove(currentActiveTag);
+                    tagScreens[currentActiveTag].Disable(tagScreens[tagNumber]);
+                    tagScreens[currentActiveTag].UpdateControlledArea(Controlled);
+                }
+                if (!surpressLayoutUpdate) {
+                    reorganiseActiveTagSpaces();
+                }
             }
             else if (_enabledTags.Count > 1) {
-                _enabledTags.Remove(tagNumber);
-                tagScreens[tagNumber].Disable();
                 tagScreens[tagNumber].UpdateControlledArea(Controlled);
+                tagScreens[tagNumber].Disable();
+                _enabledTags.Remove(tagNumber);
+                _activeTag = _enabledTags.First();
             }
             if (!surpressLayoutUpdate) {
-                //reorganiseActiveTagSpaces();
+                reorganiseActiveTagSpaces();
             }
         }
         
