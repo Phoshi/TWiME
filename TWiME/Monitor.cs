@@ -179,8 +179,8 @@ namespace TWiME {
             Screen = newscreen;
             createBar();
             Rectangle temp = Screen.WorkingArea;
-            temp.Height = Screen.Bounds.Height - Bar.Height;
-            temp.Y = Bar.Bottom;
+            temp.Height = Screen.Bounds.Height - Bar.bar.Location.Height;
+            temp.Y = Screen.Bounds.Top + Bar.bar.Location.Height;
             Controlled = temp;
             Name = Screen.DeviceName;
             createTagScreens();
