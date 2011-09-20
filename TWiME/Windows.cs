@@ -93,16 +93,16 @@ namespace TWiME {
                 return true;
             }
 
-            IntPtr style = GetWindowLongPtr((IntPtr) handle, -16); //-16 is GWL_STYLE
+            /*IntPtr style = GetWindowLongPtr((IntPtr) handle, -16); //-16 is GWL_STYLE
             if (((long) style & WS_POPUP) == WS_POPUP) {
                 return true;
             }
             if (((long) style & WS_CAPTION) != WS_CAPTION) {
                 return true;
             }
-            if (((long)style & WS_THICKFRAME) == 0) {
+            if (((long)style & WS_THICKFRAME) != WS_THICKFRAME) {
                 return true;
-            }
+            }*/
 
             if (!ignoreClasses.Contains(className.ToString())) {
                 windowList.Add(new Window(title.ToString(), (IntPtr) handle,

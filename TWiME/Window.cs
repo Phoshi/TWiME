@@ -7,6 +7,10 @@ using System.Windows.Forms;
 
 namespace TWiME {
     public class Window {
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
+        private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
+
         [DllImport("user32.dll")]
         private static extern
             bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
@@ -118,12 +122,17 @@ namespace TWiME {
         private string _className;
         private Rectangle _location;
         private long lastTitleUpdate = DateTime.Now.Ticks;
+        private long _style;
 
         public IntPtr handle {
             get { return _handle; }
         }
 
         public bool AsyncResizing = true;
+
+        public long Style {
+            get { return _style; }
+        }
 
         public string Title {
             get {
@@ -195,6 +204,7 @@ namespace TWiME {
             _process = process;
             _className = className;
             _visible = isWindowVisible;
+            _style = (long) GetWindowLongPtr(handle, -16); //-16 is GWL_STYLE
         }
 
         public override string ToString() {

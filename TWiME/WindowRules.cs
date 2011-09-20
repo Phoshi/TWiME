@@ -16,6 +16,7 @@ namespace TWiME {
         ignore      //Window should not be managed by TWiME at all
     }
 
+
     public class WindowRule {
         private WindowRules _rule;
         private int _data;
@@ -28,7 +29,7 @@ namespace TWiME {
             get { return _data; }
         }
 
-        public WindowRule(WindowRules rule, int data) {
+        public WindowRule(WindowRules rule, int data, bool negate = false) {
             _rule = rule;
             _data = data;
         }
@@ -39,6 +40,12 @@ namespace TWiME {
 
     public class WindowMatch {
         private string _class, _title;
+        public long _style;
+        private bool _negative;
+
+        public long Style {
+            get { return _style; }
+        }
 
         public string Class {
             get { return _class; }
@@ -48,19 +55,30 @@ namespace TWiME {
             get { return _title; }
         }
 
-        public WindowMatch(string windowClass, string windowTitle) {
+        public WindowMatch(string windowClass, string windowTitle, long style, bool negate = false) {
             _class = windowClass;
             _title = windowTitle;
+            _style = style;
+            _negative = negate;
         }
 
         public bool windowMatches(Window window) {
+            bool passesTitle = false, passesStyle = false;
             if (window.Title.Glob(_title) && window.ClassName.Glob(_class)) {
-                return true;
+                passesTitle = true;
             }
-            return false;
+            if ((window.Style & _style) == _style) {
+                passesStyle = true;
+            }
+            if (!_negative) {
+                return (passesStyle && passesTitle);
+            }
+            else {
+                return !(passesStyle && passesTitle);
+            }
         }
         public override string ToString() {
-            return "{0} - {1}".With(_class, _title);
+            return "{0} - {1} - {2}{3}".With(_class, _title, _style, _negative ? " (Negated)" : "");
         }
     }
 }
