@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -126,12 +127,18 @@ namespace TWiME {
             foreach (List<string> list in settings.KeysUnderSection("Window Rules")) {
                 string winClass = list[1];
                 string winTitle = list[2];
-                string winRule = list[3];
+                long winStyle = long.Parse(list[3], NumberStyles.HexNumber);
+                string winRule = list[4];
+                bool negative = false;
+                if (winClass.StartsWith("!")) {
+                    negative = true;
+                    winClass = winClass.Substring(1);
+                }
                 int value = Convert.ToInt32(settings.ReadSetting(list.ToArray()));
                 WindowRules rule;
                 if (WindowRules.TryParse(winRule, true, out rule)) {
                     WindowRule newRule = new WindowRule(rule, value);
-                    WindowMatch newMatch = new WindowMatch(winClass, winTitle);
+                    WindowMatch newMatch = new WindowMatch(winClass, winTitle, winStyle, negative);
                     windowRules[newMatch] = newRule;
                 }
             }
@@ -477,7 +484,7 @@ namespace TWiME {
                         if (kvPair.Key.windowMatches(window)) {
                             WindowRule rule = kvPair.Value;
                             if (rule.rule == WindowRules.ignore) {
-                                windowIgnored = true;
+                                windowIgnored = rule.data == 1;
                             }
                         }
                     }
