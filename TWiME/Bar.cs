@@ -215,6 +215,10 @@ namespace TWiME {
                 foreach (Node<Action> child in root.Children) {
                     thisItem.DropDownItems.Add(buildMenu(child));
                 }
+                if (root.Data != null) {
+                    thisItem.Click += ((sender, eventArgs) => root.Data());
+                }
+
                 return thisItem;
             }
             else {
