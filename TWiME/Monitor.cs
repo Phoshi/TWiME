@@ -26,6 +26,10 @@ namespace TWiME {
             return _enabledTags.Contains(tagNumber);
         }
 
+        public string SafeName {
+            get { return Screen.DeviceName.Replace(".", ""); }
+        }
+
         public void SetTagState(int tagNumber, bool state, bool exclusive = true, bool surpressLayoutUpdate = false) {
             if (state) {
                 if (!_enabledTags.Contains(tagNumber)) {
