@@ -74,7 +74,6 @@
     <Compile Include="windowExtensions.cs" />
     <Compile Include="WindowRules.cs" />
     <Compile Include="Windows.cs" />
-    <Compile Include="WindowStyleRules.cs" />
     <Compile Include="WindowSwitcher.cs">
       <SubType>Form</SubType>
     </Compile>
