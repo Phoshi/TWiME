@@ -430,6 +430,7 @@ namespace TWiME {
 
         private void Bar_FormClosing(object sender, FormClosingEventArgs e) {
             registerBar();
+            Manager.SendMessage(Message.Close, Level.Global, 0);
         }
 
         private void Bar_Shown(object sender, EventArgs e) {
