@@ -65,6 +65,9 @@ namespace TWiME {
             if (!surpressLayoutUpdate) {
                 reorganiseActiveTagSpaces();
             }
+
+            string newVisibleTags = String.Join(",", (from tag in _enabledTags select (tag + 1).ToString()));
+            Manager.settings.AddSetting(newVisibleTags, SafeName, "VisibleTags");
         }
         
         public List<int> GetEnabledTags() {
@@ -178,7 +181,6 @@ namespace TWiME {
         }
 
         public Monitor(Screen newscreen) {
-            _enabledTags.Add(0);
             _activeTag = 0;
             Screen = newscreen;
             createBar();
@@ -189,6 +191,23 @@ namespace TWiME {
             Name = Screen.DeviceName;
             createTagScreens();
             _splitter = float.Parse(Manager.settings.ReadSettingOrDefault("0.5", Screen.DeviceName.Replace(".", ""), "Splitter"));
+            string activeTags = Manager.settings.ReadSettingOrDefault("1", SafeName, "VisibleTags");
+            string[] tags = activeTags.Split(',');
+            foreach (string tag in tags) {
+                try {
+                    int tagNumber = int.Parse(tag) - 1;
+                    if (tagNumber >= 0 && tagNumber <= tagScreens.Length) {
+                        _enabledTags.Add(tagNumber);
+                    }
+                }
+                catch (FormatException) {
+                    //Swallow
+                }
+            }
+            if (_enabledTags.Count == 0) { //If we did have a definition, but it's all junk, screw it and just use zero
+                _enabledTags.Add(0);
+            }
+            reorganiseActiveTagSpaces();
             Manager.WindowCreate += Manager_WindowCreate;
             Manager.WindowDestroy += Manager_WindowDestroy;
             Manager.WindowFocusChange += Manager_WindowFocusChange;
