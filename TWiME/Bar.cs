@@ -48,6 +48,12 @@ namespace TWiME {
 
         public new ContextMenuStrip Menu { get; private set; }
 
+        private bool _internalClosing = false;
+        public bool InternalClosing {
+            get { return _internalClosing; }
+            set { _internalClosing = value; }
+        }
+
         public Bar(Monitor monitor) {
             InitializeComponent();
             barHeight = Convert.ToInt32(Manager.settings.ReadSettingOrDefault(15, "General.Bar.Height"));
@@ -430,7 +436,9 @@ namespace TWiME {
 
         private void Bar_FormClosing(object sender, FormClosingEventArgs e) {
             registerBar();
-            Manager.SendMessage(Message.Close, Level.Global, 0);
+            if (!InternalClosing) {
+                Manager.SendMessage(Message.Close, Level.Global, 0);
+            }
         }
 
         private void Bar_Shown(object sender, EventArgs e) {
