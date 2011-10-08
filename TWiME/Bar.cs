@@ -438,6 +438,10 @@ namespace TWiME {
         }
 
         private void Bar_LocationChanged(object sender, EventArgs e) {
+            forceLocation();
+        }
+
+        private void forceLocation() {
             Window thisWindow = new Window("", this.Handle, "", "", true);
             Rectangle rect = thisWindow.Location;
             rect.Height = barHeight;
@@ -456,7 +460,7 @@ namespace TWiME {
 
         private void Bar_Paint(object sender, PaintEventArgs e) {
             _clicks.Clear();
-
+            forceLocation();
             Manager.Log(new string('=', 30));
             Manager.Log("Starting draw");
 
