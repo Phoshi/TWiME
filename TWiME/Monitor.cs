@@ -514,5 +514,13 @@ namespace TWiME {
         public override int GetHashCode() {
             return (Name != null ? Name.GetHashCode() : 0);
         }
+
+        public void Disown() {
+            foreach (TagScreen tagScreen in tagScreens) {
+                tagScreen.Disown();
+            }
+            Bar.InternalClosing = true;
+            Bar.Close();
+        }
     }
 }
