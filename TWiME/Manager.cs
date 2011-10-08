@@ -572,6 +572,12 @@ namespace TWiME {
             return _windowList.FirstOrDefault(window => window.handle == handle);
         }
 
+        public static void DisownWindow(Window window) {
+            window.Visible = true;
+            _windowList.Remove(window);
+            _handles.Remove(window.handle);
+        }
+
         public delegate void WindowEventHandler(object sender, WindowEventArgs args);
 
         public static event WindowEventHandler WindowCreate;
