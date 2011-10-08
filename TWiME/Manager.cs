@@ -116,7 +116,11 @@ namespace TWiME {
                 }
             }
             if (displaySettingsHaveChanged) {
-                SendMessage(Message.Close, Level.Global, 1); //Just restart, for now. 
+                foreach (Monitor monitor in monitors) {
+                    monitor.Disown();
+                }
+                monitors = new List<Monitor>();
+                setupMonitors();
             }
         }
 
