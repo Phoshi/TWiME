@@ -360,5 +360,11 @@ namespace TWiME {
         public void AssertLayout() {
             layout.Assert();
         }
+
+        public void Disown() {
+            foreach (Window window in _windowList) {
+                Manager.DisownWindow(window);
+            }
+        }
     }
 }
