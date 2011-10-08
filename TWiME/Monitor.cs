@@ -207,6 +207,7 @@ namespace TWiME {
             if (_enabledTags.Count == 0) { //If we did have a definition, but it's all junk, screw it and just use zero
                 _enabledTags.Add(0);
             }
+            _activeTag = _enabledTags.First();
             reorganiseActiveTagSpaces();
             Manager.WindowCreate += Manager_WindowCreate;
             Manager.WindowDestroy += Manager_WindowDestroy;
