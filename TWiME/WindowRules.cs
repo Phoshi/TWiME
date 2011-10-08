@@ -13,7 +13,8 @@ namespace TWiME {
         tag9 = tag,
         stack,      //Window should take this place in the stack
         monitor,    //Window should be on this monitor
-        ignore      //Window should not be managed by TWiME at all
+        ignore,     //Window should not be managed by TWiME at all
+        noResize,   //Window should not be resized
     }
 
 

@@ -486,6 +486,9 @@ namespace TWiME {
                             if (rule.rule == WindowRules.ignore) {
                                 windowIgnored = rule.data == 1;
                             }
+                            if (rule.rule == WindowRules.noResize) {
+                                window.AllowResize = rule.data != 1;
+                            }
                         }
                     }
                     if (windowIgnored) {
