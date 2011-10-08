@@ -107,11 +107,13 @@ namespace TWiME {
             foreach (KeyValuePair<WindowMatch, WindowRule> keyValuePair in Manager.windowRules) {
                 if (keyValuePair.Key.windowMatches((Window) sender)) {
                     if (keyValuePair.Value.rule == WindowRules.monitor) {
-                        if (Manager.monitors[keyValuePair.Value.data].Name == _parent.Name) {
-                            rulesThisMonitor = true;
-                        }
-                        else {
-                            return;
+                        if (keyValuePair.Value.data < Manager.monitors.Count && keyValuePair.Value.data >= 0) {
+                            if (Manager.monitors[keyValuePair.Value.data].Name == _parent.Name) {
+                                rulesThisMonitor = true;
+                            }
+                            else {
+                                return;
+                            }
                         }
                     }
                     if (keyValuePair.Value.rule == WindowRules.tag) {
