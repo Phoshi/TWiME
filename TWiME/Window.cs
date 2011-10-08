@@ -329,8 +329,10 @@ namespace TWiME {
                 whereTo.Width = _location.Width;
                 whereTo.Height = _location.Height;
             }
-            SetWindowPos(handle, (IntPtr) HWND_TOP, whereTo.X, whereTo.Y, whereTo.Width, whereTo.Height,
-                            SWP_NOACTIVATE);
+            if (whereTo != _location) {
+                SetWindowPos(handle, (IntPtr) HWND_TOP, whereTo.X, whereTo.Y, whereTo.Width, whereTo.Height,
+                             SWP_NOACTIVATE);
+            }
         }
 
         public bool Maximised {
