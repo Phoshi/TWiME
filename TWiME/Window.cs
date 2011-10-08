@@ -130,6 +130,12 @@ namespace TWiME {
 
         public bool AsyncResizing = true;
 
+        private bool _allowResize = true;
+        public bool AllowResize {
+            get { return _allowResize; }
+            set { _allowResize = value; }
+        }
+
         public long Style {
             get { return _style; }
         }
@@ -318,6 +324,11 @@ namespace TWiME {
         }
 
         private void assertLocation(Rectangle whereTo) {
+            updatePosition();
+            if (!_allowResize) {
+                whereTo.Width = _location.Width;
+                whereTo.Height = _location.Height;
+            }
             SetWindowPos(handle, (IntPtr) HWND_TOP, whereTo.X, whereTo.Y, whereTo.Width, whereTo.Height,
                             SWP_NOACTIVATE);
         }
