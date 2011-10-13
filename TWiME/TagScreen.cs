@@ -357,6 +357,16 @@ namespace TWiME {
                 Thread wallThread = new Thread((() => Manager.SetWallpaper(wallpaperPath)));
                 wallThread.Start();
             }
+
+            bool toggleTaskbar = bool.Parse(Manager.settings.ReadSettingOrDefault("false", "General.Main.ShowTaskbarOnEmptyTags"));
+            if (toggleTaskbar) {
+                if (windows.Count == 0) {
+                    Taskbar.hidden = false;
+                }
+                else {
+                    Taskbar.hidden = true;
+                }
+            }
         }
 
         public void AssertLayout() {
