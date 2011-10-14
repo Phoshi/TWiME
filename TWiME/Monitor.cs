@@ -9,7 +9,6 @@ namespace TWiME {
         public Rectangle Controlled { get; internal set; }
         public Bar Bar;
         private TagScreen[] tagScreens;
-        private TagScreen[] tagScreens = new TagScreen[9];
 
         public TagScreen[] screens {
             get { return tagScreens; }
