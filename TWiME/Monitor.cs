@@ -184,7 +184,6 @@ namespace TWiME {
         }
 
         public Monitor(Screen newscreen) {
-            _activeTag = 0;
             Screen = newscreen;
             Name = Screen.DeviceName;
             int numTagScreens = int.Parse(Manager.settings.ReadSettingOrDefault(9, SafeName, "NumberOfTags"));
@@ -195,7 +194,6 @@ namespace TWiME {
             temp.Height = Screen.Bounds.Height - Bar.bar.Location.Height;
             temp.Y = Screen.Bounds.Top + Bar.bar.Location.Height;
             Controlled = temp;
-            Name = Screen.DeviceName;
             createTagScreens();
             _splitter = float.Parse(Manager.settings.ReadSettingOrDefault("0.5", Screen.DeviceName.Replace(".", ""), "Splitter"));
             string activeTags = Manager.settings.ReadSettingOrDefault("1", SafeName, "VisibleTags");
@@ -245,7 +243,6 @@ namespace TWiME {
 
         private void createTagScreens() {
             for (int i = 0; i < tagScreens.Length; i++) {
-            for (int i = 0; i < 9; i++) {
                 tagScreens[i] = new TagScreen(this, i);
             }
         }
