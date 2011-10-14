@@ -67,7 +67,9 @@ namespace TWiME {
             }
 
             string newVisibleTags = String.Join(",", (from tag in _enabledTags select (tag + 1).ToString()));
-            Manager.settings.AddSetting(newVisibleTags, SafeName, "VisibleTags");
+            if (!Manager.settings.readOnly) {
+                Manager.settings.AddSetting(newVisibleTags, SafeName, "VisibleTags");
+            }
         }
         
         public List<int> GetEnabledTags() {
