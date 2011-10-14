@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -567,6 +568,52 @@ namespace TWiME {
                         additionalImages.Add(countMap);
                         item.Value = countMap;
                     }
+
+                    if (item.Path == "DriveInfo") {
+                        string[] sizes = { "B", "KB", "MB", "GB", "TB", "EB" };
+                        Bitmap countMap;
+                        string countString = "";
+                        string[] args = item.Argument.Split(' ');
+                        DriveInfo driveInfo = new DriveInfo(args[1]);
+
+                        if (args[0] == "free") {
+                            float freespace = driveInfo.TotalFreeSpace;
+                            int magnitude = 0;
+                            while (freespace > 1024) {
+                                freespace /= 1024;
+                                magnitude++;
+                            }
+
+                            countString = freespace.ToString("0.0") + sizes[magnitude];
+                        }
+                        else if (args[0] == "total") {
+                            float totalSpace = driveInfo.TotalSize;
+                            int magnitude = 0;
+                            while (totalSpace > 1024) {
+                                totalSpace /= 1024;
+                                magnitude++;
+                            }
+
+                            countString = totalSpace.ToString("0.0") + sizes[magnitude];
+                        }
+                        else {
+                            float freeSpace = driveInfo.TotalFreeSpace / (float)driveInfo.TotalSize;
+                            countString = freeSpace.ToString("0.00");
+                        }
+
+                        countString = item.PrependValue + countString + item.AppendValue;
+                        int countWidth = countString.Width(titleFont);
+                        countMap = new Bitmap(countWidth + 5, height);
+
+                        using (Graphics gr = Graphics.FromImage(countMap)) {
+                            gr.FillRectangle(item.BackColour, 0, 0, countMap.Width, countMap.Height);
+                            gr.DrawString(countString, titleFont, item.ForeColour, 0, 0);
+                        }
+
+                        additionalImages.Add(countMap);
+                        item.Value = countMap;
+                    }
+
                 }
                 else {
                     try {
