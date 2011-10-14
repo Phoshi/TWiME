@@ -31,6 +31,9 @@ namespace TWiME {
         }
 
         public void SetTagState(int tagNumber, bool state, bool exclusive = true, bool surpressLayoutUpdate = false) {
+            if (tagNumber >= tagScreens.Count()) {
+                return;
+            }
             if (state) {
                 if (!_enabledTags.Contains(tagNumber)) {
                     int index = _enabledTags.IndexOf(GetActiveTag());
@@ -310,6 +313,9 @@ namespace TWiME {
                 }
                 if (message.Message == Message.TagWindow) {
                     if (GetActiveScreen().GetFocusedWindow().Equals(Bar.bar)) {
+                        return;
+                    }
+                    if (message.data >= tagScreens.Count()) {
                         return;
                     }
                     if (tagScreens[message.data].windows.Contains(GetActiveScreen().GetFocusedWindow())) {
