@@ -8,6 +8,7 @@ namespace TWiME {
     public class Monitor {
         public Rectangle Controlled { get; internal set; }
         public Bar Bar;
+        private TagScreen[] tagScreens;
         private TagScreen[] tagScreens = new TagScreen[9];
 
         public TagScreen[] screens {
@@ -185,6 +186,10 @@ namespace TWiME {
         public Monitor(Screen newscreen) {
             _activeTag = 0;
             Screen = newscreen;
+            Name = Screen.DeviceName;
+            int numTagScreens = int.Parse(Manager.settings.ReadSettingOrDefault(9, SafeName, "NumberOfTags"));
+            tagScreens = new TagScreen[numTagScreens];
+            _activeTag = 0;
             createBar();
             Rectangle temp = Screen.WorkingArea;
             temp.Height = Screen.Bounds.Height - Bar.bar.Location.Height;
@@ -239,6 +244,7 @@ namespace TWiME {
         }
 
         private void createTagScreens() {
+            for (int i = 0; i < tagScreens.Length; i++) {
             for (int i = 0; i < 9; i++) {
                 tagScreens[i] = new TagScreen(this, i);
             }
