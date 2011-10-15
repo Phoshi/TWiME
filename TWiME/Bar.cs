@@ -803,9 +803,19 @@ namespace TWiME {
             if (tagStyle == "roman") {
                 return romanNumerals[tag];
             }
-            if (tagStyle == "alphabet") {
+            if (tagStyle == "ALPHABET") {
                 return ((char) (((int)'A') + (tag - 1))).ToString();
             }
+            if (tagStyle == "alphabet") {
+                return ((char)(((int)'a') + (tag - 1))).ToString();
+            }
+            if (tagStyle == "symbol") {
+                return ((char)(((int)'!') + (tag - 1))).ToString();
+            }
+            if (tagStyle == "thing") {
+                return ((char)(179 + (tag - 1))).ToString();
+            }
+
             if (tagStyle == "custom") {
                 return Manager.settings.ReadSettingOrDefault(tag.ToString(), _parent.SafeName, tag.ToString(), "Name");
             }
