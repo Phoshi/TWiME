@@ -31,6 +31,7 @@ namespace TWiME {
         private Brush selectedBrush;
         private Pen seperatorPen;
         private Brush coverBrush;
+        private string tagStyle;
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr GetWindowLong(IntPtr hWnd, int nIndex);
@@ -57,6 +58,7 @@ namespace TWiME {
 
         public Bar(Monitor monitor) {
             InitializeComponent();
+
             barHeight = Convert.ToInt32(Manager.settings.ReadSettingOrDefault(15, "General.Bar.Height"));
             titleFont = new Font(Manager.settings.ReadSettingOrDefault("Segoe UI", "General.Bar.Font"), barHeight * 0.6f);
             boldFont = new Font(titleFont, FontStyle.Bold);
@@ -88,6 +90,8 @@ namespace TWiME {
             seperatorPen = new Pen(seperatorColour, seperatorWidth);
             _screen = monitor.Screen;
             _parent = monitor;
+
+            tagStyle = Manager.settings.ReadSettingOrDefault("numbers", _parent.SafeName, "Bar", "TagStyle");
             //this.TopMost = true;
             this.StartPosition = FormStartPosition.Manual;
             this.Location = _screen.Bounds.Location;
@@ -498,9 +502,15 @@ namespace TWiME {
 
             Size previewSize = new Size(width, height);
             int tag = 1;
+            int originalWidth = width;
             foreach (TagScreen screen in _parent.screens) {
                 if (screen == null) {
                     return; //We're not set up yet, just give up and try again later
+                }
+                width = originalWidth;
+                string tagName = getTagName(tag);
+                if (tagName.Width(titleFont) > width) {
+                    width = (int) (tagName.Width(titleFont) * 1.2);
                 }
                 Rectangle drawTangle = new Rectangle(currentWidth, 0, width - 1, this.Height - 1);
 
@@ -513,19 +523,21 @@ namespace TWiME {
                                (() => Manager.SendMessage(Message.SwapTagWindow, Level.Monitor, tag1)));
 
                 Image state = screen.getStateImage(previewSize);
-                e.Graphics.DrawRectangle(new Pen(Color.White), drawTangle);
                 PointF tagPos = new PointF();
-                tagPos.X = (currentWidth) + (width / 2) - (tag.ToString().Width(titleFont) / 2);
-                tagPos.Y = height / 2 - tag.ToString().Height(titleFont) / 2;
+                tagPos.X = (currentWidth) + (width / 2) - (tagName.Width(titleFont) / 2);
+                tagPos.Y = height / 2 - tagName.Height(titleFont) / 2;
+
+                e.Graphics.DrawRectangle(new Pen(Color.White), drawTangle);
                 e.Graphics.DrawImage(state, drawTangle);
                 if (_parent.IsTagEnabled(tag1)) {
                     e.Graphics.FillRectangle(selectedBrush, drawTangle);
-                    e.Graphics.DrawString(tag++.ToString(), tag1 == _parent.GetActiveTag() ? boldFont : titleFont, foregroundBrush, tagPos);
+                    e.Graphics.DrawString(tagName, tag1 == _parent.GetActiveTag() ? boldFont : titleFont, foregroundBrush, tagPos);
                 }
                 else {
-                    e.Graphics.DrawString(tag++.ToString(), titleFont, foregroundBrush, tagPos);
+                    e.Graphics.DrawString(tagName, titleFont, foregroundBrush, tagPos);
                 }
                 currentWidth += width;
+                tag++;
             }
 
             //Generate the additional items
@@ -784,6 +796,21 @@ namespace TWiME {
             if (Manager.GetFocussedMonitor() != _parent) {
                 e.Graphics.FillRectangle(coverBrush, this.ClientRectangle);
             }
+        }
+
+        private string[] romanNumerals = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XII", "XVIII", "XIX", "XX"};
+        private string getTagName(int tag) {
+            if (tagStyle == "roman") {
+                return romanNumerals[tag];
+            }
+            if (tagStyle == "alphabet") {
+                return ((char) (((int)'A') + (tag - 1))).ToString();
+            }
+            if (tagStyle == "custom") {
+                return Manager.settings.ReadSettingOrDefault(tag.ToString(), _parent.SafeName, tag.ToString(), "Name");
+            }
+            return tag.ToString();
+
         }
 
         public void Redraw() {
