@@ -609,7 +609,7 @@ namespace TWiME {
                             countString = totalSpace.ToString("0.0") + sizes[magnitude];
                         }
                         else {
-                            float freeSpace = driveInfo.TotalFreeSpace / (float)driveInfo.TotalSize;
+                            float freeSpace = (driveInfo.TotalFreeSpace / (float)driveInfo.TotalSize) * 100;
                             countString = freeSpace.ToString("0.00");
                         }
 
