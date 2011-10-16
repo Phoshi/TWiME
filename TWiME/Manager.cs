@@ -331,6 +331,7 @@ namespace TWiME {
             if (message.Message == Message.Switch) {
                 Manager.Log("Toggling taskbar");
                 Taskbar.hidden = !Taskbar.hidden;
+                Manager.monitors[0].AssertTagLayout();
             }
         }
 
