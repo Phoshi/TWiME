@@ -30,7 +30,7 @@ namespace TWiME {
             get { return _data; }
         }
 
-        public WindowRule(WindowRules rule, int data, bool negate = false) {
+        public WindowRule(WindowRules rule, int data) {
             _rule = rule;
             _data = data;
         }
@@ -74,9 +74,7 @@ namespace TWiME {
             if (!_negative) {
                 return (passesStyle && passesTitle);
             }
-            else {
-                return !(passesStyle && passesTitle);
-            }
+            return !(passesStyle && passesTitle);
         }
         public override string ToString() {
             return "{0} - {1} - {2}{3}".With(_class, _title, _style, _negative ? " (Negated)" : "");
