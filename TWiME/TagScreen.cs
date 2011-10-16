@@ -327,7 +327,7 @@ namespace TWiME {
             }
             _windowList.Insert(stackPosition, window);
             if (_parent.IsTagEnabled(tag)) {
-                Enable();
+                window.Visible = true;
             }
         }
 
