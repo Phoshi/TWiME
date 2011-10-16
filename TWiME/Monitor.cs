@@ -6,7 +6,18 @@ using System.Windows.Forms;
 
 namespace TWiME {
     public class Monitor {
-        public Rectangle Controlled { get; internal set; }
+        private Rectangle _controlled;
+        public Rectangle Controlled {
+            get {
+                if (!Taskbar.hidden && this==Manager.monitors[0]) {
+                    Rectangle newRect = _controlled;
+                    newRect.Height -= 25;
+                    return newRect;
+                }
+                return _controlled;
+            }
+            set { _controlled = value; }
+        }
         public Bar Bar;
         private TagScreen[] tagScreens;
 
