@@ -532,5 +532,9 @@ namespace TWiME {
             Bar.InternalClosing = true;
             Bar.Close();
         }
+
+        public void AssertTagLayout() {
+            reorganiseActiveTagSpaces();
+        }
     }
 }
