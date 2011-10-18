@@ -318,6 +318,7 @@ namespace TWiME {
                     Manager.Log("Setting {0} visible and not maximised".With(window), 10);
                     window.Visible = true;
                     window.Maximised = false;
+                    window.ShowCaption = true;
                 }
                 Manager.Log("Showing taskbar", 10);
                 Taskbar.hidden = false;
@@ -485,7 +486,7 @@ namespace TWiME {
                 }
                 if (!_handles.Contains(window.handle)) {
                     Manager.Log("Found a new window! {0} isn't in the main listing".With(window.Title));
-                    foreach (KeyValuePair<WindowMatch, WindowRule> kvPair in windowRules) {
+                    foreach (KeyValuePair<WindowMatch, WindowRule> kvPair in new Dictionary<WindowMatch, WindowRule>(windowRules)) {
                         if (kvPair.Key.windowMatches(window)) {
                             WindowRule rule = kvPair.Value;
                             if (rule.rule == WindowRules.ignore) {
@@ -493,6 +494,12 @@ namespace TWiME {
                             }
                             if (rule.rule == WindowRules.noResize) {
                                 window.AllowResize = rule.data != 1;
+                            }
+                            if (rule.rule == WindowRules.stripBorders) {
+                                window.ShowCaption = rule.data != 1;
+                                WindowMatch newMatch = new WindowMatch(kvPair.Key.Class, kvPair.Key.Title, kvPair.Key.Style, false);
+                                WindowRule newRule = new WindowRule(WindowRules.ignore, 0);
+                                windowRules.Add(newMatch, newRule);
                             }
                         }
                     }

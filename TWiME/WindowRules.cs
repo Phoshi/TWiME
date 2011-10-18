@@ -15,6 +15,7 @@ namespace TWiME {
         monitor,    //Window should be on this monitor
         ignore,     //Window should not be managed by TWiME at all
         noResize,   //Window should not be resized
+        stripBorders, //Window borders should be stripped
     }
 
 

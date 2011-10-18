@@ -8,6 +8,9 @@ using System.Windows.Forms;
 namespace TWiME {
     public class Window {
 
+        [DllImport("user32.dll")]
+        static extern int SetWindowLong(IntPtr hWnd, int nIndex, long dwNewLong);
+
         [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
         private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
 
@@ -109,6 +112,8 @@ namespace TWiME {
         public const int SWP_NOZORDER = 0x0004;
         public const int SWP_SHOWWINDOW = 0x0040;
 
+        private const int GWL_STYLE = -16;
+
 
         private const uint SPI_GETFOREGROUNDLOCKTIMEOUT = 0x2000;
         private const uint SPI_SETFOREGROUNDLOCKTIMEOUT = 0x2001;
@@ -136,8 +141,29 @@ namespace TWiME {
             set { _allowResize = value; }
         }
 
+        private const long WS_CAPTION = 0x00C00000L;
+        private const long WS_THICKFRAME = 0x00040000L;
+
+        private bool _showCaption = true;
+        public bool ShowCaption { get { return _showCaption; } 
+            set {
+                if (value) {
+                    Style = Style | (WS_CAPTION | WS_THICKFRAME);
+                }
+                else {
+                    Style = Style & ~(WS_CAPTION | WS_THICKFRAME);
+                }
+                _showCaption = value;
+
+            }
+        }
+
         public long Style {
             get { return _style; }
+            set {
+                SetWindowLong(handle, GWL_STYLE, value);
+                _style = value;
+            }
         }
 
         public string Title {
@@ -210,7 +236,7 @@ namespace TWiME {
             _process = process;
             _className = className;
             _visible = isWindowVisible;
-            _style = (long) GetWindowLongPtr(handle, -16); //-16 is GWL_STYLE
+            _style = (long) GetWindowLongPtr(handle, GWL_STYLE); //-16 is GWL_STYLE
         }
 
         public override string ToString() {
