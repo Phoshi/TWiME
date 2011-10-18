@@ -9,7 +9,7 @@ namespace TWiME {
         private Rectangle _controlled;
         public Rectangle Controlled {
             get {
-                if (!Taskbar.hidden && this==Manager.monitors[0]) {
+                if (!Taskbar.hidden && (Manager.monitors.Count>0 && this==Manager.monitors[0])) {
                     Rectangle newRect = _controlled;
                     newRect.Height -= 25;
                     return newRect;
