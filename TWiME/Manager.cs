@@ -497,7 +497,7 @@ namespace TWiME {
                             }
                             if (rule.rule == WindowRules.stripBorders) {
                                 window.ShowCaption = rule.data != 1;
-                                WindowMatch newMatch = new WindowMatch(kvPair.Key.Class, kvPair.Key.Title, kvPair.Key.Style, false);
+                                WindowMatch newMatch = new WindowMatch(window.ClassName, kvPair.Key.Title, kvPair.Key.Style, false);
                                 WindowRule newRule = new WindowRule(WindowRules.ignore, 0);
                                 windowRules.Add(newMatch, newRule);
                             }
