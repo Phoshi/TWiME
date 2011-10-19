@@ -56,10 +56,8 @@ namespace TWiME {
         }
 
         public void InitLayout() {
-            if (!Manager.settings.readOnly) {
-                Manager.settings.AddSetting(Manager.GetLayoutNameFromIndex(activeLayout),
-                                            parent.SafeName, (_tag).ToString(), "DefaultLayout");
-            }
+            Manager.settings.AddSetting(Manager.GetLayoutNameFromIndex(activeLayout),
+                                        parent.SafeName, (_tag).ToString(), "DefaultLayout");
             Layout instance =
                 (Layout)
                 Activator.CreateInstance(Manager.layouts[activeLayout],
@@ -256,17 +254,13 @@ namespace TWiME {
                 }
                 if (message.Message == Message.Splitter) {
                     layout.MoveSplitter(message.data / 100.0f);
-                    if (!Manager.settings.readOnly) {
-                        Manager.settings.AddSetting(layout.GetSplitter(), parent.SafeName,
-                                                    (_tag).ToString(), "Splitter");
-                    }
+                    Manager.settings.AddSetting(layout.GetSplitter(), parent.SafeName,
+                                                (_tag).ToString(), "Splitter");
                 }
                 if (message.Message == Message.VSplitter) {
                     layout.MoveSplitter(message.data / 100.0f, true);
-                    if (!Manager.settings.readOnly) {
-                        Manager.settings.AddSetting(layout.GetSplitter(true), parent.SafeName,
-                                                    (_tag).ToString(), "VSplitter");
-                    }
+                    Manager.settings.AddSetting(layout.GetSplitter(true), parent.SafeName,
+                                                (_tag).ToString(), "VSplitter");
                 }
                 if (message.Message == Message.Close) {
                     foreach (Window window in _windowList) {
