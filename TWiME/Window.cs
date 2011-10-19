@@ -218,9 +218,9 @@ namespace TWiME {
                                                   }
                                                   else {
                                                       _maximized = IsZoomed(_handle);
+                                                      Manager.hiddenWindows.Add(this);
                                                       ShowWindow(_handle, SW_HIDE);
                                                       _visible = false;
-                                                      Manager.hiddenWindows.Add(this);
                                                   }
                                               }
                                              );
