@@ -202,12 +202,12 @@ namespace TWiME {
             int numTagScreens = int.Parse(Manager.settings.ReadSettingOrDefault(9, SafeName, "NumberOfTags"));
             tagScreens = new TagScreen[numTagScreens];
             _activeTag = 0;
+            createTagScreens();
             createBar();
             Rectangle temp = Screen.WorkingArea;
             temp.Height = Screen.Bounds.Height - Bar.bar.Location.Height;
             temp.Y = Screen.Bounds.Top + Bar.bar.Location.Height;
             Controlled = temp;
-            createTagScreens();
             _splitter = float.Parse(Manager.settings.ReadSettingOrDefault("0.5", Screen.DeviceName.Replace(".", ""), "Splitter"));
             string activeTags = Manager.settings.ReadSettingOrDefault("1", SafeName, "VisibleTags");
             string[] tags = activeTags.Split(',');
