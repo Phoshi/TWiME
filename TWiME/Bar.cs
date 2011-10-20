@@ -503,11 +503,11 @@ namespace TWiME {
             Size previewSize = new Size(width, height);
             int tag = 1;
             int originalWidth = width;
+            if (_parent.screens.Any(screen => screen == null) || !Manager.monitors.Contains(_parent)) {
+                return;
+            }
             if (_parent.screens.Length > 1) {
                 foreach (TagScreen screen in _parent.screens) {
-                    if (screen == null) {
-                        return; //We're not set up yet, just give up and try again later
-                    }
                     width = originalWidth;
                     string tagName = getTagName(tag);
                     if (tagName.Width(titleFont) > width) {
