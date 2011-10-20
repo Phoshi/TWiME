@@ -278,7 +278,7 @@ namespace TWiME {
                 newTS[i] = new TagScreen(this, i);
             }
             tagScreens = newTS;
-            Manager.settings.AddSetting(newNumber.ToString(), SafeName, "NumberOfTagsq");
+            Manager.settings.AddSetting(newNumber.ToString(), SafeName, "NumberOfTags");
         }
 
         public void CatchMessage(HotkeyMessage message) {
