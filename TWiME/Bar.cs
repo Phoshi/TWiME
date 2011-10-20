@@ -503,41 +503,43 @@ namespace TWiME {
             Size previewSize = new Size(width, height);
             int tag = 1;
             int originalWidth = width;
-            foreach (TagScreen screen in _parent.screens) {
-                if (screen == null) {
-                    return; //We're not set up yet, just give up and try again later
-                }
-                width = originalWidth;
-                string tagName = getTagName(tag);
-                if (tagName.Width(titleFont) > width) {
-                    width = (int) (tagName.Width(titleFont) * 1.2);
-                }
-                Rectangle drawTangle = new Rectangle(currentWidth, 0, width - 1, this.Height - 1);
+            if (_parent.screens.Length > 1) {
+                foreach (TagScreen screen in _parent.screens) {
+                    if (screen == null) {
+                        return; //We're not set up yet, just give up and try again later
+                    }
+                    width = originalWidth;
+                    string tagName = getTagName(tag);
+                    if (tagName.Width(titleFont) > width) {
+                        width = (int) (tagName.Width(titleFont) * 1.2);
+                    }
+                    Rectangle drawTangle = new Rectangle(currentWidth, 0, width - 1, this.Height - 1);
 
-                int tag1 = tag - 1;
-                addMouseAction(MouseButtons.Left, drawTangle,
-                               (() => Manager.SendMessage(Message.Screen, Level.Monitor, tag1)));
-                addMouseAction(MouseButtons.Middle, drawTangle,
-                               (() => Manager.SendMessage(Message.LayoutRelative, Level.Monitor, tag1)));
-                addMouseAction(MouseButtons.Right, drawTangle,
-                               (() => Manager.SendMessage(Message.SwapTagWindow, Level.Monitor, tag1)));
+                    int tag1 = tag - 1;
+                    addMouseAction(MouseButtons.Left, drawTangle,
+                                   (() => Manager.SendMessage(Message.Screen, Level.Monitor, tag1)));
+                    addMouseAction(MouseButtons.Middle, drawTangle,
+                                   (() => Manager.SendMessage(Message.LayoutRelative, Level.Monitor, tag1)));
+                    addMouseAction(MouseButtons.Right, drawTangle,
+                                   (() => Manager.SendMessage(Message.SwapTagWindow, Level.Monitor, tag1)));
 
-                Image state = screen.getStateImage(previewSize);
-                PointF tagPos = new PointF();
-                tagPos.X = (currentWidth) + (width / 2) - (tagName.Width(titleFont) / 2);
-                tagPos.Y = height / 2 - tagName.Height(titleFont) / 2;
+                    Image state = screen.getStateImage(previewSize);
+                    PointF tagPos = new PointF();
+                    tagPos.X = (currentWidth) + (width / 2) - (tagName.Width(titleFont) / 2);
+                    tagPos.Y = height / 2 - tagName.Height(titleFont) / 2;
 
-                e.Graphics.DrawRectangle(new Pen(Color.White), drawTangle);
-                e.Graphics.DrawImage(state, drawTangle);
-                if (_parent.IsTagEnabled(tag1)) {
-                    e.Graphics.FillRectangle(selectedBrush, drawTangle);
-                    e.Graphics.DrawString(tagName, tag1 == _parent.GetActiveTag() ? boldFont : titleFont, foregroundBrush, tagPos);
+                    e.Graphics.DrawRectangle(new Pen(Color.White), drawTangle);
+                    e.Graphics.DrawImage(state, drawTangle);
+                    if (_parent.IsTagEnabled(tag1)) {
+                        e.Graphics.FillRectangle(selectedBrush, drawTangle);
+                        e.Graphics.DrawString(tagName, tag1 == _parent.GetActiveTag() ? boldFont : titleFont, foregroundBrush, tagPos);
+                    }
+                    else {
+                        e.Graphics.DrawString(tagName, titleFont, foregroundBrush, tagPos);
+                    }
+                    currentWidth += width;
+                    tag++;
                 }
-                else {
-                    e.Graphics.DrawString(tagName, titleFont, foregroundBrush, tagPos);
-                }
-                currentWidth += width;
-                tag++;
             }
 
             //Generate the additional items
