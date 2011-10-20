@@ -798,10 +798,26 @@ namespace TWiME {
             }
         }
 
-        private string[] romanNumerals = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XII", "XVIII", "XIX", "XX"};
+        private int[] values = new int[] { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
+        private string[] numerals = new string[] { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
+        private string toRoman(int number) {
+            if (number == 0) {
+                return "N";
+            }
+
+            string converted = "";
+
+            for (int i = 0; i < 13; i++) {
+                while (number >= values[i]) {
+                    number -= values[i];
+                    converted+=numerals[i];
+                }
+            }
+            return converted;
+        }
         private string getTagName(int tag) {
             if (tagStyle == "roman") {
-                return romanNumerals[tag];
+                return toRoman(tag);
             }
             if (tagStyle == "ALPHABET") {
                 return ((char) (((int)'A') + (tag - 1))).ToString();
