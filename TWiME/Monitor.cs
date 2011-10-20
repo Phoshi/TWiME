@@ -260,6 +260,26 @@ namespace TWiME {
             }
         }
 
+        public void ChangeNumberOfTagScreens(int newNumber) {
+            if (newNumber < 1) {
+                return;
+            }
+            TagScreen[] newTS = new TagScreen[newNumber];
+            if (tagScreens.Length > newNumber) {
+                for (int i = newNumber; i < tagScreens.Length; i++) {
+                    tagScreens[i].Disown();
+                }
+                Array.Copy(tagScreens, newTS, newNumber);
+            }
+            else {
+                Array.Copy(tagScreens, newTS, newNumber - 1);
+            }
+            for (int i = tagScreens.Length; i < newTS.Length; i++) {
+                newTS[i] = new TagScreen(this, i);
+            }
+            tagScreens = newTS;
+        }
+
         public void CatchMessage(HotkeyMessage message) {
             if (message.level == Level.Monitor) {
                 if (message.Message == Message.MonitorSwitch) {
@@ -488,6 +508,10 @@ namespace TWiME {
                         _enabledTags.Insert(0, poppedTag);
                     }
                     reorganiseActiveTagSpaces();
+                }
+                if (message.Message == Message.ReindexTagScreens) {
+                    int newNumber = tagScreens.Length + message.data;
+                    ChangeNumberOfTagScreens(newNumber);
                 }
             }
             else {

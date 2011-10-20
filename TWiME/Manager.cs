@@ -296,6 +296,10 @@ namespace TWiME {
             hook(Keys.S, (()=>SendMessage(Message.SplitRotate, Level.Monitor, 1)), Keys.Shift);
             hook(Keys.S, (()=>SendMessage(Message.SplitRotate, Level.Monitor, -1)), Keys.Control);
 
+            hook(Keys.Oemplus, (() => SendMessage(Message.ReindexTagScreens, Level.Monitor, 1)), Keys.Control);
+            hook(Keys.OemMinus, (() => SendMessage(Message.ReindexTagScreens, Level.Monitor, -1)), Keys.Control);
+
+
             _globalHook.KeyDown += hook_KeyDown;
             _globalHook.KeyUp += globalHook_KeyUp;
         }

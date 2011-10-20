@@ -29,6 +29,7 @@ namespace TWiME {
         OnlyShow, //Only show this tagspace
         ShowAll, //Show all tags
         SplitRotate, //Rotate shown tags
+        ReindexTagScreens, //Change the number of existing tags
     }
 
     public enum Level {
