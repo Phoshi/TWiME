@@ -264,6 +264,9 @@ namespace TWiME {
             if (newNumber < 1) {
                 return;
             }
+            if (IsTagEnabled(newNumber)) {
+                SetTagState(0, true);
+            }
             TagScreen[] newTS = new TagScreen[newNumber];
             if (tagScreens.Length > newNumber) {
                 for (int i = newNumber; i < tagScreens.Length; i++) {
