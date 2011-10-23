@@ -375,6 +375,10 @@ namespace TWiME {
             foreach (Window window in _windowList) {
                 Manager.DisownWindow(window);
             }
+            _windowList = new List<Window>();
+            Manager.WindowCreate -= Manager_WindowCreate;
+            Manager.WindowDestroy -= Manager_WindowDestroy;
+            layout.UpdateWindowList(_windowList);
         }
     }
 }

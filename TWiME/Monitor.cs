@@ -568,6 +568,10 @@ namespace TWiME {
             foreach (TagScreen tagScreen in tagScreens) {
                 tagScreen.Disown();
             }
+            Manager.WindowCreate -= Manager_WindowCreate;
+            Manager.WindowDestroy -= Manager_WindowDestroy;
+            Manager.WindowFocusChange -= Manager_WindowFocusChange;
+
             Bar.InternalClosing = true;
             Bar.Close();
         }
