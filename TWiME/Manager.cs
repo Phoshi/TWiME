@@ -116,12 +116,16 @@ namespace TWiME {
                 }
             }
             if (displaySettingsHaveChanged) {
-                foreach (Monitor monitor in monitors) {
-                    monitor.Disown();
-                }
-                monitors = new List<Monitor>();
-                setupMonitors();
+                softReset();
             }
+        }
+
+        private static void softReset() {
+            foreach (Monitor monitor in monitors) {
+                monitor.Disown();
+            }
+            monitors = new List<Monitor>();
+            setupMonitors();
         }
 
         private static void setupWindowRules() {
@@ -298,6 +302,8 @@ namespace TWiME {
 
             hook(Keys.Oemplus, (() => SendMessage(Message.ReindexTagScreens, Level.Monitor, 1)), Keys.Control);
             hook(Keys.OemMinus, (() => SendMessage(Message.ReindexTagScreens, Level.Monitor, -1)), Keys.Control);
+
+            hook(Keys.R, softReset, Keys.Shift);
 
 
             _globalHook.KeyDown += hook_KeyDown;
@@ -592,6 +598,7 @@ namespace TWiME {
             window.Visible = true;
             _windowList.Remove(window);
             _handles.Remove(window.handle);
+            window.ShowCaption = true;
         }
 
         public delegate void WindowEventHandler(object sender, WindowEventArgs args);
