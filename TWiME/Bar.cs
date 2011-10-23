@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -33,6 +34,13 @@ namespace TWiME {
         private Brush coverBrush;
         private string tagStyle;
 
+        public Font TitleFont {
+            get { return titleFont; }
+        }
+        public int BarHeight {
+            get { return barHeight; }
+        }
+
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr GetWindowLong(IntPtr hWnd, int nIndex);
 
@@ -43,6 +51,9 @@ namespace TWiME {
 
         private Screen _screen;
         private Monitor _parent;
+        public new Monitor Parent {
+            get { return _parent; }
+        }
 
         private Dictionary<MouseButtons, Dictionary<Rectangle, Action>> _clicks =
             new Dictionary<MouseButtons, Dictionary<Rectangle, Action>>();
@@ -55,6 +66,8 @@ namespace TWiME {
             get { return _internalClosing; }
             set { _internalClosing = value; }
         }
+
+        Dictionary<string, Type> _barPlugins = new Dictionary<string, Type>();
 
         public Bar(Monitor monitor) {
             InitializeComponent();
@@ -104,6 +117,7 @@ namespace TWiME {
             this.BackColor = bColor;
             this.ShowInTaskbar = false;
             bar = new Window("", this.Handle, "", "", true);
+            loadPluginItems();
             loadAdditionalItems();
             generateMenu();
         }
@@ -145,6 +159,18 @@ namespace TWiME {
                 Menu.Items.Add(collection[0]);
             }
         }
+
+        private void loadPluginItems() {
+            foreach (string file in Directory.GetFiles("BarItems", "*.dll")) {
+                Assembly asm = Assembly.LoadFile(Path.Combine(Directory.GetCurrentDirectory(), file));
+                foreach (Type type in asm.GetTypes()) {
+                    if (typeof(IPluginBarItem).IsAssignableFrom(type)) {
+                        _barPlugins[type.Name] = type;
+                    }
+                }
+            }
+        }
+
 
         [DllImport("Shlwapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
         static extern uint AssocQueryString(AssocF flags, AssocStr str, string pszAssoc, string pszExtra,
@@ -449,83 +475,25 @@ namespace TWiME {
                     continue;
                 }
                 if (item.IsBuiltIn) {
-                    if (item.Path == "time") {
-                        DateTime now = DateTime.Now;
-                        string dateString = item.PrependValue+now.ToString(item.Argument)+item.AppendValue;
-                        int dateWidth = dateString.Width(titleFont);
-                        Bitmap timeMap = new Bitmap(dateWidth + 5, height);
-
-                        using (Graphics gr = Graphics.FromImage(timeMap)) {
-                            gr.FillRectangle(item.BackColour, 0, 0, timeMap.Width, timeMap.Height);
-                            gr.DrawString(dateString, titleFont, item.ForeColour, 0, 0);
-                        }
-
-                        additionalImages.Add(timeMap);
-                        item.Value = timeMap;
+                    if (!_barPlugins.ContainsKey(item.Path)) {
+                        continue;
                     }
-                    if (item.Path == "Layout") {
-                        Image layoutSymbol = _parent.GetActiveScreen().GetLayoutSymbol(previewSize);
-                        additionalImages.Add(layoutSymbol);
-                        item.Value = layoutSymbol;
+                    IPluginBarItem barItem = (IPluginBarItem) Activator.CreateInstance(
+                        _barPlugins[item.Path],
+                        new object[] {this});
+
+                    barItem.SetAppend(item.AppendValue);
+                    barItem.SetPrepend(item.PrependValue);
+                    barItem.SetBackColour(item.BackColour);
+                    barItem.SetForeColour(item.ForeColour);
+                    barItem.SetDoNotShow(item.DoNotShowMatch);
+                    barItem.SetOnlyShows(item.OnlyShowOnMatch);
+                    Bitmap bitmap = barItem.Draw(item.Argument);
+                    if (bitmap != null) {
+                        additionalImages.Add(bitmap);
+                        item.Value = bitmap;
                     }
-                    if (item.Path == "Window Count") {
-                        string countString = item.PrependValue + (from screen in _parent.screens select screen.windows).SelectMany(window=>window).Distinct().Count() + item.AppendValue;
-                        int countWidth = countString.Width(titleFont);
-                        Bitmap countMap = new Bitmap(countWidth + 5, height);
-
-                        using (Graphics gr = Graphics.FromImage(countMap)) {
-                            gr.FillRectangle(item.BackColour, 0, 0, countMap.Width, countMap.Height);
-                            gr.DrawString(countString, titleFont, item.ForeColour, 0, 0);
-                        }
-                        additionalImages.Add(countMap);
-                        item.Value = countMap;
-                    }
-
-                    if (item.Path == "DriveInfo") {
-                        string[] sizes = { "B", "KB", "MB", "GB", "TB", "EB" };
-                        Bitmap countMap;
-                        string countString = "";
-                        string[] args = item.Argument.Split(' ');
-                        DriveInfo driveInfo = new DriveInfo(args[1]);
-
-                        if (args[0] == "free") {
-                            float freespace = driveInfo.TotalFreeSpace;
-                            int magnitude = 0;
-                            while (freespace > 1024) {
-                                freespace /= 1024;
-                                magnitude++;
-                            }
-
-                            countString = freespace.ToString("0.0") + sizes[magnitude];
-                        }
-                        else if (args[0] == "total") {
-                            float totalSpace = driveInfo.TotalSize;
-                            int magnitude = 0;
-                            while (totalSpace > 1024) {
-                                totalSpace /= 1024;
-                                magnitude++;
-                            }
-
-                            countString = totalSpace.ToString("0.0") + sizes[magnitude];
-                        }
-                        else {
-                            float freeSpace = (driveInfo.TotalFreeSpace / (float)driveInfo.TotalSize) * 100;
-                            countString = freeSpace.ToString("0.00");
-                        }
-
-                        countString = item.PrependValue + countString + item.AppendValue;
-                        int countWidth = countString.Width(titleFont);
-                        countMap = new Bitmap(countWidth + 5, height);
-
-                        using (Graphics gr = Graphics.FromImage(countMap)) {
-                            gr.FillRectangle(item.BackColour, 0, 0, countMap.Width, countMap.Height);
-                            gr.DrawString(countString, titleFont, item.ForeColour, 0, 0);
-                        }
-
-                        additionalImages.Add(countMap);
-                        item.Value = countMap;
-                    }
-
+                    
                 }
                 else {
                     try {

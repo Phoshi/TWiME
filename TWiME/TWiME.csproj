@@ -60,6 +60,7 @@
     </Compile>
     <Compile Include="GlobalKeyboardHook.cs" />
     <Compile Include="HotkeyMessage.cs" />
+    <Compile Include="IPluginBarItem.cs" />
     <Compile Include="Layout.cs" />
     <Compile Include="Manager.cs" />
     <Compile Include="Monitor.cs" />
