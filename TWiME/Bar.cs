@@ -323,7 +323,6 @@ namespace TWiME {
             thisWindow.AsyncResizing = false;
             thisWindow.Location = rect;
             bar = thisWindow;
-            registerBar();
             Manager.WindowFocusChange += Manager_WindowFocusChange;
             Timer t = new Timer();
             t.Tick += (parent, args) => this.Redraw();
@@ -339,108 +338,7 @@ namespace TWiME {
             Redraw();
         }
 
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct RECT {
-            public int left;
-            public int top;
-            public int right;
-            public int bottom;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct APPBARDATA {
-            public int cbSize;
-            public IntPtr hWnd;
-            public int uCallbackMessage;
-            public int uEdge;
-            public RECT rc;
-            public IntPtr lParam;
-        }
-
-        private enum ABMsg {
-            ABM_NEW = 0,
-            ABM_REMOVE,
-            ABM_QUERYPOS,
-            ABM_SETPOS,
-        }
-
-        private enum ABEdge {
-            ABE_LEFT = 0,
-            ABE_TOP,
-            ABE_RIGHT,
-            ABE_BOTTOM
-        }
-
-        [DllImport("SHELL32", CallingConvention = CallingConvention.StdCall)]
-        private static extern uint SHAppBarMessage(int dwMessage, ref APPBARDATA pData);
-
-        [DllImport("User32.dll", ExactSpelling = true,
-            CharSet = System.Runtime.InteropServices.CharSet.Auto)]
-        private static extern bool MoveWindow
-            (IntPtr hWnd, int x, int y, int cx, int cy, bool repaint);
-
-        [DllImport("User32.dll", CharSet = CharSet.Auto)]
-        private static extern int RegisterWindowMessage(string msg);
-
-        private bool fBarRegistered;
-        private int uCallBack;
-
-        private void registerBar() {
-            APPBARDATA abd = new APPBARDATA();
-            abd.cbSize = Marshal.SizeOf(abd);
-            abd.hWnd = this.Handle;
-            if (!fBarRegistered) {
-                uCallBack = RegisterWindowMessage("AppBarMessage");
-                abd.uCallbackMessage = uCallBack;
-
-                SHAppBarMessage((int) ABMsg.ABM_NEW, ref abd);
-                fBarRegistered = true;
-
-                abSetPos();
-            }
-            else {
-                SHAppBarMessage((int) ABMsg.ABM_REMOVE, ref abd);
-                fBarRegistered = false;
-            }
-        }
-
-        private void abSetPos() {
-            APPBARDATA abd = new APPBARDATA();
-            abd.cbSize = Marshal.SizeOf(abd);
-            abd.hWnd = this.Handle;
-            abd.uEdge = (int) ABEdge.ABE_TOP;
-
-            abd.rc.left = Screen.FromHandle(this.Handle).Bounds.Left;
-            abd.rc.right = Screen.FromHandle(this.Handle).Bounds.Width;
-            abd.rc.top = Screen.FromHandle(this.Handle).Bounds.Top;
-            abd.rc.bottom = Size.Height;
-
-
-            SHAppBarMessage((int) ABMsg.ABM_QUERYPOS, ref abd);
-
-            switch (abd.uEdge) {
-                case (int) ABEdge.ABE_LEFT:
-                    abd.rc.right = abd.rc.left + Size.Width;
-                    break;
-                case (int) ABEdge.ABE_RIGHT:
-                    abd.rc.left = abd.rc.right - Size.Width;
-                    break;
-                case (int) ABEdge.ABE_TOP:
-                    abd.rc.bottom = abd.rc.top + this.Size.Height;
-                    break;
-                case (int) ABEdge.ABE_BOTTOM:
-                    abd.rc.top = abd.rc.bottom - Size.Height;
-                    break;
-            }
-
-            SHAppBarMessage((int) ABMsg.ABM_SETPOS, ref abd);
-            MoveWindow(abd.hWnd, abd.rc.left, abd.rc.top,
-                       abd.rc.right - abd.rc.left, abd.rc.bottom - abd.rc.top, true);
-        }
-
         private void Bar_FormClosing(object sender, FormClosingEventArgs e) {
-            registerBar();
             if (!InternalClosing) {
                 Manager.SendMessage(Message.Close, Level.Global, 0);
             }
