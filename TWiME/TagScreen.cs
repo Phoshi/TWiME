@@ -115,7 +115,9 @@ namespace TWiME {
                         }
                     }
                     if (keyValuePair.Value.rule == WindowRules.tag) {
+                        if (_parent.screens.Count() >= keyValuePair.Value.data) {
                             tagsToOpenOn.Add(keyValuePair.Value.data - 1);
+                        }
                     }
                 }
             }
