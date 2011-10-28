@@ -39,7 +39,7 @@ Win-Left/Right, to move the layout's horizontal splitter
 Win-Up/Down, to move the layout's vertical splitter  
 Though note that the above two may have no effect depending on the loaded layout, and you can hold shift while pressing either to move further in each jump.  
 Win-Control-Space and Win-Control-Shift-Space switch between loaded layouts for the active tag.  
-Win-Control-Left/Right moves the monitor splitter for displaying multiple tags  
+Win-Control-Left/Right moves the monitor splitter for displaying multiple tags. Add shift to move faster.  
 
 Configuration:
 --------------
@@ -71,6 +71,8 @@ There are many different settings you can change here.
     Main.AutoSave - "true" or "false", decides whether layout state is saved at the end of the session. TWiMErc values still override saved settings, however. Default false.  
     Main.MouseFollowsInput - "true" or "false", decides whether the mouse is moved whenever TWiME switches focus. Default false.  
     Main.Poll - an integer value, decides how often the main polling loop runs, in ms. Lower values produce faster detection of windows, but with an increase in required processor time. 1000ms is default. You probably won't need to mess with this.  
+    Main.RestartOnDisplayChange - "true" or "false" - decides whether to do a soft-reset if a display config change is detected.
+    Main.ShowTaskbarOnEmptyTags - "true" or "false" - decides whether to automatically show the taskbar when switching to an empty tag
 
     WindowSwitcher.Font.Name - The font to use in the window switcher, Default Segoe UI  
     WindowSwitcher.Font.Size - the size of that font, Default 8  
@@ -81,13 +83,16 @@ There are many different settings you can change here.
 
 [Window Rules]  
     Window Rules are quite simple, they follow this format:  
-    WindowClass.WindowTitle.rule=value  
-    Where Window Class is the window class, window title is the window title, and both allow wildcard matches (*).  
+    WindowClass.WindowTitle.WindowStyle.rule=value  
+    Where Window Class is the window class, window title is the window title, and both allow wildcard matches (*). WindowStyle is the style to match - "0" will match all styles.  
     The rule can be:  
         tag - defines what tag the window should default to  
+        tag[1-9] - defines more tags to show on
         stack - defines what position in the stack the window should open at - ovverides the default above  
         monitor - defines what monitor the window should open on, as an index where the primary monitor is 0  
         ignore - set this to completely ignore the window and don't take it into account for anything  
+        noResize - Tile this window, but don't ever assert width and height. Not a great effect, but some windows don't take force resizing well.  
+        stripBorders - Defines whether to strip the title bar and window frame. It will be put back as TWiME quits.
     A window can have multiple rules, they are all applied.  
 
 [Display Specific Rules]  
@@ -98,12 +103,23 @@ There are many different settings you can change here.
         Splitter - The horizontal splitter, from 0-1  
         VSplitter - the vertical splitter, from 0-1  
         Wallpaper - the wallpaper to use for this tag  
+        Name - the name to use for the 'custom' tagstyle.
+         
+    You can also set some rules on the monitor itself.
+        DefaultStackPosition - the tag-specific default stack position for new windows.
+        VisibleTags - a comma-seperated list of tags to show at startup
+        NumberOfTags - the number of tags to have on startup. Default 9.
+        Bar.TagStyle - one of:
+            custom - uses "tagNumber.Name" for the name. Takes an arbitary length string and will resize the tag display if neccesary.
+            roman - uses roman numerals
+            alphabet and ALPHABET - uses lower and uppercase letters
+            symbol and thing - two different kinds of ASCII symbols
     Setting the `Splitter` for a monitor changes the splitter for showing multiple tags at the same time  
   
 [Menu Items]  
     Menu items are also quite simple, the items follow this format:  
         Category.Subcategory.Subcategory.Item=Path Or Command to run  
-    An item can have as many subcategories as you want. If the path to run is not a special command, that path will be executed.  
+    An item can have as many subcategories as you want. If the path to run is not a special command, that path will be executed. Items with subitems can also have executable paths.  
     Categories will produce a menu with submenus as you'd expect.  
     Windows handles executing things quite well, give it a file and it'll open the associated application, give it a path and you'll get an explorer window there, give it an executable and you'll launch that.  
 
@@ -111,6 +127,31 @@ There are many different settings you can change here.
         Edit TWiMErc - opens the TWiMErc in your default text editor  
         Restart - what it says on the tin  
         Quit - as before  
+
+
+[Bar Items]
+    The TWiMEBar can have additional items at the right-hand-side, after the window list.
+    Simple ones to display the output of an application are built-in, and there is a plugin interface for more complex items. The format to define them is as so.
+
+    itemName.Property=value
+    
+    In order to define the item, the first property **must** be Path, to define the executable to run and display the output of, or the plugin name.
+    The properties are:
+        Path - the path to the item to run, whether it be a plugin or an executable.
+        IsBuiltIn - true if the command is a plugin, otherwise you don't need this (I should rename it)
+        Argument - arguments to pass to the plugin or executable
+        Monitor - restrict the item to a single monitor's bar
+        Prepend - add some text onto the start of the output
+        Append - and on the end
+        Click - what to do when you click on the item. Also takes the builtin commands
+            Next Layout - to switch to the next loaded layout for the currently active tag
+            Switcher - to open the window switcher (Think a tag-aware alt-tab)
+        Interval - how often to rerun this command
+        Background - defines the background colour
+        Foreground - defines the foreground colour
+        DoNotShow - a semicolon delineated list of regular expressions. If any match, the item won't be shown.
+        OnlyShow - as above, but the item will only be visible if an expression matches.
+        
 
 
 If General.Main.AutoSave is true, a `_runtimerc` file will be created on exit. This is exactly the same format as the `_TWiMErc`, and is automatically generated from the settings at the time.  
