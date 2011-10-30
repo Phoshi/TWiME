@@ -275,7 +275,7 @@ namespace TWiME {
                 Array.Copy(tagScreens, newTS, newNumber);
             }
             else {
-                Array.Copy(tagScreens, newTS, newNumber - 1);
+                Array.Copy(tagScreens, newTS, newNumber - (newNumber - tagScreens.Length));
             }
             for (int i = tagScreens.Length; i < newTS.Length; i++) {
                 newTS[i] = new TagScreen(this, i);
