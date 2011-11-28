@@ -118,7 +118,7 @@ namespace TWiME {
                     if (column == numColumns - 1) {
                         if ((numRows * numColumns) != GetEnabledScreens().Count()) {
                             int shortfall = (int) ((numRows * numColumns) - GetEnabledScreens().Count());
-                            winWidth = (int) (Controlled.Width / (numRows - shortfall));
+                            winWidth = (int) (Controlled.Width / (numRows - shortfall)) + 1;
                         }
                     }
                     int thisWinLeft = Controlled.Left + (winWidth * row);
@@ -144,9 +144,9 @@ namespace TWiME {
                     int secondaryHeight = Controlled.Height / (GetEnabledScreens().Count() - 1);
                     for (int i = 1; i < GetEnabledScreens().Count(); i++) {
                         TagScreen window = GetEnabledScreens().ElementAt(i);
-                        int nx = Controlled.Left + width;
+                        int nx = Controlled.Left + width - 1;
                         int ny = Controlled.Top + secondaryHeight * (i - 1);
-                        int nwidth = Controlled.Width - width;
+                        int nwidth = Controlled.Width - width + 2;
                         Rectangle secondaryRect = new Rectangle(nx, ny, nwidth, secondaryHeight);
                         layouts[window] = secondaryRect;
                     }
