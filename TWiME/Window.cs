@@ -358,6 +358,7 @@ namespace TWiME {
             if (whereTo != _location) {
                 SetWindowPos(handle, (IntPtr) HWND_TOP, whereTo.X, whereTo.Y, whereTo.Width, whereTo.Height,
                              SWP_NOACTIVATE);
+                ShowWindow(handle, SW_SHOWMAXIMIZED);
             }
         }
 
