@@ -521,6 +521,9 @@ namespace TWiME {
                             if (rule.rule == WindowRules.tilingStyle) {
                                 window.TilingType = (WindowTilingType) rule.data;
                             }
+                            if (rule.rule == WindowRules.topmost) {
+                                window.TopMost = rule.data != 0;
+                            }
                         }
                     }
                     if (windowIgnored) {
