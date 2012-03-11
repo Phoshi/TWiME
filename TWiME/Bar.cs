@@ -583,13 +583,15 @@ namespace TWiME {
                     if (windowTitle == "") {
                         windowTitle = window.ClassName;
                     }
-                    Bitmap windowMap = new Bitmap("{0}{2} {1}".With(index + 1, windowTitle, _tilingStyleSymbols[window.TilingType]).Width(titleFont), height);
+                    Bitmap windowMap = new Bitmap("{3}{0}{2} {1}".With(index + 1, windowTitle, _tilingStyleSymbols[window.TilingType],
+                                                                       window.TopMost ? "+" : "").Width(titleFont), height);
                     Graphics windowGraphics = Graphics.FromImage(windowMap);
                     windowGraphics.FillRectangle(drawFocussed ? backgroundBrush : backgroundBrush2, 0, 0,
                                                  windowMap.Width, windowMap.Height);
-                    windowGraphics.DrawString("{0}{2} {1}".With(index + 1, windowTitle, _tilingStyleSymbols[window.TilingType]), titleFont,
-                                              drawFocussed ? foregroundBrush : foregroundBrush2,
-                                              0, 0);
+                    windowGraphics.DrawString(
+                        "{3}{0}{2} {1}".With(index + 1, windowTitle, _tilingStyleSymbols[window.TilingType], window.TopMost ? "+" : ""), titleFont,
+                        drawFocussed ? foregroundBrush : foregroundBrush2,
+                        0, 0);
                     windowGraphics.Dispose();
                     windowTiles.Add(windowMap);
                     index++;

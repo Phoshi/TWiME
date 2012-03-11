@@ -143,6 +143,20 @@ namespace TWiME {
 
         public WindowTilingType TilingType { get; set; }
 
+        private bool _topMost = false;
+        public bool TopMost {
+            get { return _topMost; }
+            set {
+                if (value) {
+                    SetWindowPos(this.handle, (IntPtr) HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                }
+                else {
+                    SetWindowPos(this.handle, (IntPtr) HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                }
+                _topMost = value;
+            }
+        }
+
         private const long WS_CAPTION = 0x00C00000L;
         private const long WS_THICKFRAME = 0x00040000L;
 
@@ -396,6 +410,14 @@ namespace TWiME {
                         currentType = 0;
                     }
                     TilingType = (WindowTilingType) currentType;
+                }
+            }
+            else if (message.Message == Message.TopMost) {
+                if (message.data > 0) {
+                    TopMost = message.data != 0;
+                }
+                else {
+                    TopMost = !TopMost;
                 }
             }
         }

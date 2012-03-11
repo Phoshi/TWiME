@@ -240,6 +240,8 @@ namespace TWiME {
             hook(Keys.F, (() => SendMessage(Message.TilingType, Level.Window, 3)));
             hook(Keys.G, (() => SendMessage(Message.TilingType, Level.Window, -1)));
 
+            hook(Keys.T, (() => SendMessage(Message.TopMost, Level.Window, -1)), Keys.Shift);
+
 
 
             hook(Keys.J, (() => SendMessage(Message.Monitor, Level.Screen, 1)), Keys.Shift | Keys.Alt);
