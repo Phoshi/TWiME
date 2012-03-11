@@ -91,7 +91,7 @@ namespace TWiME {
                 Manager.Log("Removing window: {0} {1}".With(toRemove.ClassName, toRemove.Title), 1);
                 layout.UpdateWindowList(_windowList);
                 if (parent.IsTagEnabled(tag)) {
-                    layout.Assert();
+                    AssertLayout();
                 }
             }
         }
@@ -140,7 +140,7 @@ namespace TWiME {
                 Manager.Log("Adding Window: " + newWindow.ClassName + " " + newWindow, 1);
                 layout.UpdateWindowList(_windowList);
                 if (_parent.IsTagEnabled(_tag)) {
-                    layout.Assert();
+                    AssertLayout();
                 }
                 else if ((from tag in tagsToOpenOn where _parent.GetFocussedTag() == tag select tag).Count() == 0) {
                     newWindow.Visible = false;
@@ -202,7 +202,7 @@ namespace TWiME {
                             Window newWindow = _windowList[newIndex];
                             _windowList[oldIndex] = newWindow;
                             _windowList[newIndex] = oldWindow;
-                            layout.Assert();
+                            AssertLayout();
                             Manager.CenterMouseOnActiveWindow();
                         }
                     }
@@ -223,7 +223,7 @@ namespace TWiME {
                     }
                     _windowList[oldIndex] = newWindow;
                     _windowList[newIndex] = oldWindow;
-                    layout.Assert();
+                    AssertLayout();
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.Message == Message.FocusThis) {
@@ -244,13 +244,13 @@ namespace TWiME {
                     Window focussedWindow = GetFocusedWindow();
                     newMonitor.CatchWindow(this.ThrowWindow(focussedWindow));
                     _parent.screens.Where(screen => screen.windows.Contains(focussedWindow)).ToList().ForEach(screen => screen._windowList.Remove(focussedWindow));
-                    layout.Assert();
+                    AssertLayout();
                     newMonitor.GetActiveScreen().Enable();
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.Message == Message.MonitorMoveThis) {
                     Manager.monitors[message.data].CatchWindow(ThrowWindow(GetFocusedWindow()));
-                    layout.Assert();
+                    AssertLayout();
                     Manager.monitors[message.data].GetActiveScreen().Activate();
                     Manager.CenterMouseOnActiveWindow();
                 }
@@ -350,7 +350,7 @@ namespace TWiME {
             foreach (Window window in windows) {
                 window.Visible = true;
             }
-            layout.Assert();
+            AssertLayout();
             string wallpaperPath = Manager.settings.ReadSettingOrDefault("", _parent.SafeName,
                 (_tag).ToString(), "Wallpaper");
             if (wallpaperPath != "") {
@@ -370,7 +370,18 @@ namespace TWiME {
         }
 
         public void AssertLayout() {
+            List<Window> viableWindowList = (from window in _windowList where window.TilingType == WindowTilingType.Normal select window).ToList();
+            layout.UpdateWindowList(viableWindowList);
             layout.Assert();
+            layout.UpdateWindowList(_windowList);
+
+            foreach (Window window in _windowList.Where(window => window.TilingType == WindowTilingType.FullTag)) {
+                window.Location = _controlled;
+            }
+
+            foreach (Window window in _windowList.Where(window => window.TilingType == WindowTilingType.FullScreen)) {
+                window.Location = _parent.Controlled;
+            }
         }
 
         public void Disown() {
