@@ -69,6 +69,13 @@ namespace TWiME {
 
         Dictionary<string, Type> _barPlugins = new Dictionary<string, Type>();
 
+        Dictionary<WindowTilingType, String> _tilingStyleSymbols = new Dictionary<WindowTilingType, string> {
+                                                                                                                {WindowTilingType.Normal, ")"},
+                                                                                                                {WindowTilingType.FullTag, "}"},
+                                                                                                                {WindowTilingType.FullScreen, ">"},
+                                                                                                                {WindowTilingType.Floating, "$"}
+                                                                                                            }; 
+
         public Bar(Monitor monitor) {
             InitializeComponent();
 
@@ -576,11 +583,11 @@ namespace TWiME {
                     if (windowTitle == "") {
                         windowTitle = window.ClassName;
                     }
-                    Bitmap windowMap = new Bitmap("{0}) {1}".With(index + 1, windowTitle).Width(titleFont), height);
+                    Bitmap windowMap = new Bitmap("{0}{2} {1}".With(index + 1, windowTitle, _tilingStyleSymbols[window.TilingType]).Width(titleFont), height);
                     Graphics windowGraphics = Graphics.FromImage(windowMap);
                     windowGraphics.FillRectangle(drawFocussed ? backgroundBrush : backgroundBrush2, 0, 0,
                                                  windowMap.Width, windowMap.Height);
-                    windowGraphics.DrawString("{0}) {1}".With(index + 1, windowTitle), titleFont,
+                    windowGraphics.DrawString("{0}{2} {1}".With(index + 1, windowTitle, _tilingStyleSymbols[window.TilingType]), titleFont,
                                               drawFocussed ? foregroundBrush : foregroundBrush2,
                                               0, 0);
                     windowGraphics.Dispose();

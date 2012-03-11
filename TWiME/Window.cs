@@ -141,6 +141,8 @@ namespace TWiME {
             set { _allowResize = value; }
         }
 
+        public WindowTilingType TilingType { get; set; }
+
         private const long WS_CAPTION = 0x00C00000L;
         private const long WS_THICKFRAME = 0x00040000L;
 
@@ -382,6 +384,19 @@ namespace TWiME {
         public void CatchMessage(HotkeyMessage message) {
             if (message.Message == Message.Close) {
                 this.Close();
+            }
+            else if (message.Message == Message.TilingType) {
+                if (message.data > 0) {
+                    TilingType = (WindowTilingType) message.data;
+                }
+                else {
+                    int currentType = (int) TilingType;
+                    currentType++;
+                    if (currentType >= Enum.GetValues(typeof(WindowTilingType)).Length) {
+                        currentType = 0;
+                    }
+                    TilingType = (WindowTilingType) currentType;
+                }
             }
         }
 

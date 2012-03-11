@@ -30,6 +30,7 @@ namespace TWiME {
         ShowAll, //Show all tags
         SplitRotate, //Rotate shown tags
         ReindexTagScreens, //Change the number of existing tags
+        TilingType, //Change the window's tiling type
     }
 
     public enum Level {

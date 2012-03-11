@@ -81,6 +81,7 @@
     <Compile Include="WindowSwitcher.Designer.cs">
       <DependentUpon>WindowSwitcher.cs</DependentUpon>
     </Compile>
+    <Compile Include="WindowTilingType.cs" />
     <EmbeddedResource Include="Bar.resx">
       <DependentUpon>Bar.cs</DependentUpon>
     </EmbeddedResource>

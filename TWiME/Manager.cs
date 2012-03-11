@@ -236,6 +236,11 @@ namespace TWiME {
             hook(Keys.Return, (() => SendMessage(Message.SwitchThis, Level.Screen, 0)), Keys.Shift);
             hook(Keys.C, (() => SendMessage(Message.Close, Level.Window, 0)));
 
+            hook(Keys.T, (() => SendMessage(Message.TilingType, Level.Window, 0)));
+            hook(Keys.F, (() => SendMessage(Message.TilingType, Level.Window, 3)));
+            hook(Keys.G, (() => SendMessage(Message.TilingType, Level.Window, -1)));
+
+
 
             hook(Keys.J, (() => SendMessage(Message.Monitor, Level.Screen, 1)), Keys.Shift | Keys.Alt);
             hook(Keys.K, (() => SendMessage(Message.Monitor, Level.Screen, -1)), Keys.Shift | Keys.Alt);
@@ -510,6 +515,9 @@ namespace TWiME {
                                 WindowMatch newMatch = new WindowMatch(window.ClassName, kvPair.Key.Title, kvPair.Key.Style, false);
                                 WindowRule newRule = new WindowRule(WindowRules.ignore, 0);
                                 windowRules.Add(newMatch, newRule);
+                            }
+                            if (rule.rule == WindowRules.tilingStyle) {
+                                window.TilingType = (WindowTilingType) rule.data;
                             }
                         }
                     }

@@ -2,7 +2,7 @@
 
 namespace TWiME {
     public enum WindowRules {
-        tag,        //Window should be tagged with this when it opens
+        tag,            //Window should be tagged with this when it opens
         tag2 = tag,
         tag3 = tag,
         tag4 = tag,
@@ -11,11 +11,12 @@ namespace TWiME {
         tag7 = tag,
         tag8 = tag,
         tag9 = tag,
-        stack,      //Window should take this place in the stack
-        monitor,    //Window should be on this monitor
-        ignore,     //Window should not be managed by TWiME at all
-        noResize,   //Window should not be resized
-        stripBorders, //Window borders should be stripped
+        stack,          //Window should take this place in the stack
+        monitor,        //Window should be on this monitor
+        ignore,         //Window should not be managed by TWiME at all
+        noResize,       //Window should not be resized
+        stripBorders,   //Window borders should be stripped
+        tilingStyle,    //How the window should be tiled
     }
 
 
