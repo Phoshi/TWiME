@@ -420,6 +420,14 @@ namespace TWiME {
                     TopMost = !TopMost;
                 }
             }
+            else if (message.Message == Message.WindowChrome) {
+                if (message.data > 0) {
+                    ShowCaption = message.data != 0;
+                }
+                else {
+                    ShowCaption = !ShowCaption;
+                }
+            }
         }
 
         public void Close() {

@@ -32,6 +32,7 @@ namespace TWiME {
         ReindexTagScreens, //Change the number of existing tags
         TilingType, //Change the window's tiling type
         TopMost, //Change whether the window is topmost or not
+        WindowChrome, //Change whether the window chrome is visible
     }
 
     public enum Level {
