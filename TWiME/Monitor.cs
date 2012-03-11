@@ -9,7 +9,10 @@ namespace TWiME {
         private Rectangle _controlled;
         public Rectangle Controlled {
             get {
-                if (!Taskbar.hidden && (Manager.monitors.Count>0 && this==Manager.monitors[0])) {
+                if (!Manager.monitors.Contains(this)) {
+                    return _controlled;
+                }
+                if (!Taskbar.hidden && (this==Manager.monitors[0])) {
                     Rectangle newRect = _controlled;
                     newRect.Height -= 25;
                     return newRect;
@@ -116,6 +119,7 @@ namespace TWiME {
                 int row = 0, column = 0;
                 foreach (TagScreen screen in GetEnabledScreens()) {
                     if (column == numColumns - 1) {
+
                         if ((numRows * numColumns) != GetEnabledScreens().Count()) {
                             int shortfall = (int) ((numRows * numColumns) - GetEnabledScreens().Count());
                             winWidth = (int) (Controlled.Width / (numRows - shortfall)) + 1;
@@ -133,7 +137,7 @@ namespace TWiME {
             }
             else {
                 TagScreen mainWindow = GetEnabledScreens().First();
-                int width = (int)(Controlled.Width * _splitter);
+                int width = (int)(Controlled.Width * _splitter) + 1;
                 int height = Controlled.Height;
                 int x = Controlled.X;
                 int y = Controlled.Y;
@@ -146,7 +150,7 @@ namespace TWiME {
                         TagScreen window = GetEnabledScreens().ElementAt(i);
                         int nx = Controlled.Left + width - 1;
                         int ny = Controlled.Top + secondaryHeight * (i - 1);
-                        int nwidth = Controlled.Width - width + 2;
+                        int nwidth = Controlled.Width - width + 1;
                         Rectangle secondaryRect = new Rectangle(nx, ny, nwidth, secondaryHeight);
                         layouts[window] = secondaryRect;
                     }
@@ -207,6 +211,7 @@ namespace TWiME {
             Rectangle temp = Screen.WorkingArea;
             temp.Height = Screen.Bounds.Height - Bar.bar.Location.Height;
             temp.Y = Screen.Bounds.Top + Bar.bar.Location.Height;
+            temp.Width += 1;
             Controlled = temp;
             _splitter = float.Parse(Manager.settings.ReadSettingOrDefault("0.5", Screen.DeviceName.Replace(".", ""), "Splitter"));
             string activeTags = Manager.settings.ReadSettingOrDefault("1", SafeName, "VisibleTags");
