@@ -17,6 +17,7 @@ namespace TWiME {
         noResize,       //Window should not be resized
         stripBorders,   //Window borders should be stripped
         tilingStyle,    //How the window should be tiled
+        topmost,        //Whether the window should be topmost-by-default
     }
 
 
