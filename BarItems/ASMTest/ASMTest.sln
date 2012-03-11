@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASMTest", "ASMTest\ASMTest.vcxproj", "{B57C2F8E-8E3F-433C-AA9B-F72AFE617526}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B57C2F8E-8E3F-433C-AA9B-F72AFE617526}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B57C2F8E-8E3F-433C-AA9B-F72AFE617526}.Debug|Win32.Build.0 = Debug|Win32
+		{B57C2F8E-8E3F-433C-AA9B-F72AFE617526}.Release|Win32.ActiveCfg = Release|Win32
+		{B57C2F8E-8E3F-433C-AA9B-F72AFE617526}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
