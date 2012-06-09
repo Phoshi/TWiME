@@ -35,6 +35,13 @@ namespace TWiME {
         public static Settings settings;
         public static Dictionary<WindowMatch, WindowRule> windowRules = new Dictionary<WindowMatch, WindowRule>();
 
+        private static bool _layoutEnabled = true;
+
+        public static bool LayoutEnabled {
+            get { return _layoutEnabled; }
+            set { _layoutEnabled = value; }
+        }
+
         [DllImport("user32.dll")]
         private static extern
             IntPtr GetForegroundWindow();
@@ -484,6 +491,7 @@ namespace TWiME {
             pollWindows_Tick(new object(), new EventArgs());
         }
 
+        private static Window windowBeingDragged = null;
         private static IntPtr focusTrack = IntPtr.Zero;
         private static void pollWindows_Tick(object sender, EventArgs e) {
             _globalHook.unhook();
@@ -568,7 +576,68 @@ namespace TWiME {
             }
             foreach (Monitor monitor in monitors) {
                 monitor.GetActiveScreen().AssertLayout();
+                if ((Control.MouseButtons & MouseButtons.Left) == MouseButtons.Left) {
+                    foreach (Window window in monitor.GetVisibleWindows()) {
+                        if (window.Location.Contains(Control.MousePosition)) {
+                            windowBeingDragged = window;
+                        }
+                    }
+                    if (windowBeingDragged != null) {
+                        Manager.LayoutEnabled = false;
+                    }
+                }
             }
+
+            if (windowBeingDragged != null) {
+                if (windowBeingDragged.Monitor() != GetMouseoveredMonitor()) {
+                    Monitor oldMonitor = windowBeingDragged.Monitor();
+                    Monitor newMonitor = GetMouseoveredMonitor();
+
+                    if (newMonitor != null) {
+                        TagScreen newTagScreen = newMonitor.GetMouseoveredTagScreen();
+                        if (newTagScreen != null) {
+                            newTagScreen.CatchWindow(oldMonitor.ThrowWindow(windowBeingDragged));
+                        }
+                    }
+                }
+
+                if (GetMouseoveredMonitor() != null) {
+                    TagScreen currentTagScreen = GetMouseoveredMonitor().GetMouseoveredTagScreen();
+
+                    if (currentTagScreen != null) {
+                        List<TagScreen> activeTagsForWindow = windowBeingDragged.TagScreens();
+                        if (!activeTagsForWindow.Contains(currentTagScreen)) {
+                            windowBeingDragged.Monitor().ThrowWindow(windowBeingDragged);
+                            currentTagScreen.CatchWindow(windowBeingDragged);
+                        }
+
+                        foreach (Window window in currentTagScreen.windows) {
+                            if (window != windowBeingDragged && window.Location.Contains(Control.MousePosition)) {
+                                int windowPosition = currentTagScreen.GetWindowIndex(window);
+                                currentTagScreen.SwapWindows(windowBeingDragged, currentTagScreen.windows[windowPosition]);
+                                Manager.LayoutEnabled = true;
+                                currentTagScreen.AssertLayout();
+                                Manager.LayoutEnabled = false;
+                                break;
+                            }
+                        }
+
+                        if ((Control.MouseButtons & MouseButtons.Left) != MouseButtons.Left) {
+                            windowBeingDragged = null;
+                            Manager.LayoutEnabled = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        private static Monitor GetMouseoveredMonitor() {
+            foreach (Monitor monitor in monitors) {
+                if (monitor.Controlled.Contains(Control.MousePosition)) {
+                    return monitor;
+                }
+            }
+            return null;
         }
 
         public static void ForceUnhandle(Window window) {

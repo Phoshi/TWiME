@@ -21,6 +21,11 @@ namespace TWiME {
         private readonly int _tag;
         public int activeLayout;
 
+        public Rectangle Controlled {
+            get { return _controlled; }
+            set { UpdateControlledArea(value); }
+        }
+
         public int tag {
             get { return _tag; }
         }
@@ -159,6 +164,15 @@ namespace TWiME {
             IntPtr hWnd = GetForegroundWindow();
             for (int i = 0; i < _windowList.Count; i++) {
                 if (_windowList[i].handle == hWnd) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public int GetWindowIndex(Window window) {
+            for (int i = 0; i < _windowList.Count; i++) {
+                if (_windowList[i] == window) {
                     return i;
                 }
             }
@@ -370,10 +384,12 @@ namespace TWiME {
         }
 
         public void AssertLayout() {
+            if (!Manager.LayoutEnabled) {
+                return;
+            }
             List<Window> viableWindowList = (from window in _windowList where window.TilingType == WindowTilingType.Normal select window).ToList();
             layout.UpdateWindowList(viableWindowList);
             layout.Assert();
-            layout.UpdateWindowList(_windowList);
 
             foreach (Window window in _windowList.Where(window => window.TilingType == WindowTilingType.FullTag)) {
                 window.Location = _controlled;
@@ -392,6 +408,17 @@ namespace TWiME {
             Manager.WindowCreate -= Manager_WindowCreate;
             Manager.WindowDestroy -= Manager_WindowDestroy;
             layout.UpdateWindowList(_windowList);
+        }
+
+        public void SwapWindows(Window one, Window two) {
+            int oldIndex = GetWindowIndex(one);
+            int newIndex = GetWindowIndex(two);
+            if (oldIndex == -1 || newIndex == -1) {
+                return;
+            }
+            _windowList[oldIndex] = two;
+            _windowList[newIndex] = one;
+            AssertLayout();
         }
     }
 }
