@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 
 namespace TWiME {
     public static class windowExtensions { //Why extensions? Because I want to keep the Window class standalone
@@ -9,11 +8,7 @@ namespace TWiME {
                     return monitor;
                 }
             }
-            return Manager.monitors.First();
-        }
-
-        public static List<TagScreen> TagScreens(this Window window) {
-            return (from screen in window.Monitor().screens where screen.windows.Contains(window) select screen).ToList();
+            return null;
         }
     }
 }

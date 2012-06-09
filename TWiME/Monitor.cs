@@ -584,23 +584,5 @@ namespace TWiME {
         public void AssertTagLayout() {
             reorganiseActiveTagSpaces();
         }
-
-        public TagScreen GetMouseoveredTagScreen() {
-            foreach (TagScreen screen in GetEnabledScreens()) {
-                if (screen.Controlled.Contains(Control.MousePosition)) {
-                    return screen;
-                }
-            }
-            return null;
-        }
-
-        public Window ThrowWindow(Window window) {
-            foreach (TagScreen tagScreen in tagScreens) {
-                if (tagScreen.windows.Contains(window)) {
-                    tagScreen.ThrowWindow(window);
-                }
-            }
-            return window;
-        }
     }
 }
