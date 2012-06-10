@@ -368,7 +368,6 @@ namespace TWiME {
             List<Window> viableWindowList = (from window in _windowList where window.TilingType == WindowTilingType.Normal select window).ToList();
             layout.UpdateWindowList(viableWindowList);
             layout.Assert();
-            layout.UpdateWindowList(_windowList);
 
             foreach (Window window in _windowList.Where(window => window.TilingType == WindowTilingType.FullTag)) {
                 window.Location = _controlled;
