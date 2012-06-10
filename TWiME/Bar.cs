@@ -16,11 +16,7 @@ using Tree;
 
 namespace TWiME {
     public sealed partial class Bar : Form {
-        public Window bar { get; internal set; }
-
-        private const int GWL_EXSTYLE = (-20);
-        private const int WS_EX_TOOLWINDOW = 0x00000080;
-        private const int WS_EX_NOACTIVATE = 0x08000000;
+        public Window BarWindow { get; internal set; }
 
         private int barHeight = 15;
         private Font titleFont;
@@ -41,16 +37,9 @@ namespace TWiME {
             get { return barHeight; }
         }
 
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr GetWindowLong(IntPtr hWnd, int nIndex);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, IntPtr newLong);
-
-        public delegate bool EnumWindowsProc(int hWnd, int lParam);
-
         private Screen _screen;
         private Monitor _parent;
+
         public new Monitor Parent {
             get { return _parent; }
         }
@@ -61,11 +50,7 @@ namespace TWiME {
 
         public new ContextMenuStrip Menu { get; private set; }
 
-        private bool _internalClosing = false;
-        public bool InternalClosing {
-            get { return _internalClosing; }
-            set { _internalClosing = value; }
-        }
+        public bool InternalClosing { get; set; }
 
         Dictionary<string, Type> _barPlugins = new Dictionary<string, Type>();
 
@@ -77,6 +62,7 @@ namespace TWiME {
                                                                                                             }; 
 
         public Bar(Monitor monitor) {
+            InternalClosing = false;
             InitializeComponent();
 
             barHeight = Convert.ToInt32(Manager.settings.ReadSettingOrDefault(15, "General.Bar.Height"));
@@ -112,18 +98,16 @@ namespace TWiME {
             _parent = monitor;
 
             tagStyle = Manager.settings.ReadSettingOrDefault("numbers", _parent.SafeName, "Bar", "TagStyle");
-            //this.TopMost = true;
             this.StartPosition = FormStartPosition.Manual;
             this.Location = _screen.Bounds.Location;
             this.Width = _screen.Bounds.Width;
             this.Height = 10;
             this.FormBorderStyle = FormBorderStyle.None;
             this.DesktopLocation = this.Location;
-            //RegisterBar();
             Color bColor = Color.FromName(Manager.settings.ReadSettingOrDefault("DarkGray", "General.Bar.BackColour"));
             this.BackColor = bColor;
             this.ShowInTaskbar = false;
-            bar = new Window("", this.Handle, "", "", true);
+            BarWindow = new Window("", this.Handle, "", "", true);
             loadPluginItems();
             loadAdditionalItems();
             generateMenu();
@@ -178,50 +162,17 @@ namespace TWiME {
             }
         }
 
-
-        [DllImport("Shlwapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        static extern uint AssocQueryString(AssocF flags, AssocStr str, string pszAssoc, string pszExtra,
-           [Out] StringBuilder pszOut, [In][Out] ref uint pcchOut);
-
-        [Flags]
-        enum AssocF {
-            Init_NoRemapCLSID = 0x1,
-            Init_ByExeName = 0x2,
-            Open_ByExeName = 0x2,
-            Init_DefaultToStar = 0x4,
-            Init_DefaultToFolder = 0x8,
-            NoUserSettings = 0x10,
-            NoTruncate = 0x20,
-            Verify = 0x40,
-            RemapRunDll = 0x80,
-            NoFixUps = 0x100,
-            IgnoreBaseClass = 0x200
-        }
-
-        enum AssocStr {
-            Command = 1,
-            Executable,
-            FriendlyDocName,
-            FriendlyAppName,
-            NoOpen,
-            ShellNewValue,
-            DDECommand,
-            DDEIfExec,
-            DDEApplication,
-            DDETopic
-        }
-
         public string GetAssociation(string doctype) {
             uint pcchOut = 0;   // size of output buffer
 
             // First call is to get the required size of output buffer
-            AssocQueryString(AssocF.Verify, AssocStr.Executable, doctype, null, null, ref pcchOut);
+            Win32API.AssocQueryString(Win32API.AssocF.Verify, Win32API.AssocStr.Executable, doctype, null, null, ref pcchOut);
 
             // Allocate the output buffer
             StringBuilder pszOut = new StringBuilder((int)pcchOut);
 
             // Get the full pathname to the program in pszOut
-            AssocQueryString(AssocF.Verify, AssocStr.Executable, doctype, null, pszOut, ref pcchOut);
+            Win32API.AssocQueryString(Win32API.AssocF.Verify, Win32API.AssocStr.Executable, doctype, null, pszOut, ref pcchOut);
             string doc = pszOut.ToString();
             return doc;
         }
@@ -229,9 +180,7 @@ namespace TWiME {
 
         private void runCommand(string command) {
             Dictionary<string, Action> specialCommands = new Dictionary<string, Action>();
-            specialCommands["Edit TWiMErc"] = (() => {
-                                                   Process.Start(GetAssociation(@".txt"), "_TWiMErc");
-                                               });
+            specialCommands["Edit TWiMErc"] = (() => Process.Start(GetAssociation(@".txt"), "_TWiMErc"));
             specialCommands["Quit"] = (() => Manager.SendMessage(Message.Close, Level.Global, 0));
             specialCommands["Restart"] = (() => Manager.SendMessage(Message.Close, Level.Global, 1));
 
@@ -355,16 +304,16 @@ namespace TWiME {
             rect.Height = barHeight;
             thisWindow.AsyncResizing = false;
             thisWindow.Location = rect;
-            bar = thisWindow;
+            BarWindow = thisWindow;
             Manager.WindowFocusChange += Manager_WindowFocusChange;
             Timer t = new Timer();
             t.Tick += (parent, args) => this.Redraw();
             t.Interval = int.Parse(Manager.settings.ReadSettingOrDefault("10000", "General.Bar.Refresh"));
             t.Start();
 
-            int winStyles = (int) GetWindowLong(this.Handle, GWL_EXSTYLE);
-            winStyles |= WS_EX_TOOLWINDOW;
-            SetWindowLong(this.Handle, GWL_EXSTYLE, (IntPtr) winStyles);
+            int winStyles = (int) Win32API.GetWindowLong(this.Handle, Win32API.GWL_EXSTYLE);
+            winStyles |= Win32API.WS_EX_TOOLWINDOW;
+            Win32API.SetWindowLong(this.Handle, Win32API.GWL_EXSTYLE, winStyles);
         }
 
         private void Manager_WindowFocusChange(object sender, WindowEventArgs args) {
@@ -622,7 +571,10 @@ namespace TWiME {
                     addMouseAction(MouseButtons.Left, drawRect,
                                    (() => Manager.SendMessage(Message.FocusThis, Level.Screen, index1)));
                     addMouseAction(MouseButtons.Middle, drawRect,
-                                   (() => Manager.SendMessage(Message.Close, Level.Screen, index1)));
+                                   (() => {
+                                        Manager.SendMessage(Message.FocusThis, Level.Screen, index1);
+                                        Manager.SendMessage(Message.Close, Level.Screen, index1);
+                                    }));
                     addMouseAction(MouseButtons.Right, drawRect, (() => {
                                                                       Manager.SendMessage(Message.FocusThis,
                                                                                           Level.Screen, 0);
@@ -675,38 +627,22 @@ namespace TWiME {
             }
         }
 
-        private int[] values = new int[] { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
-        private string[] numerals = new string[] { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
-        private string toRoman(int number) {
-            if (number == 0) {
-                return "N";
-            }
-
-            string converted = "";
-
-            for (int i = 0; i < 13; i++) {
-                while (number >= values[i]) {
-                    number -= values[i];
-                    converted+=numerals[i];
-                }
-            }
-            return converted;
-        }
         private string getTagName(int tag) {
             if (tagStyle == "roman") {
-                return toRoman(tag);
+                return RomanNumeral.ToRoman(tag);
             }
+            Func<int, string> tagFromStartingPoint = (start => (start + (tag - 1)).ToString());
             if (tagStyle == "ALPHABET") {
-                return ((char) (((int)'A') + (tag - 1))).ToString();
+                return tagFromStartingPoint('A');
             }
             if (tagStyle == "alphabet") {
-                return ((char)(((int)'a') + (tag - 1))).ToString();
+                return tagFromStartingPoint('a');
             }
             if (tagStyle == "symbol") {
-                return ((char)(((int)'!') + (tag - 1))).ToString();
+                return tagFromStartingPoint('!');
             }
             if (tagStyle == "thing") {
-                return ((char)(179 + (tag - 1))).ToString();
+                return tagFromStartingPoint(172);
             }
 
             if (tagStyle == "custom") {
@@ -722,7 +658,7 @@ namespace TWiME {
 
         private void Bar_MouseDown(object sender, MouseEventArgs e) {
             if (Manager.GetFocussedMonitor() != _parent) {
-                bar.Activate();
+                BarWindow.Activate();
             }
             Manager.Log("Caught click event on bar", 4);
             if (_clicks.ContainsKey(e.Button)) {
@@ -741,37 +677,9 @@ namespace TWiME {
         protected override CreateParams CreateParams {
             get {
                 CreateParams param = base.CreateParams;
-                param.ExStyle = (param.ExStyle | WS_EX_NOACTIVATE);
+                param.ExStyle = (param.ExStyle | Win32API.WS_EX_NOACTIVATE);
                 return param;
             }
-        }
-    }
-    class BarItem {
-        public int MaximumWidth, MinimumWidth;
-        public bool IsBuiltIn;
-        public string Path;
-        public string Argument;
-        public Brush ForeColour, BackColour;
-        public Image Value;
-        public long LastRenew;
-        public TimeSpan RenewInterval;
-        public string ClickExecutePath = "";
-        public string PrependValue;
-        public string AppendValue;
-        public string[] DoNotShowMatch;
-        public string[] OnlyShowOnMatch;
-
-        public BarItem(string path, string argument="", bool builtIn = false, int minWidth = -1, int maxWidth = -1, Brush forecolour = null, Brush backcolour = null) {
-            Path = path;
-            Argument = argument;
-            IsBuiltIn = builtIn;
-            MinimumWidth = minWidth;
-            MaximumWidth = maxWidth;
-            BackColour = backcolour ?? new SolidBrush(
-                    Color.FromName(Manager.settings.ReadSettingOrDefault("Black", "General.Bar.UnselectedBackgroundColour")));
-            ForeColour = forecolour ?? new SolidBrush(
-                    Color.FromName(Manager.settings.ReadSettingOrDefault("LightGray", "General.Bar.SelectedForeground")));
-            RenewInterval = new TimeSpan(0, 0, 0, 5); //5 seconds
         }
     }
 }

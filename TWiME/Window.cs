@@ -7,118 +7,6 @@ using System.Windows.Forms;
 
 namespace TWiME {
     public class Window {
-
-        [DllImport("user32.dll")]
-        static extern int SetWindowLong(IntPtr hWnd, int nIndex, long dwNewLong);
-
-        [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
-        private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
-
-        [DllImport("user32.dll")]
-        private static extern
-            bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
-
-        [DllImport("user32.dll")]
-        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-        [DllImport("user32.dll")]
-        private static extern
-            bool SetForegroundWindow(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern
-            bool IsIconic(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern
-            bool IsZoomed(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern
-            IntPtr GetForegroundWindow();
-
-        [DllImport("user32.dll")]
-        private static extern
-            IntPtr GetWindowThreadProcessId(IntPtr hWnd, IntPtr ProcessId);
-
-        [DllImport("user32.dll")]
-        private static extern
-            bool AttachThreadInput(IntPtr idAttach, IntPtr idAttachTo, bool fAttach);
-
-        [DllImport("user32.dll")]
-        private static extern
-            int GetWindowText(IntPtr hWnd, StringBuilder title, int size);
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetWindowRect(IntPtr hwnd, out RECT lpRect);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy,
-                                                uint uFlags);
-
-        [DllImport("user32.dll")]
-        private static extern bool BringWindowToTop(IntPtr hWnd);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool SystemParametersInfo(uint uiAction, uint uiParam, IntPtr pvParam, uint fWinIni);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetWindow(IntPtr handle, uint command);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        private static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, int wParam, IntPtr lParam);
-
-        public const int WM_SYSCOMMAND = 0x0112;
-        public const int SC_CLOSE = 0xF060;
-
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct RECT {
-            public int _Left;
-            public int _Top;
-            public int _Right;
-            public int _Bottom;
-        }
-
-        private const int SW_HIDE = 0;
-        private const int SW_SHOWNORMAL = 1;
-        private const int SW_SHOWMINIMIZED = 2;
-        private const int SW_SHOWMAXIMIZED = 3;
-        private const int SW_SHOW = 5;
-        private const int SW_SHOWNOACTIVATE = 4;
-        private const int SW_RESTORE = 9;
-        private const int SW_SHOWDEFAULT = 10;
-
-        public const int HWND_TOP = 0;
-        public const int HWND_BOTTOM = 1;
-        public const int HWND_TOPMOST = -1;
-        public const int HWND_NOTOPMOST = -2;
-
-        public const int SWP_ASYNCWINDOWPOS = 0x4000;
-        public const int SWP_DEFERERASE = 0x2000;
-        public const int SWP_DRAWFRAME = 0x0020;
-        public const int SWP_FRAMECHANGED = 0x0020;
-        public const int SWP_HIDEWINDOW = 0x0080;
-        public const int SWP_NOACTIVATE = 0x0010;
-        public const int SWP_NOCOPYBITS = 0x0100;
-        public const int SWP_NOMOVE = 0x0002;
-        public const int SWP_NOOWNERZORDER = 0x0200;
-        public const int SWP_NOREDRAW = 0x0008;
-        public const int SWP_NOREPOSITION = 0x0200;
-        public const int SWP_NOSENDCHANGING = 0x0400;
-        public const int SWP_NOSIZE = 0x0001;
-        public const int SWP_NOZORDER = 0x0004;
-        public const int SWP_SHOWWINDOW = 0x0040;
-
-        private const int GWL_STYLE = -16;
-
-
-        private const uint SPI_GETFOREGROUNDLOCKTIMEOUT = 0x2000;
-        private const uint SPI_SETFOREGROUNDLOCKTIMEOUT = 0x2001;
-
-
         private IntPtr _handle;
         private string _title;
         private bool _visible;
@@ -143,31 +31,28 @@ namespace TWiME {
 
         public WindowTilingType TilingType { get; set; }
 
-        private bool _topMost = false;
+        private bool _topMost;
         public bool TopMost {
             get { return _topMost; }
             set {
                 if (value) {
-                    SetWindowPos(this.handle, (IntPtr) HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                    Win32API.SetWindowPos(this.handle, (IntPtr) Win32API.HWND_TOPMOST, 0, 0, 0, 0, Win32API.SWP_NOMOVE | Win32API.SWP_NOSIZE);
                 }
                 else {
-                    SetWindowPos(this.handle, (IntPtr) HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                    Win32API.SetWindowPos(this.handle, (IntPtr) Win32API.HWND_NOTOPMOST, 0, 0, 0, 0, Win32API.SWP_NOMOVE | Win32API.SWP_NOSIZE);
                 }
                 _topMost = value;
             }
         }
 
-        private const long WS_CAPTION = 0x00C00000L;
-        private const long WS_THICKFRAME = 0x00040000L;
-
         private bool _showCaption = true;
         public bool ShowCaption { get { return _showCaption; } 
             set {
                 if (value) {
-                    Style = Style | (WS_CAPTION | WS_THICKFRAME);
+                    Style = Style | (Win32API.WS_CAPTION | Win32API.WS_THICKFRAME);
                 }
                 else {
-                    Style = Style & ~(WS_CAPTION | WS_THICKFRAME);
+                    Style = Style & ~(Win32API.WS_CAPTION | Win32API.WS_THICKFRAME);
                 }
                 _showCaption = value;
 
@@ -177,7 +62,7 @@ namespace TWiME {
         public long Style {
             get { return _style; }
             set {
-                SetWindowLong(handle, GWL_STYLE, value);
+                Win32API.SetWindowLong(handle, Win32API.GWL_STYLE, value);
                 _style = value;
             }
         }
@@ -194,7 +79,7 @@ namespace TWiME {
 
         public void UpdateTitle() {
             StringBuilder windowTitle = new StringBuilder(256);
-            GetWindowText(_handle, windowTitle, 256);
+            Win32API.GetWindowText(_handle, windowTitle, 256);
             _title = windowTitle.ToString();
             lastTitleUpdate = DateTime.Now.Ticks;
         }
@@ -213,7 +98,7 @@ namespace TWiME {
 
         public void ForceVisible() {
             if (!_visible) {
-                ShowWindowAsync(_handle, _maximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
+                Win32API.ShowWindowAsync(_handle, _maximized ? Win32API.SW_SHOWMAXIMIZED : Win32API.SW_SHOWNORMAL);
                 _visible = true;
             }
         }
@@ -225,7 +110,7 @@ namespace TWiME {
                 Action visibleUpdateAction = (() => {
                                                   if (value) {
                                                       if (!_visible) {
-                                                          ShowWindow(_handle, Maximised ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
+                                                          Win32API.ShowWindow(_handle, Maximised ? Win32API.SW_SHOWMAXIMIZED : Win32API.SW_SHOWNORMAL);
                                                           _visible = true;
                                                       }
                                                       if (Manager.hiddenWindows.Contains(this)) {
@@ -233,9 +118,9 @@ namespace TWiME {
                                                       }
                                                   }
                                                   else {
-                                                      _maximized = IsZoomed(_handle);
+                                                      _maximized = Win32API.IsZoomed(_handle);
                                                       Manager.hiddenWindows.Add(this);
-                                                      ShowWindow(_handle, SW_HIDE);
+                                                      Win32API.ShowWindow(_handle, Win32API.SW_HIDE);
                                                       _visible = false;
                                                   }
                                               }
@@ -252,7 +137,7 @@ namespace TWiME {
             _process = process;
             _className = className;
             _visible = isWindowVisible;
-            _style = (long) GetWindowLongPtr(handle, GWL_STYLE); //-16 is GWL_STYLE
+            _style = (long) Win32API.GetWindowLongPtr(handle, Win32API.GWL_STYLE); //-16 is GWL_STYLE
         }
 
         public override string ToString() {
@@ -276,64 +161,64 @@ namespace TWiME {
         /// Sets window focus. Repeatedly. 
         /// </summary>
         public void Activate() {
-            if (_handle == GetForegroundWindow()) {
+            if (_handle == Win32API.GetForegroundWindow()) {
                 return;
             }
 
-            if (IsIconic(_handle)) {
-                ShowWindowAsync(_handle, SW_RESTORE);
+            if (Win32API.IsIconic(_handle)) {
+                Win32API.ShowWindowAsync(_handle, Win32API.SW_RESTORE);
             }
 
-            attemptSetForeground(_handle, GetForegroundWindow());
+            attemptSetForeground(_handle, Win32API.GetForegroundWindow());
             bool meAttachedToFore, foreAttachedToTarget;
 
-            IntPtr foregroundThread = GetWindowThreadProcessId(GetForegroundWindow(), IntPtr.Zero);
+            IntPtr foregroundThread = Win32API.GetWindowThreadProcessId(Win32API.GetForegroundWindow(), IntPtr.Zero);
             IntPtr thisThread = (IntPtr) Thread.CurrentThread.ManagedThreadId;
-            IntPtr targetThread = GetWindowThreadProcessId(_handle, IntPtr.Zero);
+            IntPtr targetThread = Win32API.GetWindowThreadProcessId(_handle, IntPtr.Zero);
 
-            meAttachedToFore = AttachThreadInput(thisThread, foregroundThread, true);
-            foreAttachedToTarget = AttachThreadInput(foregroundThread, targetThread, true);
-            IntPtr foreground = GetForegroundWindow();
-            BringWindowToTop(_handle);
+            meAttachedToFore = Win32API.AttachThreadInput(thisThread, foregroundThread, true);
+            foreAttachedToTarget = Win32API.AttachThreadInput(foregroundThread, targetThread, true);
+            IntPtr foreground = Win32API.GetForegroundWindow();
+            Win32API.BringWindowToTop(_handle);
             for (int i = 0; i < 5; i++) {
                 attemptSetForeground(_handle, foreground);
-                if (GetForegroundWindow() == _handle) {
+                if (Win32API.GetForegroundWindow() == _handle) {
                     break;
                 }
             }
 
             //SetForegroundWindow(_handle);
-            AttachThreadInput(foregroundThread, thisThread, false);
-            AttachThreadInput(foregroundThread, targetThread, false);
+            Win32API.AttachThreadInput(foregroundThread, thisThread, false);
+            Win32API.AttachThreadInput(foregroundThread, targetThread, false);
 
-            if (GetForegroundWindow() != _handle) {
+            if (Win32API.GetForegroundWindow() != _handle) {
                 // Code by Daniel P. Stasinski
                 // Converted to C# by Kevin Gale
                 IntPtr Timeout = IntPtr.Zero;
-                SystemParametersInfo(SPI_GETFOREGROUNDLOCKTIMEOUT, 0, Timeout, 0);
-                SystemParametersInfo(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, IntPtr.Zero, 0x1);
-                BringWindowToTop(_handle); // IE 5.5 related hack
-                SetForegroundWindow(_handle);
-                SystemParametersInfo(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, Timeout, 0x1);
+                Win32API.SystemParametersInfo(Win32API.SPI_GETFOREGROUNDLOCKTIMEOUT, 0, Timeout, 0);
+                Win32API.SystemParametersInfo(Win32API.SPI_SETFOREGROUNDLOCKTIMEOUT, 0, IntPtr.Zero, 0x1);
+                Win32API.BringWindowToTop(_handle); // IE 5.5 related hack
+                Win32API.SetForegroundWindow(_handle);
+                Win32API.SystemParametersInfo(Win32API.SPI_SETFOREGROUNDLOCKTIMEOUT, 0, Timeout, 0x1);
             }
 
             if (meAttachedToFore) {
-                AttachThreadInput(thisThread, foregroundThread, false);
+                Win32API.AttachThreadInput(thisThread, foregroundThread, false);
             }
             if (foreAttachedToTarget) {
-                AttachThreadInput(foregroundThread, targetThread, false);
+                Win32API.AttachThreadInput(foregroundThread, targetThread, false);
             }
             Visible = true;
         }
 
         private void attemptSetForeground(IntPtr target, IntPtr foreground) {
-            SetForegroundWindow(target);
+            Win32API.SetForegroundWindow(target);
             Thread.Sleep(10);
-            IntPtr newFore = GetForegroundWindow();
+            IntPtr newFore = Win32API.GetForegroundWindow();
             if (newFore == target) {
                 return;
             }
-            if (newFore != foreground && target == GetWindow(newFore, 4)) {
+            if (newFore != foreground && target == Win32API.GetWindow(newFore, 4)) {
                 //4 is GW_OWNER - the window parent
                 return;
             }
@@ -341,8 +226,8 @@ namespace TWiME {
         }
 
         private void updatePosition() {
-            RECT newRect;
-            GetWindowRect(handle, out newRect);
+            Win32API.RECT newRect;
+            Win32API.GetWindowRect(handle, out newRect);
             _location.X = newRect._Left;
             _location.Y = newRect._Top;
             _location.Width = newRect._Right - newRect._Left;
@@ -355,7 +240,7 @@ namespace TWiME {
                 return _location;
             }
             set {
-                ShowWindowAsync(handle, SW_SHOWMAXIMIZED);
+                Win32API.ShowWindowAsync(handle, Win32API.SW_SHOWMAXIMIZED);
                 Thread moveThread = new Thread((()=>assertLocation(value)));
                 moveThread.Start();
                 if (!AsyncResizing) {
@@ -372,9 +257,9 @@ namespace TWiME {
                 whereTo.Height = _location.Height;
             }
             if (whereTo != _location) {
-                SetWindowPos(handle, (IntPtr) HWND_TOP, whereTo.X, whereTo.Y, whereTo.Width, whereTo.Height,
-                             SWP_NOACTIVATE);
-                ShowWindow(handle, SW_SHOWMAXIMIZED);
+                Win32API.SetWindowPos(handle, (IntPtr) Win32API.HWND_TOP, whereTo.X, whereTo.Y, whereTo.Width, whereTo.Height,
+                             Win32API.SWP_NOACTIVATE);
+                Win32API.ShowWindow(handle, Win32API.SW_SHOWMAXIMIZED);
             }
         }
 
@@ -385,11 +270,11 @@ namespace TWiME {
                     return;
                 }
                 if (value) {
-                    ShowWindowAsync(handle, SW_SHOWMAXIMIZED);
+                    Win32API.ShowWindowAsync(handle, Win32API.SW_SHOWMAXIMIZED);
                     _maximized = true;
                 }
                 else {
-                    ShowWindowAsync(handle, SW_RESTORE);
+                    Win32API.ShowWindowAsync(handle, Win32API.SW_RESTORE);
                     _maximized = false;
                 }
             }
@@ -431,7 +316,7 @@ namespace TWiME {
         }
 
         public void Close() {
-            SendMessage(_handle, WM_SYSCOMMAND, SC_CLOSE, IntPtr.Zero);
+            Win32API.SendMessage(_handle, Win32API.WM_SYSCOMMAND, Win32API.SC_CLOSE, IntPtr.Zero);
         }
 
         public bool Equals(Window other) {

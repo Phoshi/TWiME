@@ -77,10 +77,6 @@ namespace TWiME {
             return layoutSymbol;
         }
 
-        [DllImport("user32.dll")]
-        private static extern
-            IntPtr GetForegroundWindow();
-
         private void Manager_WindowDestroy(object sender, WindowEventArgs args) {
             Window newWindow = (Window) sender;
             IEnumerable<Window> deleteList =
@@ -98,7 +94,6 @@ namespace TWiME {
 
         private void Manager_WindowCreate(object sender, WindowEventArgs args) {
             bool rulesThisMonitor = false;
-            Convert.ToInt32(Manager.settings.ReadSettingOrDefault(0, _parent.SafeName, "DefaultStackPosition"));
             int monitorPosition =
                 Convert.ToInt32(Manager.settings.ReadSettingOrDefault(-1, "General.Monitor.DefaultMonitor"));
             List<int> tagsToOpenOn = new List<int>();
@@ -156,7 +151,7 @@ namespace TWiME {
         }
 
         public int GetFocusedWindowIndex() {
-            IntPtr hWnd = GetForegroundWindow();
+            IntPtr hWnd = Win32API.GetForegroundWindow();
             for (int i = 0; i < _windowList.Count; i++) {
                 if (_windowList[i].handle == hWnd) {
                     return i;
@@ -361,10 +356,10 @@ namespace TWiME {
             bool toggleTaskbar = bool.Parse(Manager.settings.ReadSettingOrDefault("false", "General.Main.ShowTaskbarOnEmptyTags"));
             if (toggleTaskbar) {
                 if (windows.Count == 0) {
-                    Taskbar.hidden = false;
+                    Taskbar.Hidden = false;
                 }
                 else {
-                    Taskbar.hidden = true;
+                    Taskbar.Hidden = true;
                 }
             }
         }

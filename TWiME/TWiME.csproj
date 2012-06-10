@@ -58,6 +58,7 @@
     <Compile Include="Bar.Designer.cs">
       <DependentUpon>Bar.cs</DependentUpon>
     </Compile>
+    <Compile Include="BarItem.cs" />
     <Compile Include="GlobalKeyboardHook.cs" />
     <Compile Include="HotkeyMessage.cs" />
     <Compile Include="IPluginBarItem.cs" />
@@ -67,9 +68,11 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="rectangleExtensions.cs" />
+    <Compile Include="RomanNumeral.cs" />
     <Compile Include="stringExtensions.cs" />
     <Compile Include="TagScreen.cs" />
     <Compile Include="Taskbar.cs" />
+    <Compile Include="Win32API.cs" />
     <Compile Include="Window.cs" />
     <Compile Include="WindowEventArgs.cs" />
     <Compile Include="windowExtensions.cs" />

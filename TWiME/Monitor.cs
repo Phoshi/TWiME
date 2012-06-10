@@ -12,7 +12,7 @@ namespace TWiME {
                 if (!Manager.monitors.Contains(this)) {
                     return _controlled;
                 }
-                if (!Taskbar.hidden && (this==Manager.monitors[0])) {
+                if (!Taskbar.Hidden && (this==Manager.monitors[0])) {
                     Rectangle newRect = _controlled;
                     newRect.Height -= 25;
                     return newRect;
@@ -61,7 +61,7 @@ namespace TWiME {
                 }
                 int currentActiveTag = GetActiveTag();
                 tagScreens[tagNumber].Enable();
-                Bar.bar.Activate();
+                Bar.BarWindow.Activate();
                 _activeTag = tagNumber;
                 tagScreens[tagNumber].Activate();
                 if (exclusive) {
@@ -112,17 +112,17 @@ namespace TWiME {
         private Dictionary<TagScreen, Rectangle> generateLayout() {
             Dictionary<TagScreen, Rectangle> layouts = new Dictionary<TagScreen, Rectangle>();
             if (GetEnabledScreens().Count() > 3) {
-                double numRows = Math.Ceiling(Math.Pow(GetEnabledScreens().Count(), 0.5));
-                double numColumns = Math.Ceiling(GetEnabledScreens().Count() / numRows);
-                int winWidth = (int) (Controlled.Width / numRows);
-                int winHeight = (int) (Controlled.Height / numColumns);
+                int numRows = (int) Math.Ceiling(Math.Pow(GetEnabledScreens().Count(), 0.5));
+                int numColumns = (int) Math.Ceiling((double)GetEnabledScreens().Count() / numRows);
+                int winWidth = Controlled.Width / numRows;
+                int winHeight = Controlled.Height / numColumns;
                 int row = 0, column = 0;
                 foreach (TagScreen screen in GetEnabledScreens()) {
                     if (column == numColumns - 1) {
 
                         if ((numRows * numColumns) != GetEnabledScreens().Count()) {
-                            int shortfall = (int) ((numRows * numColumns) - GetEnabledScreens().Count());
-                            winWidth = (int) (Controlled.Width / (numRows - shortfall)) + 1;
+                            int shortfall = (numRows * numColumns) - GetEnabledScreens().Count();
+                            winWidth = Controlled.Width / (numRows - shortfall) + 1;
                         }
                     }
                     int thisWinLeft = Controlled.Left + (winWidth * row);
@@ -209,8 +209,8 @@ namespace TWiME {
             createTagScreens();
             createBar();
             Rectangle temp = Screen.WorkingArea;
-            temp.Height = Screen.Bounds.Height - Bar.bar.Location.Height;
-            temp.Y = Screen.Bounds.Top + Bar.bar.Location.Height;
+            temp.Height = Screen.Bounds.Height - Bar.BarWindow.Location.Height;
+            temp.Y = Screen.Bounds.Top + Bar.BarWindow.Location.Height;
             temp.Width += 1;
             Controlled = temp;
             _splitter = float.Parse(Manager.settings.ReadSettingOrDefault("0.5", Screen.DeviceName.Replace(".", ""), "Splitter"));
@@ -352,7 +352,7 @@ namespace TWiME {
                     CatchMessage(new HotkeyMessage(Message.Screen, Level.Monitor, message.handle, newIndex));
                 }
                 if (message.Message == Message.TagWindow) {
-                    if (GetActiveScreen().GetFocusedWindow().Equals(Bar.bar)) {
+                    if (GetActiveScreen().GetFocusedWindow().Equals(Bar.BarWindow)) {
                         return;
                     }
                     if (message.data >= tagScreens.Count()) {
@@ -378,7 +378,7 @@ namespace TWiME {
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.Message == Message.SwapTagWindow) {
-                    if (GetActiveScreen().GetFocusedWindow().Equals(Bar.bar)) {
+                    if (GetActiveScreen().GetFocusedWindow().Equals(Bar.BarWindow)) {
                         return;
                     }
                     if (message.data == GetActiveScreen().tag) {
@@ -393,7 +393,7 @@ namespace TWiME {
                     Manager.CenterMouseOnActiveWindow();
                 }
                 if (message.Message == Message.SwapTagWindowRelative) {
-                    if (GetActiveScreen().GetFocusedWindow().Equals(Bar.bar)) {
+                    if (GetActiveScreen().GetFocusedWindow().Equals(Bar.BarWindow)) {
                         return;
                     }
                     int newIndex;

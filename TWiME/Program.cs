@@ -28,7 +28,7 @@ namespace TWiME {
                 foreach (var window in Manager.Windows) {
                     window.ForceVisible();
                 }
-                Taskbar.hidden = false;
+                Taskbar.Hidden = false;
                 Application.Exit();
             }
         }

@@ -35,21 +35,6 @@ namespace TWiME {
         public static Settings settings;
         public static Dictionary<WindowMatch, WindowRule> windowRules = new Dictionary<WindowMatch, WindowRule>();
 
-        [DllImport("user32.dll")]
-        private static extern
-            IntPtr GetForegroundWindow();
-
-        [DllImport("user32.dll")]
-        private static extern bool PostMessage(IntPtr hWnd, UInt32 Msg, int wParam, int lParam);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        private static extern Int32 SystemParametersInfo(
-            UInt32 action, UInt32 uParam, String vParam, UInt32 winIni);
-
-        private static readonly UInt32 SPI_SETDESKWALLPAPER = 0x14;
-        private static readonly UInt32 SPIF_UPDATEINIFILE = 0x01;
-        private static readonly UInt32 SPIF_SENDWININICHANGE = 0x02;
-
         private const UInt32 WM_KEYDOWN = 0x0100;
         private const UInt32 WM_KEYUP = 0x0101;
         private const int VK_LWIN = 0x5B;
@@ -60,7 +45,7 @@ namespace TWiME {
         private static bool isControlKeyDown;
 
         public static void Setup() {
-            Taskbar.hidden = true;
+            Taskbar.Hidden = true;
             bool settingsReadOnly =
                 !Convert.ToBoolean(userSettingsOverride.ReadSettingOrDefault("false", "General.Main.AutoSave"));
             settings = new Settings("_runtimesettings", settingsReadOnly);
@@ -90,10 +75,11 @@ namespace TWiME {
                 Image image = Image.FromFile(path);
                 image.Save(newName, ImageFormat.Bmp);
                 image.Dispose();
-                SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, newName,
-                              SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+                Win32API.SystemParametersInfo(Win32API.SPI_SETDESKWALLPAPER, 0, newName,
+                              Win32API.SPIF_UPDATEINIFILE | Win32API.SPIF_SENDWININICHANGE);
             }
-            catch {//Because /fuck GDI+/, seriously.
+            catch (Exception) {//Because /fuck GDI+/, seriously.
+                Manager.Log("Wallpaper change to {0} failed".With(path));
             }
         }
 
@@ -155,7 +141,7 @@ namespace TWiME {
         public static void CenterMouseOnActiveWindow() {
             bool moveMouse = Convert.ToBoolean(settings.ReadSettingOrDefault("false", "General.Main.MouseFollowsInput"));
             if (moveMouse) {
-                IntPtr pointer = GetForegroundWindow();
+                IntPtr pointer = Win32API.GetForegroundWindow();
                 Window window = GetWindowObjectByHandle(pointer);
                 if (window != null) {
                     Cursor.Position = window.Location.Center();
@@ -319,7 +305,7 @@ namespace TWiME {
         }
 
         public static void SendMessage(Message type, Level level, int data) {
-            IntPtr focussed = GetForegroundWindow();
+            IntPtr focussed = Win32API.GetForegroundWindow();
             HotkeyMessage message = new HotkeyMessage(type, level, focussed, data);
             if (message.level == Level.Global) {
                 CatchMessage(message);
@@ -339,7 +325,7 @@ namespace TWiME {
                     window.ShowCaption = true;
                 }
                 Manager.Log("Showing taskbar", 10);
-                Taskbar.hidden = false;
+                Taskbar.Hidden = false;
                 if (message.data == 0) {
                     Application.Exit();
                 }
@@ -349,7 +335,7 @@ namespace TWiME {
             }
             if (message.Message == Message.Switch) {
                 Manager.Log("Toggling taskbar");
-                Taskbar.hidden = !Taskbar.hidden;
+                Taskbar.Hidden = !Taskbar.Hidden;
                 Manager.monitors[0].AssertTagLayout();
             }
         }
@@ -431,8 +417,8 @@ namespace TWiME {
                 if (executedACommandLately) {
                     Log("We've executed a command this run. Return.", 3);
                     executedACommandLately = false;
-                    PostMessage((IntPtr) 0xFFFF, WM_KEYDOWN, VK_LWIN, 0); //0xFFFF is HWND_BROADCAST - everything.
-                    PostMessage((IntPtr) 0xFFFF, WM_KEYUP, VK_LWIN, 0); //0xFFFF is HWND_BROADCAST - everything.
+                    Win32API.PostMessage((IntPtr) 0xFFFF, WM_KEYDOWN, VK_LWIN, 0); //0xFFFF is HWND_BROADCAST - everything.
+                    Win32API.PostMessage((IntPtr) 0xFFFF, WM_KEYUP, VK_LWIN, 0); //0xFFFF is HWND_BROADCAST - everything.
                     return true;
                 }
                 Log("We haven't executed a command this run. Return", 3);
@@ -489,8 +475,8 @@ namespace TWiME {
             _globalHook.unhook();
             _globalHook.hook();
 
-            if (GetForegroundWindow() != focusTrack) {
-                focusTrack = GetForegroundWindow();
+            if (Win32API.GetForegroundWindow() != focusTrack) {
+                focusTrack = Win32API.GetForegroundWindow();
                 OnWindowFocusChange(GetWindowObjectByHandle(focusTrack),
                                     new WindowEventArgs(Manager.GetFocussedMonitor().Screen));
             }
@@ -515,7 +501,7 @@ namespace TWiME {
                             }
                             if (rule.rule == WindowRules.stripBorders) {
                                 window.ShowCaption = rule.data != 1;
-                                WindowMatch newMatch = new WindowMatch(window.ClassName, kvPair.Key.Title, kvPair.Key.Style, false);
+                                WindowMatch newMatch = new WindowMatch(window.ClassName, kvPair.Key.Title, kvPair.Key.Style);
                                 WindowRule newRule = new WindowRule(WindowRules.ignore, 0);
                                 windowRules.Add(newMatch, newRule);
                             }
@@ -544,7 +530,7 @@ namespace TWiME {
                      where screen.windows.Contains(window1)
                      select screen);
                 TagScreen firstScreenWithWindow = screensWithWindow.First();
-                firstScreenWithWindow.parent.Bar.bar.Activate();
+                firstScreenWithWindow.parent.Bar.BarWindow.Activate();
                 SendMessage(Message.Screen, Level.Monitor, firstScreenWithWindow.tag);
                 window.Activate();
             }
@@ -589,7 +575,7 @@ namespace TWiME {
         }
 
         public static int GetFocussedMonitorIndex() {
-            Screen screen = Screen.FromHandle(GetForegroundWindow());
+            Screen screen = Screen.FromHandle(Win32API.GetForegroundWindow());
             int index = 0;
             foreach (Monitor mon in monitors) {
                 if (mon.Name == screen.DeviceName) {
