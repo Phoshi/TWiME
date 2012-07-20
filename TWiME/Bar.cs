@@ -12,6 +12,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Extensions;
+using Microsoft.Win32;
 using Tree;
 
 namespace TWiME {
@@ -111,6 +112,13 @@ namespace TWiME {
             loadPluginItems();
             loadAdditionalItems();
             generateMenu();
+
+            SystemEvents.SessionEnding += SystemEvents_SessionEnding;
+        }
+
+        void SystemEvents_SessionEnding(object sender, SessionEndingEventArgs e) {
+            this.Close();
+            Manager.SendMessage(Message.Close, Level.Global, 0);
         }
 
         private void generateMenu() {
