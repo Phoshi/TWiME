@@ -266,6 +266,8 @@ namespace TWiME {
                   SendMessage(Message.LayoutRelativeReverse, Level.Monitor, GetFocussedMonitor().GetActiveScreen().tag)),
                  Keys.Control | Keys.Shift);
 
+            hook(Keys.Oem8, (() => SendMessage(Message.TilingType, Level.Window, -2)));
+
             #region TagStuff
 
             int tagIndex = 0;
