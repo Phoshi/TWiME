@@ -209,8 +209,8 @@ namespace TWiME {
             createTagScreens();
             createBar();
             Rectangle temp = Screen.WorkingArea;
-            temp.Height = Screen.Bounds.Height - Bar.BarWindow.Location.Height;
-            temp.Y = Screen.Bounds.Top + Bar.BarWindow.Location.Height;
+            temp.Height = Screen.Bounds.Height - Bar.BarHeight;
+            temp.Y = Screen.Bounds.Top + Bar.BarHeight;
             temp.Width += 1;
             Controlled = temp;
             _splitter = float.Parse(Manager.settings.ReadSettingOrDefault("0.5", Screen.DeviceName.Replace(".", ""), "Splitter"));
