@@ -241,11 +241,7 @@ namespace TWiME {
             }
             set {
                 Win32API.ShowWindowAsync(handle, Win32API.SW_SHOWMAXIMIZED);
-                Thread moveThread = new Thread((()=>assertLocation(value)));
-                moveThread.Start();
-                if (!AsyncResizing) {
-                    moveThread.Join();
-                }
+                ThreadPool.QueueUserWorkItem((delegate { assertLocation(value); }));
                 _location = value;
             }
         }
@@ -258,7 +254,7 @@ namespace TWiME {
             }
             if (whereTo != _location) {
                 Win32API.SetWindowPos(handle, (IntPtr) Win32API.HWND_TOP, whereTo.X, whereTo.Y, whereTo.Width, whereTo.Height,
-                             Win32API.SWP_NOACTIVATE);
+                             Win32API.SWP_NOACTIVATE | Win32API.SWP_ASYNCWINDOWPOS | Win32API.SWP_NOZORDER);
                 Win32API.ShowWindow(handle, Win32API.SW_SHOWMAXIMIZED);
             }
         }
@@ -288,13 +284,16 @@ namespace TWiME {
                 if (message.data > 0) {
                     TilingType = (WindowTilingType) message.data;
                 }
-                else {
+                else if (message.data == -1) {
                     int currentType = (int) TilingType;
                     currentType++;
                     if (currentType >= Enum.GetValues(typeof(WindowTilingType)).Length) {
                         currentType = 0;
                     }
                     TilingType = (WindowTilingType) currentType;
+                }
+                else {
+                    TilingType = TilingType == WindowTilingType.Normal ? WindowTilingType.FullScreen : WindowTilingType.Normal;
                 }
             }
             else if (message.Message == Message.TopMost) {
