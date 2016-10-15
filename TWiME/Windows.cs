@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
+using Windows10Interop;
 
 namespace TWiME {
     internal class Windows : IEnumerable, IEnumerator {
@@ -44,6 +45,9 @@ namespace TWiME {
         private bool processWindow(int handle, int lparam) {
             if (_showInvisible == false && !Win32API.IsWindowVisible(handle)) {
                 return (true);
+            }
+            if (!Desktop.Current.HasWindow(new IntPtr(handle))) {
+                return true;
             }
             if (_justHandles) {
                 handleList.Add(handle);
@@ -86,12 +90,13 @@ namespace TWiME {
         }
 
         private string getWindowModuleName(int handle) {
+            return "";
             uint processID;
             if (Win32API.GetWindowThreadProcessId(handle, out processID) > 0) {
                 try {
                     return Process.GetProcessById((int) processID).MainModule.FileName;
                 }
-                catch (ArgumentException) {
+                catch (Exception) {
                     return "";
                 }
             }

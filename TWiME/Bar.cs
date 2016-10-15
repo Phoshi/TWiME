@@ -350,6 +350,15 @@ namespace TWiME {
             rect.Width = thisWindow.Screen.WorkingArea.Width;
             thisWindow.Maximised = false;
             thisWindow.Location = rect;
+
+            if (_parent.Bar != null)
+            {
+                Rectangle temp = _parent.Screen.WorkingArea;
+                temp.Height = _parent.Screen.Bounds.Height - _parent.Bar.BarHeight;
+                temp.Y = _parent.Screen.Bounds.Top + _parent.Bar.BarHeight;
+                temp.Width = _parent.Bar.Width;
+                _parent.Controlled = temp;
+            }
         }
 
         private void addMouseAction(MouseButtons button, Rectangle area, Action action) {
@@ -439,25 +448,30 @@ namespace TWiME {
                     continue;
                 }
                 if (item.IsBuiltIn) {
-                    if (!_barPlugins.ContainsKey(item.Path)) {
-                        continue;
-                    }
-                    IPluginBarItem barItem = (IPluginBarItem) Activator.CreateInstance(
-                        _barPlugins[item.Path],
-                        new object[] {this});
+                    try {
+                        if (!_barPlugins.ContainsKey(item.Path)) {
+                            continue;
+                        }
+                        IPluginBarItem barItem = (IPluginBarItem)Activator.CreateInstance(
+                            _barPlugins[item.Path],
+                            new object[] { this });
 
-                    barItem.SetAppend(item.AppendValue);
-                    barItem.SetPrepend(item.PrependValue);
-                    barItem.SetBackColour(item.BackColour);
-                    barItem.SetForeColour(item.ForeColour);
-                    barItem.SetDoNotShow(item.DoNotShowMatch);
-                    barItem.SetOnlyShows(item.OnlyShowOnMatch);
-                    Bitmap bitmap = barItem.Draw(item.Argument);
-                    if (bitmap != null) {
-                        additionalImages.Add(bitmap);
-                        item.Value = bitmap;
+                        barItem.SetAppend(item.AppendValue);
+                        barItem.SetPrepend(item.PrependValue);
+                        barItem.SetBackColour(item.BackColour);
+                        barItem.SetForeColour(item.ForeColour);
+                        barItem.SetDoNotShow(item.DoNotShowMatch);
+                        barItem.SetOnlyShows(item.OnlyShowOnMatch);
+                        Bitmap bitmap = barItem.Draw(item.Argument);
+                        if (bitmap != null) {
+                            additionalImages.Add(bitmap);
+                            item.Value = bitmap;
+                        }
                     }
-                    
+                    catch {
+                        //Oh god everything is exploding
+                    }
+
                 }
                 else {
                     try {

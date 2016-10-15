@@ -298,6 +298,9 @@ namespace TWiME {
         }
 
         public void CatchWindow(Window window) {
+            if ((from monitor in Manager.monitors select monitor.Bar.BarWindow).Contains(window)) {
+                return; //Don't take control of the Bar windows, that would be bad.
+            }
             int stackPosition =
                 Convert.ToInt32(Manager.settings.ReadSettingOrDefault(0, _parent.SafeName, "DefaultStackPosition"));
             foreach (KeyValuePair<WindowMatch, WindowRule> kvPair in Manager.windowRules) {

@@ -59,6 +59,8 @@
       <DependentUpon>Bar.cs</DependentUpon>
     </Compile>
     <Compile Include="BarItem.cs" />
+    <Compile Include="COM\VirtualDesktop.cs" />
+    <Compile Include="COM\VirtualDesktopInterop.cs" />
     <Compile Include="GlobalKeyboardHook.cs" />
     <Compile Include="HotkeyMessage.cs" />
     <Compile Include="IPluginBarItem.cs" />

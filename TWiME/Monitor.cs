@@ -19,7 +19,9 @@ namespace TWiME {
                 }
                 return _controlled;
             }
-            set { _controlled = value; }
+            set { _controlled = value;
+                  reorganiseActiveTagSpaces();
+            }
         }
         public Bar Bar;
         private TagScreen[] tagScreens;
